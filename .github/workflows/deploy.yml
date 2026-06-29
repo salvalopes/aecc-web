@@ -1,0 +1,47 @@
+name: Deploy aecc-web
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Export web estático
+        run: npx expo export --platform web
+        env:
+          EXPO_PUBLIC_API_URL: https://aecc.salv4.com/api
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Garantir rsync no servidor
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "command -v rsync >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y rsync)"
+
+      - name: Rsync dist para o servidor
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/deploy/aecc/web/
