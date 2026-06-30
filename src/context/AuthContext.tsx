@@ -34,7 +34,7 @@ function buildAuthorizationUrl(challenge: string, state: string): string {
     response_type: 'code',
     client_id: 'aecc-web',
     redirect_uri: getRedirectUri(),
-    scope: 'openid profile email roles aecc_api',
+    scope: 'openid profile email roles aecc_api offline_access',
     code_challenge: challenge,
     code_challenge_method: 'S256',
     state,
