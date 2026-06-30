@@ -74,6 +74,21 @@ export interface LoginResponse {
   expiresIn: number;
 }
 
+export interface ConfirmEmailRequest {
+  userId: string;
+  token: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  userId: string;
+  token: string;
+  newPassword: string;
+}
+
 export interface CreateLeadRequest {
   productId: string;
   message: string;

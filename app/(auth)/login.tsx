@@ -56,6 +56,13 @@ export default function LoginScreen() {
           <Text style={styles.buttonText}>Entrar</Text>
         )}
       </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => router.push('/(auth)/forgot-password')}
+        style={styles.forgotLink}
+      >
+        <Text style={styles.forgotLinkText}>Esqueci-me da palavra-passe</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -81,4 +88,6 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   error: { color: '#d32f2f', marginBottom: 8, textAlign: 'center' },
+  forgotLink: { marginTop: 16, alignItems: 'center' },
+  forgotLinkText: { color: '#0a7ea4', fontSize: 14 },
 });
