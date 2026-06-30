@@ -15,13 +15,15 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
+      // login() does: POST /auth/login (cookie) → PKCE → window.location.href redirect
+      // The browser navigates away on success; no router.replace() needed here.
       await login({ email, password });
-      router.replace('/(app)');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao autenticar');
-    } finally {
       setLoading(false);
     }
+    // On success the page navigates away — intentionally no finally setLoading(false)
+    // to avoid a loading flicker before the browser redirect completes.
   }
 
   return (

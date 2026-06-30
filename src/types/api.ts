@@ -10,8 +10,6 @@ export interface User {
   fullName: string;
   role: UserRole;
   emailConfirmed: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface Category {
@@ -68,10 +66,18 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  accessToken: string;
-  tokenType: string;
-  expiresIn: number;
+// OAuth 2.0 token response (snake_case per spec)
+export interface TokenResponse {
+  access_token: string;
+  refresh_token?: string; // only present when offline_access scope is granted
+  token_type: string;
+  expires_in: number;
+}
+
+export interface ExchangeCodeParams {
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
 }
 
 export interface ConfirmEmailRequest {

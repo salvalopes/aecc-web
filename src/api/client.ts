@@ -1,14 +1,20 @@
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
 type TokenGetter = () => string | null;
+type TokenRefresher = () => Promise<boolean>;
 
 let getToken: TokenGetter = () => null;
+let tryRefreshToken: TokenRefresher = () => Promise.resolve(false);
 
 export function setTokenGetter(fn: TokenGetter): void {
   getToken = fn;
 }
 
-class ApiError extends Error {
+export function setTokenRefresher(fn: TokenRefresher): void {
+  tryRefreshToken = fn;
+}
+
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
@@ -18,7 +24,9 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+let isRefreshing = false;
+
+async function doRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
 
   const headers: Record<string, string> = {
@@ -26,11 +34,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...(init.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     let message = response.statusText;
@@ -49,6 +59,23 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  try {
+    return await doRequest<T>(path, init);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401 && !isRefreshing) {
+      isRefreshing = true;
+      try {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) return doRequest<T>(path, init);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    throw e;
+  }
+}
+
 export const apiClient = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
@@ -57,5 +84,3 @@ export const apiClient = {
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
-
-export { ApiError };
