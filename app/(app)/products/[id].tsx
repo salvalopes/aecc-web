@@ -1,5 +1,6 @@
 import {
   Alert,
+  Image,
   Modal,
   Pressable,
   SafeAreaView,
@@ -11,15 +12,17 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/useAuth';
 import { productsApi } from '@/api/products.api';
 import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
-import type { Product, Company, Category, UpdateProductRequest, ProductType } from '@/types/api';
+import type { Product, ProductImage, Company, Category, UpdateProductRequest, ProductType } from '@/types/api';
 
 interface FormState {
   categoryId: string;
@@ -52,6 +55,8 @@ export default function ProductDetailScreen() {
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 
   const isOwner = !!user && !!company && company.ownerUserId === user.id;
 
@@ -165,6 +170,72 @@ export default function ProductDetailScreen() {
     }
   }
 
+  async function handleAddImage() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const mime = asset.mimeType ?? (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+
+    setUploadingImage(true);
+    try {
+      const newImage = await productsApi.addImage(id!, asset.uri, `photo.${ext}`, mime);
+      startTransition(() =>
+        setProduct(prev =>
+          prev ? { ...prev, images: [...prev.images, newImage] } : prev
+        )
+      );
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao enviar imagem.');
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function handleFeatureImage(img: ProductImage) {
+    if (!product) return;
+    try {
+      await productsApi.featureImage(product.id, img.id);
+      startTransition(() =>
+        setProduct(prev =>
+          prev
+            ? {
+                ...prev,
+                imageUrl: img.imageUrl,
+                images: prev.images.map(i => ({ ...i, isFeatured: i.id === img.id })),
+              }
+            : prev
+        )
+      );
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao marcar imagem.');
+    }
+  }
+
+  async function handleDeleteImage(img: ProductImage) {
+    if (!product) return;
+    setDeletingImageId(img.id);
+    try {
+      await productsApi.deleteImage(product.id, img.id);
+      startTransition(() =>
+        setProduct(prev => {
+          if (!prev) return prev;
+          const remaining = prev.images.filter(i => i.id !== img.id);
+          const newFeatured = remaining.find(i => i.isFeatured) ?? remaining[0];
+          return { ...prev, imageUrl: newFeatured?.imageUrl ?? null, images: remaining };
+        })
+      );
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar imagem.');
+    } finally {
+      setDeletingImageId(null);
+    }
+  }
+
   const flatCategories = (function flatten(cats: Category[]): Category[] {
     return cats.flatMap(c => [c, ...flatten(c.children)]);
   })(categories);
@@ -193,6 +264,64 @@ export default function ProductDetailScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Gallery */}
+        {product.images.length > 0 && (
+          <FlatList
+            data={product.images}
+            horizontal
+            keyExtractor={item => item.id}
+            showsHorizontalScrollIndicator={false}
+            style={styles.gallery}
+            renderItem={({ item }) => (
+              <View style={styles.galleryItemWrap}>
+                <Image source={{ uri: item.imageUrl }} style={styles.galleryImage} />
+                {item.isFeatured && (
+                  <View style={styles.featuredBadge}>
+                    <Text style={styles.featuredBadgeText}>★</Text>
+                  </View>
+                )}
+                {isOwner && (
+                  <View style={styles.galleryActions}>
+                    {!item.isFeatured && (
+                      <TouchableOpacity
+                        style={styles.galleryActionBtn}
+                        onPress={() => handleFeatureImage(item)}
+                      >
+                        <Text style={styles.galleryActionText}>☆</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      style={[styles.galleryActionBtn, styles.galleryDeleteBtn]}
+                      onPress={() => handleDeleteImage(item)}
+                      disabled={deletingImageId === item.id}
+                    >
+                      <Text style={styles.galleryDeleteText}>
+                        {deletingImageId === item.id ? '…' : '✕'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          />
+        )}
+
+        {isOwner && (
+          <TouchableOpacity
+            style={styles.addImageBtn}
+            onPress={handleAddImage}
+            disabled={uploadingImage || product.images.length >= 15}
+          >
+            {uploadingImage ? (
+              <ActivityIndicator size="small" color="#0a7ea4" />
+            ) : (
+              <Text style={[styles.addImageText, product.images.length >= 15 && styles.disabled]}>
+                {product.images.length >= 15 ? 'Máx. 15 imagens' : '+ Adicionar imagem'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
+
         <View style={styles.hero}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroName}>{product.name}</Text>
@@ -322,6 +451,48 @@ export default function ProductDetailScreen() {
                 />
               </>
             )}
+
+            <Text style={styles.label}>Galeria de imagens</Text>
+            <View style={styles.galleryGrid}>
+              {product.images.map(img => (
+                <View key={img.id} style={styles.gridItem}>
+                  <Image source={{ uri: img.imageUrl }} style={styles.gridImage} />
+                  {img.isFeatured && (
+                    <View style={styles.featuredBadge}>
+                      <Text style={styles.featuredBadgeText}>★</Text>
+                    </View>
+                  )}
+                  <View style={styles.gridActions}>
+                    {!img.isFeatured && (
+                      <TouchableOpacity onPress={() => handleFeatureImage(img)}>
+                        <Text style={styles.gridActionStar}>☆ Destaque</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => handleDeleteImage(img)}
+                      disabled={deletingImageId === img.id}
+                    >
+                      <Text style={styles.gridActionDelete}>
+                        {deletingImageId === img.id ? '…' : 'Remover'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.addImageBtnModal, (uploadingImage || product.images.length >= 15) && styles.addImageBtnDisabled]}
+              onPress={handleAddImage}
+              disabled={uploadingImage || product.images.length >= 15}
+            >
+              {uploadingImage
+                ? <ActivityIndicator size="small" color="#0a7ea4" />
+                : <Text style={styles.addImageText}>
+                    {product.images.length >= 15 ? 'Máx. 15 imagens' : '+ Adicionar imagem'}
+                  </Text>
+              }
+            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -336,6 +507,55 @@ const styles = StyleSheet.create({
   errorText: { color: '#d32f2f', fontSize: 15, textAlign: 'center', marginBottom: 12 },
   retryBtn: { paddingVertical: 8, paddingHorizontal: 20, borderWidth: 1, borderColor: '#0a7ea4', borderRadius: 8 },
   retryText: { color: '#0a7ea4', fontSize: 14 },
+
+  gallery: { backgroundColor: '#000' },
+  galleryItemWrap: { position: 'relative', marginRight: 2 },
+  galleryImage: { width: 200, height: 200 },
+  featuredBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: '#f5c518',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  featuredBadgeText: { fontSize: 12, fontWeight: '700', color: '#000' },
+  galleryActions: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  galleryActionBtn: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  galleryActionText: { color: '#fff', fontSize: 14 },
+  galleryDeleteBtn: { backgroundColor: 'rgba(200,0,0,0.7)' },
+  galleryDeleteText: { color: '#fff', fontSize: 14 },
+  addImageBtn: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  addImageBtnModal: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#0a7ea4',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  addImageBtnDisabled: { borderColor: '#ccc' },
+  addImageText: { color: '#0a7ea4', fontSize: 14, fontWeight: '600' },
+  disabled: { opacity: 0.4 },
+
   hero: {
     backgroundColor: '#fff',
     padding: 20,
@@ -381,6 +601,14 @@ const styles = StyleSheet.create({
   headerBtn: { paddingHorizontal: 10, paddingVertical: 6 },
   headerBtnText: { color: '#0a7ea4', fontSize: 15, fontWeight: '600' },
   headerDeleteText: { color: '#d32f2f', fontSize: 15, fontWeight: '600' },
+
+  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  gridItem: { width: '47%', position: 'relative' },
+  gridImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
+  gridActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  gridActionStar: { fontSize: 12, color: '#888' },
+  gridActionDelete: { fontSize: 12, color: '#d32f2f' },
+
   modalContainer: { flex: 1, backgroundColor: '#fff' },
   modalHeader: {
     flexDirection: 'row',
@@ -394,7 +622,6 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 16, fontWeight: '700' },
   cancelText: { color: '#666', fontSize: 15 },
   saveText: { color: '#0a7ea4', fontSize: 15, fontWeight: '700' },
-  disabled: { opacity: 0.4 },
   modalBody: { flex: 1, padding: 16 },
   formError: {
     color: '#d32f2f',

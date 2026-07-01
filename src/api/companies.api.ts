@@ -15,4 +15,10 @@ export const companiesApi = {
   update: (id: string, data: UpdateCompanyRequest) =>
     apiClient.put<Company>(`/companies/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/companies/${id}`),
+
+  uploadLogo: (id: string, uri: string, name: string, mimeType: string) => {
+    const formData = new FormData();
+    formData.append('file', { uri, name, type: mimeType } as unknown as Blob);
+    return apiClient.postMultipart<{ url: string }>(`/companies/${id}/logo`, formData);
+  },
 };

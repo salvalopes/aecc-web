@@ -1,6 +1,7 @@
 import {
   Alert,
   FlatList,
+  Image,
   Modal,
   Pressable,
   SafeAreaView,
@@ -53,35 +54,42 @@ function ProductCard({
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
 }) {
+  const thumbUrl = product.imageUrl;
+
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={() => router.push(`/(app)/products/${product.id}`)}
     >
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardName}>{product.name}</Text>
-        <View style={[styles.typeBadge, product.type === 'Service' && styles.serviceBadge]}>
-          <Text style={styles.typeBadgeText}>
-            {product.type === 'Product' ? 'Produto' : 'Serviço'}
-          </Text>
+      {thumbUrl && (
+        <Image source={{ uri: thumbUrl }} style={styles.cardThumb} />
+      )}
+      <View style={styles.cardBody}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardName}>{product.name}</Text>
+          <View style={[styles.typeBadge, product.type === 'Service' && styles.serviceBadge]}>
+            <Text style={styles.typeBadgeText}>
+              {product.type === 'Product' ? 'Produto' : 'Serviço'}
+            </Text>
+          </View>
         </View>
+        {!!product.description && (
+          <Text style={styles.cardDesc} numberOfLines={2}>{product.description}</Text>
+        )}
+        {product.hasMemberBenefit && (
+          <Text style={styles.benefitTag}>★ Benefício membro</Text>
+        )}
+        {canEdit && (
+          <View style={styles.cardActions}>
+            <TouchableOpacity onPress={() => onEdit(product)} style={styles.actionBtn}>
+              <Text style={styles.editText}>Editar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onDelete(product)} style={styles.actionBtn}>
+              <Text style={styles.deleteText}>Apagar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-      {!!product.description && (
-        <Text style={styles.cardDesc} numberOfLines={2}>{product.description}</Text>
-      )}
-      {product.hasMemberBenefit && (
-        <Text style={styles.benefitTag}>★ Benefício membro</Text>
-      )}
-      {canEdit && (
-        <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => onEdit(product)} style={styles.actionBtn}>
-            <Text style={styles.editText}>Editar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onDelete(product)} style={styles.actionBtn}>
-            <Text style={styles.deleteText}>Apagar</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </TouchableOpacity>
   );
 }
@@ -452,13 +460,16 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 10,
-    padding: 14,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+    flexDirection: 'row',
   },
+  cardThumb: { width: 90, height: 90 },
+  cardBody: { flex: 1, padding: 14 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   cardName: { fontSize: 15, fontWeight: '700', color: '#111', flex: 1 },
   typeBadge: { backgroundColor: '#e8f5e9', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },

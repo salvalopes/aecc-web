@@ -1,6 +1,7 @@
 import {
   Alert,
   FlatList,
+  Image,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -13,6 +14,7 @@ import {
 } from 'react-native';
 import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/useAuth';
 import { companiesApi } from '@/api/companies.api';
 import { productsApi } from '@/api/products.api';
@@ -69,6 +71,7 @@ export default function CompanyDetailScreen() {
     leadCooldownMinutes: '60',
     leadDestinationEmail: '',
   });
+  const [pendingLogoUri, setPendingLogoUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -120,8 +123,21 @@ export default function CompanyDetailScreen() {
       leadCooldownMinutes: String(company.leadCooldownMinutes),
       leadDestinationEmail: company.leadDestinationEmail,
     });
+    setPendingLogoUri(null);
     setFormError(null);
     setModalVisible(true);
+  }
+
+  async function pickLogo() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (!result.canceled && result.assets[0]) {
+      startTransition(() => setPendingLogoUri(result.assets[0].uri));
+    }
   }
 
   async function handleSave() {
@@ -138,10 +154,19 @@ export default function CompanyDetailScreen() {
         leadCooldownMinutes: cooldown,
         leadDestinationEmail: form.leadDestinationEmail.trim(),
       };
-      const updated = await companiesApi.update(id!, payload);
+      let updated = await companiesApi.update(id!, payload);
+
+      if (pendingLogoUri) {
+        const ext = pendingLogoUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+        const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+        await companiesApi.uploadLogo(id!, pendingLogoUri, `logo.${ext}`, mime);
+        updated = await companiesApi.get(id!);
+      }
+
       startTransition(() => {
         setCompany(updated);
         setModalVisible(false);
+        setPendingLogoUri(null);
       });
     } catch (e) {
       setFormError(e instanceof ApiError ? e.message : 'Erro ao guardar.');
@@ -169,6 +194,8 @@ export default function CompanyDetailScreen() {
     );
   }
 
+  const currentLogoUri = pendingLogoUri ?? company.logoUrl;
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -178,6 +205,9 @@ export default function CompanyDetailScreen() {
         ListHeaderComponent={
           <View>
             <View style={styles.hero}>
+              {!!currentLogoUri && (
+                <Image source={{ uri: currentLogoUri }} style={styles.logo} />
+              )}
               <Text style={styles.heroName}>{company.name}</Text>
               {!!company.description && (
                 <Text style={styles.heroDesc}>{company.description}</Text>
@@ -215,6 +245,20 @@ export default function CompanyDetailScreen() {
 
           <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
             {formError && <Text style={styles.formError}>{formError}</Text>}
+
+            <Text style={styles.label}>Logo</Text>
+            <TouchableOpacity style={styles.logoPicker} onPress={pickLogo}>
+              {currentLogoUri ? (
+                <Image source={{ uri: currentLogoUri }} style={styles.logoPreview} />
+              ) : (
+                <Text style={styles.logoPickerText}>Escolher imagem…</Text>
+              )}
+            </TouchableOpacity>
+            {currentLogoUri && (
+              <TouchableOpacity onPress={pickLogo} style={styles.changeLogoBtn}>
+                <Text style={styles.changeLogoText}>Alterar logo</Text>
+              </TouchableOpacity>
+            )}
 
             <Text style={styles.label}>Nome *</Text>
             <TextInput
@@ -267,7 +311,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    alignItems: 'flex-start',
   },
+  logo: { width: 64, height: 64, borderRadius: 8, marginBottom: 12 },
   heroName: { fontSize: 22, fontWeight: '800', color: '#111', marginBottom: 6 },
   heroDesc: { fontSize: 14, color: '#555', lineHeight: 20, marginBottom: 8 },
   heroCooldown: { fontSize: 12, color: '#999' },
@@ -328,6 +374,22 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   label: { fontSize: 13, fontWeight: '600', color: '#444', marginTop: 16, marginBottom: 6 },
+  logoPicker: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fafafa',
+    overflow: 'hidden',
+  },
+  logoPickerText: { fontSize: 13, color: '#999', textAlign: 'center' },
+  logoPreview: { width: 100, height: 100, borderRadius: 10 },
+  changeLogoBtn: { marginTop: 8 },
+  changeLogoText: { color: '#0a7ea4', fontSize: 13 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',

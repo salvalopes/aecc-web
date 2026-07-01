@@ -34,6 +34,14 @@ export interface Company {
   updatedAt: string;
 }
 
+export interface ProductImage {
+  id: string;
+  imageUrl: string;
+  isFeatured: boolean;
+  displayOrder: number;
+  createdAt: string;
+}
+
 export interface Product {
   id: string;
   companyId: string;
@@ -46,6 +54,7 @@ export interface Product {
   memberBenefitDescription: string | null;
   isActive: boolean;
   createdAt: string;
+  images: ProductImage[];
 }
 
 export interface Lead {
