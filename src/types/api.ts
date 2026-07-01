@@ -28,6 +28,7 @@ export interface Company {
   logoUrl: string | null;
   coverUrl: string | null;
   leadCooldownMinutes: number;
+  leadDestinationEmail: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -45,9 +46,6 @@ export interface Product {
   memberBenefitDescription: string | null;
   isActive: boolean;
   createdAt: string;
-  updatedAt: string;
-  company?: Company;
-  category?: Category;
 }
 
 export interface Lead {
@@ -69,7 +67,7 @@ export interface LoginRequest {
 // OAuth 2.0 token response (snake_case per spec)
 export interface TokenResponse {
   access_token: string;
-  refresh_token?: string; // only present when offline_access scope is granted
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
 }
@@ -100,10 +98,50 @@ export interface CreateLeadRequest {
   message: string;
 }
 
-// Generic API response wrapper (se a API usar envelope)
-export interface PagedResult<T> {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
+// Category CRUD
+export interface CreateCategoryRequest {
+  name: string;
+  slug: string;
+  parentId?: string | null;
+}
+
+export interface UpdateCategoryRequest {
+  name: string;
+  slug: string;
+  parentId?: string | null;
+}
+
+// Company CRUD
+export interface CreateCompanyRequest {
+  name: string;
+  description: string;
+  leadCooldownMinutes: number;
+  leadDestinationEmail: string;
+}
+
+export interface UpdateCompanyRequest {
+  name: string;
+  description: string;
+  leadCooldownMinutes: number;
+  leadDestinationEmail: string;
+}
+
+// Product CRUD
+export interface CreateProductRequest {
+  companyId: string;
+  categoryId: string;
+  type: ProductType;
+  name: string;
+  description: string;
+  hasMemberBenefit: boolean;
+  memberBenefitDescription?: string | null;
+}
+
+export interface UpdateProductRequest {
+  categoryId: string;
+  type: ProductType;
+  name: string;
+  description: string;
+  hasMemberBenefit: boolean;
+  memberBenefitDescription?: string | null;
 }

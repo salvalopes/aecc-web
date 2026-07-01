@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const tokens = await authApi.refreshToken(stored);
         await storage.set(TOKEN_KEY, tokens.access_token);
-        await storage.set(REFRESH_KEY, tokens.refresh_token);
+        if (tokens.refresh_token) await storage.set(REFRESH_KEY, tokens.refresh_token);
         setToken(tokens.access_token);
         setTokenGetter(() => tokens.access_token);
         return true;
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (refresh) {
             const tokens = await authApi.refreshToken(refresh);
             await storage.set(TOKEN_KEY, tokens.access_token);
-            await storage.set(REFRESH_KEY, tokens.refresh_token);
+            if (tokens.refresh_token) await storage.set(REFRESH_KEY, tokens.refresh_token);
             setToken(tokens.access_token);
             setTokenGetter(() => tokens.access_token);
             const me = await authApi.me();
