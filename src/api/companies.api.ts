@@ -1,5 +1,7 @@
 import { apiClient } from './client';
+import { createImageFormData } from './imageUpload';
 import type { Company, CreateCompanyRequest, UpdateCompanyRequest } from '@/types/api';
+import type { ImagePickerAsset } from 'expo-image-picker';
 
 export const companiesApi = {
   list: (params?: { name?: string; categoryId?: string }) => {
@@ -16,9 +18,8 @@ export const companiesApi = {
     apiClient.put<Company>(`/companies/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/companies/${id}`),
 
-  uploadLogo: (id: string, uri: string, name: string, mimeType: string) => {
-    const formData = new FormData();
-    formData.append('file', { uri, name, type: mimeType } as unknown as Blob);
+  uploadLogo: (id: string, asset: ImagePickerAsset) => {
+    const formData = createImageFormData(asset);
     return apiClient.postMultipart<{ url: string }>(`/companies/${id}/logo`, formData);
   },
 };
