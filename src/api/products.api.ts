@@ -1,5 +1,7 @@
 import { apiClient } from './client';
+import { createImageFormData } from './imageUpload';
 import type { Product, ProductImage, CreateProductRequest, UpdateProductRequest } from '@/types/api';
+import type { ImagePickerAsset } from 'expo-image-picker';
 
 export const productsApi = {
   list: (params?: {
@@ -22,9 +24,8 @@ export const productsApi = {
     apiClient.put<Product>(`/products/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/products/${id}`),
 
-  addImage: (productId: string, uri: string, name: string, mimeType: string) => {
-    const formData = new FormData();
-    formData.append('file', { uri, name, type: mimeType } as unknown as Blob);
+  addImage: (productId: string, asset: ImagePickerAsset) => {
+    const formData = createImageFormData(asset);
     return apiClient.postMultipart<ProductImage>(`/products/${productId}/images`, formData);
   },
   deleteImage: (productId: string, imageId: string) =>

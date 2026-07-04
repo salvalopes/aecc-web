@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  FlatList,
 } from 'react-native';
 import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
@@ -22,6 +21,7 @@ import { productsApi } from '@/api/products.api';
 import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
+import { ImageLightbox } from '@/components/ImageLightbox';
 import type { Product, ProductImage, Company, Category, UpdateProductRequest, ProductType } from '@/types/api';
 
 interface FormState {
@@ -57,6 +57,7 @@ export default function ProductDetailScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const isOwner = !!user && !!company && company.ownerUserId === user.id;
 
@@ -178,12 +179,10 @@ export default function ProductDetailScreen() {
     if (result.canceled || !result.assets[0]) return;
 
     const asset = result.assets[0];
-    const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const mime = asset.mimeType ?? (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
 
     setUploadingImage(true);
     try {
-      const newImage = await productsApi.addImage(id!, asset.uri, `photo.${ext}`, mime);
+      const newImage = await productsApi.addImage(id!, asset);
       startTransition(() =>
         setProduct(prev =>
           prev ? { ...prev, images: [...prev.images, newImage] } : prev
@@ -264,62 +263,28 @@ export default function ProductDetailScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Gallery */}
+        {/* Gallery — presentation only, no edit controls.
+            A plain ScrollView (not FlatList) avoids nesting a virtualized
+            list inside the outer vertical ScrollView, which left stale
+            rows on screen after the image count shrank (e.g. delete). */}
         {product.images.length > 0 && (
-          <FlatList
-            data={product.images}
-            horizontal
-            keyExtractor={item => item.id}
-            showsHorizontalScrollIndicator={false}
-            style={styles.gallery}
-            renderItem={({ item }) => (
-              <View style={styles.galleryItemWrap}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gallery}>
+            {product.images.map((item, index) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.galleryItemWrap}
+                onPress={() => setLightboxIndex(index)}
+                activeOpacity={0.9}
+              >
                 <Image source={{ uri: item.imageUrl }} style={styles.galleryImage} />
                 {item.isFeatured && (
                   <View style={styles.featuredBadge}>
                     <Text style={styles.featuredBadgeText}>★</Text>
                   </View>
                 )}
-                {isOwner && (
-                  <View style={styles.galleryActions}>
-                    {!item.isFeatured && (
-                      <TouchableOpacity
-                        style={styles.galleryActionBtn}
-                        onPress={() => handleFeatureImage(item)}
-                      >
-                        <Text style={styles.galleryActionText}>☆</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      style={[styles.galleryActionBtn, styles.galleryDeleteBtn]}
-                      onPress={() => handleDeleteImage(item)}
-                      disabled={deletingImageId === item.id}
-                    >
-                      <Text style={styles.galleryDeleteText}>
-                        {deletingImageId === item.id ? '…' : '✕'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            )}
-          />
-        )}
-
-        {isOwner && (
-          <TouchableOpacity
-            style={styles.addImageBtn}
-            onPress={handleAddImage}
-            disabled={uploadingImage || product.images.length >= 15}
-          >
-            {uploadingImage ? (
-              <ActivityIndicator size="small" color="#0a7ea4" />
-            ) : (
-              <Text style={[styles.addImageText, product.images.length >= 15 && styles.disabled]}>
-                {product.images.length >= 15 ? 'Máx. 15 imagens' : '+ Adicionar imagem'}
-              </Text>
-            )}
-          </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         )}
 
         <View style={styles.hero}>
@@ -453,33 +418,44 @@ export default function ProductDetailScreen() {
             )}
 
             <Text style={styles.label}>Galeria de imagens</Text>
-            <View style={styles.galleryGrid}>
-              {product.images.map(img => (
-                <View key={img.id} style={styles.gridItem}>
-                  <Image source={{ uri: img.imageUrl }} style={styles.gridImage} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.compactGallery}
+              contentContainerStyle={styles.compactGalleryContent}
+            >
+              {product.images.map((img, index) => (
+                <View key={img.id} style={styles.compactItem}>
+                  <TouchableOpacity onPress={() => setLightboxIndex(index)} activeOpacity={0.9}>
+                    <Image source={{ uri: img.imageUrl }} style={styles.compactImage} />
+                  </TouchableOpacity>
                   {img.isFeatured && (
-                    <View style={styles.featuredBadge}>
+                    <View style={styles.featuredBadgeSmall}>
                       <Text style={styles.featuredBadgeText}>★</Text>
                     </View>
                   )}
-                  <View style={styles.gridActions}>
+                  <View style={styles.compactActions}>
                     {!img.isFeatured && (
-                      <TouchableOpacity onPress={() => handleFeatureImage(img)}>
-                        <Text style={styles.gridActionStar}>☆ Destaque</Text>
+                      <TouchableOpacity
+                        style={styles.compactActionBtn}
+                        onPress={() => handleFeatureImage(img)}
+                      >
+                        <Text style={styles.compactActionText}>☆</Text>
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity
+                      style={[styles.compactActionBtn, styles.compactDeleteBtn]}
                       onPress={() => handleDeleteImage(img)}
                       disabled={deletingImageId === img.id}
                     >
-                      <Text style={styles.gridActionDelete}>
-                        {deletingImageId === img.id ? '…' : 'Remover'}
+                      <Text style={styles.compactActionText}>
+                        {deletingImageId === img.id ? '…' : '✕'}
                       </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ))}
-            </View>
+            </ScrollView>
 
             <TouchableOpacity
               style={[styles.addImageBtnModal, (uploadingImage || product.images.length >= 15) && styles.addImageBtnDisabled]}
@@ -496,6 +472,13 @@ export default function ProductDetailScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      <ImageLightbox
+        visible={lightboxIndex !== null}
+        images={product.images}
+        initialIndex={lightboxIndex ?? 0}
+        onClose={() => setLightboxIndex(null)}
+      />
     </View>
   );
 }
@@ -510,7 +493,7 @@ const styles = StyleSheet.create({
 
   gallery: { backgroundColor: '#000' },
   galleryItemWrap: { position: 'relative', marginRight: 2 },
-  galleryImage: { width: 200, height: 200 },
+  galleryImage: { width: 320, height: 320 },
   featuredBadge: {
     position: 'absolute',
     top: 6,
@@ -521,29 +504,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   featuredBadgeText: { fontSize: 12, fontWeight: '700', color: '#000' },
-  galleryActions: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  galleryActionBtn: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  galleryActionText: { color: '#fff', fontSize: 14 },
-  galleryDeleteBtn: { backgroundColor: 'rgba(200,0,0,0.7)' },
-  galleryDeleteText: { color: '#fff', fontSize: 14 },
-  addImageBtn: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
   addImageBtnModal: {
     marginTop: 12,
     borderWidth: 1,
@@ -602,12 +562,34 @@ const styles = StyleSheet.create({
   headerBtnText: { color: '#0a7ea4', fontSize: 15, fontWeight: '600' },
   headerDeleteText: { color: '#d32f2f', fontSize: 15, fontWeight: '600' },
 
-  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  gridItem: { width: '47%', position: 'relative' },
-  gridImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  gridActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  gridActionStar: { fontSize: 12, color: '#888' },
-  gridActionDelete: { fontSize: 12, color: '#d32f2f' },
+  compactGallery: { marginTop: 8 },
+  compactGalleryContent: { gap: 10, paddingRight: 4 },
+  compactItem: { width: 76, position: 'relative' },
+  compactImage: { width: 76, height: 76, borderRadius: 8 },
+  featuredBadgeSmall: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: '#f5c518',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  compactActions: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    flexDirection: 'row',
+    gap: 2,
+  },
+  compactActionBtn: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  compactDeleteBtn: { backgroundColor: 'rgba(200,0,0,0.7)' },
+  compactActionText: { color: '#fff', fontSize: 11 },
 
   modalContainer: { flex: 1, backgroundColor: '#fff' },
   modalHeader: {

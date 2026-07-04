@@ -71,7 +71,7 @@ export default function CompanyDetailScreen() {
     leadCooldownMinutes: '60',
     leadDestinationEmail: '',
   });
-  const [pendingLogoUri, setPendingLogoUri] = useState<string | null>(null);
+  const [pendingLogoAsset, setPendingLogoAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -123,7 +123,7 @@ export default function CompanyDetailScreen() {
       leadCooldownMinutes: String(company.leadCooldownMinutes),
       leadDestinationEmail: company.leadDestinationEmail,
     });
-    setPendingLogoUri(null);
+    setPendingLogoAsset(null);
     setFormError(null);
     setModalVisible(true);
   }
@@ -136,7 +136,7 @@ export default function CompanyDetailScreen() {
       aspect: [1, 1],
     });
     if (!result.canceled && result.assets[0]) {
-      startTransition(() => setPendingLogoUri(result.assets[0].uri));
+      startTransition(() => setPendingLogoAsset(result.assets[0]));
     }
   }
 
@@ -156,17 +156,15 @@ export default function CompanyDetailScreen() {
       };
       let updated = await companiesApi.update(id!, payload);
 
-      if (pendingLogoUri) {
-        const ext = pendingLogoUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-        const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-        await companiesApi.uploadLogo(id!, pendingLogoUri, `logo.${ext}`, mime);
+      if (pendingLogoAsset) {
+        await companiesApi.uploadLogo(id!, pendingLogoAsset);
         updated = await companiesApi.get(id!);
       }
 
       startTransition(() => {
         setCompany(updated);
         setModalVisible(false);
-        setPendingLogoUri(null);
+        setPendingLogoAsset(null);
       });
     } catch (e) {
       setFormError(e instanceof ApiError ? e.message : 'Erro ao guardar.');
@@ -194,7 +192,7 @@ export default function CompanyDetailScreen() {
     );
   }
 
-  const currentLogoUri = pendingLogoUri ?? company.logoUrl;
+  const currentLogoUri = pendingLogoAsset?.uri ?? company.logoUrl;
 
   return (
     <View style={styles.container}>
