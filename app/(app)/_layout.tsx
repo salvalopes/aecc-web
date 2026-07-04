@@ -4,7 +4,8 @@ import { Text } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AppLayout() {
-  const { token, isLoading } = useAuth();
+  const { token, user, isLoading } = useAuth();
+  const isAdmin = user?.role === 'Admin';
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -52,6 +53,15 @@ export default function AppLayout() {
           title: 'Perfil',
           tabBarLabel: 'Perfil',
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="users/index"
+        options={{
+          href: isAdmin ? undefined : null,
+          title: 'Utilizadores',
+          tabBarLabel: 'Utilizadores',
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛡️</Text>,
         }}
       />
       {/* Ecrãs de detalhe — ocultos da tab bar */}

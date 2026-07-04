@@ -12,6 +12,18 @@ export interface User {
   emailConfirmed: boolean;
 }
 
+// Utilizador gerido no ecrã de administração (api/users) — inclui isActive/createdAt
+// que a sessão autenticada (api/auth/me) não devolve.
+export interface ManagedUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  isActive: boolean;
+  emailConfirmed: boolean;
+  createdAt: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -133,6 +145,20 @@ export interface UpdateCompanyRequest {
   description: string;
   leadCooldownMinutes: number;
   leadDestinationEmail: string;
+}
+
+// User CRUD (admin)
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  role: UserRole;
+}
+
+export interface UpdateUserRequest {
+  fullName: string;
+  role: UserRole;
+  isActive: boolean;
 }
 
 // Product CRUD
