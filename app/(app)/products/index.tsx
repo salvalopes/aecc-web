@@ -2,21 +2,29 @@ import {
   Alert,
   FlatList,
   Image,
-  Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/theme/ThemeContext';
+import {
+  Icon,
+  Button,
+  Input,
+  Switch,
+  Chip,
+  Badge,
+  Card,
+  Modal,
+  EmptyState,
+  ErrorState,
+  LoadingSpinner,
+} from '@/components/ui';
 import { productsApi } from '@/api/products.api';
 import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
@@ -54,48 +62,100 @@ function ProductCard({
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
 }) {
+  const theme = useTheme();
   const thumbUrl = product.imageUrl;
 
   return (
-    <TouchableOpacity
-      style={styles.card}
+    <Card
+      interactive
+      padding={0}
+      style={{ flexDirection: 'row', overflow: 'hidden' }}
       onPress={() => router.push(`/(app)/products/${product.id}`)}
     >
-      {thumbUrl && (
-        <Image source={{ uri: thumbUrl }} style={styles.cardThumb} />
-      )}
+      {thumbUrl && <Image source={{ uri: thumbUrl }} style={styles.cardThumb} />}
       <View style={styles.cardBody}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardName}>{product.name}</Text>
-          <View style={[styles.typeBadge, product.type === 'Service' && styles.serviceBadge]}>
-            <Text style={styles.typeBadgeText}>
-              {product.type === 'Product' ? 'Produto' : 'Serviço'}
-            </Text>
-          </View>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.display,
+              fontSize: theme.fontSize.base,
+              fontWeight: theme.fontWeight.bold,
+              color: theme.colors.textPrimary,
+              flex: 1,
+            }}
+          >
+            {product.name}
+          </Text>
+          <Badge tone={product.type === 'Product' ? 'success' : 'info'}>
+            {product.type === 'Product' ? 'Produto' : 'Serviço'}
+          </Badge>
         </View>
         {!!product.description && (
-          <Text style={styles.cardDesc} numberOfLines={2}>{product.description}</Text>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.body,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textSecondary,
+              marginBottom: 4,
+            }}
+            numberOfLines={2}
+          >
+            {product.description}
+          </Text>
         )}
         {product.hasMemberBenefit && (
-          <Text style={styles.benefitTag}>★ Benefício membro</Text>
+          <View style={styles.benefitTag}>
+            <Icon name="star" size={13} color={theme.colors.accentPrimary} />
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.xs,
+                fontWeight: theme.fontWeight.semibold,
+                color: theme.colors.accentPrimary,
+              }}
+            >
+              Benefício membro
+            </Text>
+          </View>
         )}
         {canEdit && (
-          <View style={styles.cardActions}>
-            <TouchableOpacity onPress={() => onEdit(product)} style={styles.actionBtn}>
-              <Text style={styles.editText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => onDelete(product)} style={styles.actionBtn}>
-              <Text style={styles.deleteText}>Apagar</Text>
-            </TouchableOpacity>
+          <View style={[styles.cardActions, { borderTopColor: theme.colors.borderSubtle }]}>
+            <Pressable onPress={() => onEdit(product)} style={styles.actionBtn} hitSlop={8}>
+              <Icon name="pencil" size={14} color={theme.colors.accentPrimary} />
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.sm,
+                  fontWeight: theme.fontWeight.semibold,
+                  color: theme.colors.accentPrimary,
+                }}
+              >
+                Editar
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => onDelete(product)} style={styles.actionBtn} hitSlop={8}>
+              <Icon name="trash-2" size={14} color={theme.colors.error} />
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.sm,
+                  fontWeight: theme.fontWeight.semibold,
+                  color: theme.colors.error,
+                }}
+              >
+                Apagar
+              </Text>
+            </Pressable>
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 }
 
 export default function ProductsScreen() {
   const { user } = useAuth();
+  const theme = useTheme();
   const canCreate = user?.role === 'Admin' || user?.role === 'Associado';
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -256,47 +316,52 @@ export default function ProductsScreen() {
     return cats.flatMap(c => [c, ...flatten(c.children)]);
   })(categories);
 
+  const labelStyle = {
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold as any,
+    color: theme.colors.textSecondary,
+    marginTop: 16,
+    marginBottom: 6,
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surfaceApp }]}>
       {/* Filters */}
-      <View style={styles.filters}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+      <View
+        style={[
+          styles.filters,
+          { backgroundColor: theme.colors.surfaceCard, borderBottomColor: theme.colors.borderSubtle },
+        ]}
+      >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {(['all', 'Product', 'Service'] as const).map(t => (
-            <TouchableOpacity
+            <Chip
               key={t}
-              style={[styles.filterChip, filterType === t && styles.filterChipActive]}
+              active={filterType === t}
               onPress={() => handleFilterType(t)}
+              style={styles.filterChipSpacing}
             >
-              <Text style={[styles.filterChipText, filterType === t && styles.filterChipTextActive]}>
-                {t === 'all' ? 'Todos' : t === 'Product' ? 'Produtos' : 'Serviços'}
-              </Text>
-            </TouchableOpacity>
+              {t === 'all' ? 'Todos' : t === 'Product' ? 'Produtos' : 'Serviços'}
+            </Chip>
           ))}
           {flatCategories.map(cat => (
-            <TouchableOpacity
+            <Chip
               key={cat.id}
-              style={[styles.filterChip, filterCategory === cat.id && styles.filterChipActive]}
+              active={filterCategory === cat.id}
               onPress={() => handleFilterCategory(filterCategory === cat.id ? '' : cat.id)}
+              style={styles.filterChipSpacing}
             >
-              <Text style={[styles.filterChipText, filterCategory === cat.id && styles.filterChipTextActive]}>
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
+              {cat.name}
+            </Chip>
           ))}
         </ScrollView>
       </View>
 
       {loading && products.length === 0 ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0a7ea4" />
-        </View>
+        <LoadingSpinner />
       ) : error ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => loadProducts()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Tentar novamente</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState message={error} onRetry={() => loadProducts()} />
       ) : (
         <FlatList
           data={products}
@@ -310,230 +375,175 @@ export default function ProductsScreen() {
             />
           )}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>Sem produtos.</Text>
-            </View>
-          }
+          ListEmptyComponent={<EmptyState message="Sem produtos." />}
           refreshing={loading}
           onRefresh={() => loadProducts()}
         />
       )}
 
       {canCreate && ownedCompanies.length > 0 && (
-        <TouchableOpacity style={styles.fab} onPress={openCreate}>
-          <Text style={styles.fabText}>+ Novo Produto</Text>
-        </TouchableOpacity>
+        <Button onPress={openCreate} style={styles.fab}>+ Novo Produto</Button>
       )}
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              {editTarget ? 'Editar Produto' : 'Novo Produto'}
+      <Modal
+        visible={modalVisible}
+        title={editTarget ? 'Editar Produto' : 'Novo Produto'}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        saving={saving}
+        saveLabel="Guardar"
+      >
+        {formError && (
+          <View style={{ backgroundColor: theme.colors.errorBg, borderRadius: theme.radius.sm, padding: 10, marginBottom: 12 }}>
+            <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.sm, color: theme.colors.error }}>
+              {formError}
             </Text>
-            <TouchableOpacity onPress={handleSave} disabled={saving}>
-              <Text style={[styles.saveText, saving && styles.disabled]}>
-                {saving ? '...' : 'Guardar'}
-              </Text>
-            </TouchableOpacity>
           </View>
+        )}
 
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
-            {formError && <Text style={styles.formError}>{formError}</Text>}
-
-            {!editTarget && ownedCompanies.length > 1 && (
-              <>
-                <Text style={styles.label}>Empresa *</Text>
-                {ownedCompanies.map(c => (
-                  <Pressable
-                    key={c.id}
-                    style={[styles.pickerOption, form.companyId === c.id && styles.pickerOptionSelected]}
-                    onPress={() => setForm(f => ({ ...f, companyId: c.id }))}
-                  >
-                    <Text style={form.companyId === c.id ? styles.pickerTextSelected : styles.pickerText}>
-                      {c.name}
-                    </Text>
-                    {form.companyId === c.id && <Text style={styles.checkmark}>✓</Text>}
-                  </Pressable>
-                ))}
-              </>
-            )}
-
-            <Text style={styles.label}>Categoria *</Text>
-            {flatCategories.map(cat => (
-              <Pressable
-                key={cat.id}
-                style={[styles.pickerOption, form.categoryId === cat.id && styles.pickerOptionSelected]}
-                onPress={() => setForm(f => ({ ...f, categoryId: cat.id }))}
-              >
-                <Text style={form.categoryId === cat.id ? styles.pickerTextSelected : styles.pickerText}>
-                  {cat.name}
-                </Text>
-                {form.categoryId === cat.id && <Text style={styles.checkmark}>✓</Text>}
-              </Pressable>
-            ))}
-
-            <Text style={styles.label}>Tipo *</Text>
-            <View style={styles.typeToggle}>
-              {(['Product', 'Service'] as const).map(t => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.typeBtn, form.type === t && styles.typeBtnActive]}
-                  onPress={() => setForm(f => ({ ...f, type: t }))}
+        {!editTarget && ownedCompanies.length > 1 && (
+          <>
+            <Text style={labelStyle}>Empresa *</Text>
+            {ownedCompanies.map(c => {
+              const selected = form.companyId === c.id;
+              return (
+                <Pressable
+                  key={c.id}
+                  style={[
+                    styles.pickerOption,
+                    {
+                      borderColor: selected ? theme.colors.accentPrimary : theme.colors.borderDefault,
+                      backgroundColor: selected ? theme.colors.infoBg : theme.colors.surfaceSunken,
+                    },
+                  ]}
+                  onPress={() => setForm(f => ({ ...f, companyId: c.id }))}
                 >
-                  <Text style={[styles.typeBtnText, form.type === t && styles.typeBtnTextActive]}>
-                    {t === 'Product' ? 'Produto' : 'Serviço'}
+                  <Text
+                    style={{
+                      fontFamily: theme.fontFamily.body,
+                      fontSize: theme.fontSize.base,
+                      fontWeight: selected ? theme.fontWeight.semibold : theme.fontWeight.regular,
+                      color: selected ? theme.colors.accentPrimary : theme.colors.textPrimary,
+                    }}
+                  >
+                    {c.name}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {selected && <Icon name="check" size={16} color={theme.colors.accentPrimary} />}
+                </Pressable>
+              );
+            })}
+          </>
+        )}
 
-            <Text style={styles.label}>Nome *</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={text => setForm(f => ({ ...f, name: text }))}
-              placeholder="Nome do produto ou serviço"
-            />
+        <Text style={labelStyle}>Categoria *</Text>
+        {flatCategories.map(cat => {
+          const selected = form.categoryId === cat.id;
+          return (
+            <Pressable
+              key={cat.id}
+              style={[
+                styles.pickerOption,
+                {
+                  borderColor: selected ? theme.colors.accentPrimary : theme.colors.borderDefault,
+                  backgroundColor: selected ? theme.colors.infoBg : theme.colors.surfaceSunken,
+                },
+              ]}
+              onPress={() => setForm(f => ({ ...f, categoryId: cat.id }))}
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  fontWeight: selected ? theme.fontWeight.semibold : theme.fontWeight.regular,
+                  color: selected ? theme.colors.accentPrimary : theme.colors.textPrimary,
+                }}
+              >
+                {cat.name}
+              </Text>
+              {selected && <Icon name="check" size={16} color={theme.colors.accentPrimary} />}
+            </Pressable>
+          );
+        })}
 
-            <Text style={styles.label}>Descrição</Text>
-            <TextInput
-              style={[styles.input, styles.textarea]}
-              value={form.description}
-              onChangeText={text => setForm(f => ({ ...f, description: text }))}
-              placeholder="Descrição"
-              multiline
-              numberOfLines={3}
-            />
+        <Text style={labelStyle}>Tipo *</Text>
+        <View style={styles.typeToggle}>
+          {(['Product', 'Service'] as const).map(t => (
+            <Chip
+              key={t}
+              active={form.type === t}
+              onPress={() => setForm(f => ({ ...f, type: t }))}
+              style={styles.typeChip}
+            >
+              {t === 'Product' ? 'Produto' : 'Serviço'}
+            </Chip>
+          ))}
+        </View>
 
-            <View style={styles.switchRow}>
-              <Text style={styles.label}>Tem benefício para membros</Text>
-              <Switch
-                value={form.hasMemberBenefit}
-                onValueChange={v => setForm(f => ({ ...f, hasMemberBenefit: v }))}
-                trackColor={{ true: '#0a7ea4' }}
-              />
-            </View>
+        <Input
+          label="Nome"
+          required
+          value={form.name}
+          onChangeText={text => setForm(f => ({ ...f, name: text }))}
+          placeholder="Nome do produto ou serviço"
+          style={styles.fieldSpacing}
+        />
 
-            {form.hasMemberBenefit && (
-              <>
-                <Text style={styles.label}>Descrição do benefício</Text>
-                <TextInput
-                  style={[styles.input, styles.textarea]}
-                  value={form.memberBenefitDescription}
-                  onChangeText={text => setForm(f => ({ ...f, memberBenefitDescription: text }))}
-                  placeholder="Descreva o benefício para membros"
-                  multiline
-                  numberOfLines={2}
-                />
-              </>
-            )}
-          </ScrollView>
-        </SafeAreaView>
+        <Input
+          label="Descrição"
+          value={form.description}
+          onChangeText={text => setForm(f => ({ ...f, description: text }))}
+          placeholder="Descrição"
+          multiline
+          numberOfLines={3}
+          style={styles.fieldSpacing}
+        />
+
+        <View style={styles.switchRow}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.body,
+              fontSize: theme.fontSize.sm,
+              fontWeight: theme.fontWeight.semibold,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            Tem benefício para membros
+          </Text>
+          <Switch
+            value={form.hasMemberBenefit}
+            onValueChange={v => setForm(f => ({ ...f, hasMemberBenefit: v }))}
+          />
+        </View>
+
+        {form.hasMemberBenefit && (
+          <Input
+            label="Descrição do benefício"
+            value={form.memberBenefitDescription}
+            onChangeText={text => setForm(f => ({ ...f, memberBenefitDescription: text }))}
+            placeholder="Descreva o benefício para membros"
+            multiline
+            numberOfLines={2}
+            style={styles.fieldSpacing}
+          />
+        )}
       </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  filters: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+  container: { flex: 1 },
+  filters: { borderBottomWidth: 1 },
   filterScroll: { paddingVertical: 10, paddingHorizontal: 12 },
-  filterChip: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginRight: 8,
-    backgroundColor: '#fff',
-  },
-  filterChipActive: { backgroundColor: '#0a7ea4', borderColor: '#0a7ea4' },
-  filterChipText: { fontSize: 13, color: '#555' },
-  filterChipTextActive: { color: '#fff', fontWeight: '600' },
+  filterChipSpacing: { marginRight: 8 },
   list: { padding: 12, gap: 10, paddingBottom: 80 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-    flexDirection: 'row',
-  },
   cardThumb: { width: 90, height: 90 },
   cardBody: { flex: 1, padding: 14 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardName: { fontSize: 15, fontWeight: '700', color: '#111', flex: 1 },
-  typeBadge: { backgroundColor: '#e8f5e9', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  serviceBadge: { backgroundColor: '#e3f2fd' },
-  typeBadgeText: { fontSize: 11, color: '#555', fontWeight: '600' },
-  cardDesc: { fontSize: 13, color: '#666', marginBottom: 4 },
-  benefitTag: { fontSize: 12, color: '#0a7ea4', fontWeight: '600', marginTop: 4 },
-  cardActions: { flexDirection: 'row', gap: 16, marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-  actionBtn: { paddingVertical: 2 },
-  editText: { color: '#0a7ea4', fontSize: 13, fontWeight: '600' },
-  deleteText: { color: '#d32f2f', fontSize: 13, fontWeight: '600' },
-  errorText: { color: '#d32f2f', fontSize: 15, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { paddingVertical: 8, paddingHorizontal: 20, borderWidth: 1, borderColor: '#0a7ea4', borderRadius: 8 },
-  retryText: { color: '#0a7ea4', fontSize: 14 },
-  emptyText: { color: '#999', fontSize: 15 },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    backgroundColor: '#0a7ea4',
-    borderRadius: 28,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  fabText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  modalContainer: { flex: 1, backgroundColor: '#fff' },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: { fontSize: 16, fontWeight: '700' },
-  cancelText: { color: '#666', fontSize: 15 },
-  saveText: { color: '#0a7ea4', fontSize: 15, fontWeight: '700' },
-  disabled: { opacity: 0.4 },
-  modalBody: { flex: 1, padding: 16 },
-  formError: {
-    color: '#d32f2f',
-    fontSize: 13,
-    marginBottom: 12,
-    backgroundColor: '#fff5f5',
-    padding: 10,
-    borderRadius: 6,
-  },
-  label: { fontSize: 13, fontWeight: '600', color: '#444', marginTop: 16, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    backgroundColor: '#fafafa',
-  },
-  textarea: { minHeight: 72, textAlignVertical: 'top' },
+  benefitTag: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  cardActions: { flexDirection: 'row', gap: 16, marginTop: 8, paddingTop: 8, borderTopWidth: 1 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 },
+  fab: { position: 'absolute', bottom: 24, right: 20 },
   pickerOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -541,28 +551,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
-    backgroundColor: '#fafafa',
     marginBottom: 4,
   },
-  pickerOptionSelected: { borderColor: '#0a7ea4', backgroundColor: '#f0f8fc' },
-  pickerText: { fontSize: 15, color: '#222' },
-  pickerTextSelected: { fontSize: 15, color: '#0a7ea4', fontWeight: '600' },
-  checkmark: { color: '#0a7ea4', fontSize: 16, fontWeight: '700' },
   typeToggle: { flexDirection: 'row', gap: 8 },
-  typeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-  },
-  typeBtnActive: { backgroundColor: '#0a7ea4', borderColor: '#0a7ea4' },
-  typeBtnText: { fontSize: 14, color: '#555', fontWeight: '600' },
-  typeBtnTextActive: { color: '#fff' },
+  typeChip: { flex: 1, justifyContent: 'center' },
+  fieldSpacing: { marginTop: 16 },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

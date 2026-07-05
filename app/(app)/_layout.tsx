@@ -1,10 +1,12 @@
 import { Tabs, router } from 'expo-router';
 import { useEffect } from 'react';
-import { Text } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/theme/ThemeContext';
+import { Icon } from '@/components/ui';
 
 export default function AppLayout() {
   const { token, user, isLoading } = useAuth();
+  const theme = useTheme();
   const isAdmin = user?.role === 'Admin';
 
   useEffect(() => {
@@ -19,7 +21,12 @@ export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0a7ea4',
+        tabBarActiveTintColor: theme.colors.accentPrimary,
+        tabBarInactiveTintColor: theme.colors.textTertiary,
+        tabBarStyle: { backgroundColor: theme.colors.surfaceCard, borderTopColor: theme.colors.borderSubtle },
+        headerStyle: { backgroundColor: theme.colors.surfaceCard },
+        headerTitleStyle: { fontFamily: theme.fontFamily.display, fontWeight: theme.fontWeight.bold },
+        headerTintColor: theme.colors.textPrimary,
         headerShown: true,
       }}
     >
@@ -28,7 +35,7 @@ export default function AppLayout() {
         options={{
           title: 'Empresas',
           tabBarLabel: 'Empresas',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🏢</Text>,
+          tabBarIcon: ({ color }) => <Icon name="building-2" size={20} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -36,7 +43,7 @@ export default function AppLayout() {
         options={{
           title: 'Produtos',
           tabBarLabel: 'Produtos',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛍️</Text>,
+          tabBarIcon: ({ color }) => <Icon name="shopping-bag" size={20} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -44,7 +51,7 @@ export default function AppLayout() {
         options={{
           title: 'Categorias',
           tabBarLabel: 'Categorias',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📂</Text>,
+          tabBarIcon: ({ color }) => <Icon name="folder" size={20} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -52,7 +59,7 @@ export default function AppLayout() {
         options={{
           title: 'Perfil',
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text>,
+          tabBarIcon: ({ color }) => <Icon name="user" size={20} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -61,7 +68,7 @@ export default function AppLayout() {
           href: isAdmin ? undefined : null,
           title: 'Utilizadores',
           tabBarLabel: 'Utilizadores',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛡️</Text>,
+          tabBarIcon: ({ color }) => <Icon name="shield" size={20} color={color} />,
         }}
       />
       {/* Ecrãs de detalhe — ocultos da tab bar */}

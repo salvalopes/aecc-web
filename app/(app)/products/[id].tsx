@@ -1,22 +1,29 @@
 import {
   Alert,
   Image,
-  Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/theme/ThemeContext';
+import {
+  Icon,
+  Button,
+  IconButton,
+  Input,
+  Switch,
+  Chip,
+  Badge,
+  Modal,
+  ErrorState,
+  LoadingSpinner,
+} from '@/components/ui';
 import { productsApi } from '@/api/products.api';
 import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
@@ -37,6 +44,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const navigation = useNavigation();
+  const theme = useTheme();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
@@ -66,12 +74,8 @@ export default function ProductDetailScreen() {
       navigation.setOptions({
         headerRight: () => (
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={openEdit} style={styles.headerBtn}>
-              <Text style={styles.headerBtnText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={styles.headerBtn}>
-              <Text style={styles.headerDeleteText}>Apagar</Text>
-            </TouchableOpacity>
+            <IconButton icon="pencil" label="Editar" onPress={openEdit} />
+            <IconButton icon="trash-2" label="Apagar" tone="danger" onPress={handleDelete} />
           </View>
         ),
       });
@@ -241,27 +245,33 @@ export default function ProductDetailScreen() {
 
   const currentCategory = flatCategories.find(c => c.id === product?.categoryId);
 
+  const labelStyle = {
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold as any,
+    color: theme.colors.textSecondary,
+    marginTop: 16,
+    marginBottom: 6,
+  };
+
   if (loading && !product) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0a7ea4" />
+      <View style={[styles.center, { backgroundColor: theme.colors.surfaceApp }]}>
+        <LoadingSpinner />
       </View>
     );
   }
 
   if (error || !product) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error ?? 'Produto não encontrado.'}</Text>
-        <TouchableOpacity onPress={load} style={styles.retryBtn}>
-          <Text style={styles.retryText}>Tentar novamente</Text>
-        </TouchableOpacity>
+      <View style={[styles.center, { backgroundColor: theme.colors.surfaceApp }]}>
+        <ErrorState message={error ?? 'Produto não encontrado.'} onRetry={load} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surfaceApp }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Gallery — presentation only, no edit controls.
             A plain ScrollView (not FlatList) avoids nesting a virtualized
@@ -270,207 +280,319 @@ export default function ProductDetailScreen() {
         {product.images.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gallery}>
             {product.images.map((item, index) => (
-              <TouchableOpacity
+              <Pressable
                 key={item.id}
                 style={styles.galleryItemWrap}
                 onPress={() => setLightboxIndex(index)}
-                activeOpacity={0.9}
               >
                 <Image source={{ uri: item.imageUrl }} style={styles.galleryImage} />
                 {item.isFeatured && (
-                  <View style={styles.featuredBadge}>
-                    <Text style={styles.featuredBadgeText}>★</Text>
+                  <View
+                    style={[
+                      styles.featuredBadge,
+                      { backgroundColor: theme.colors.featured, borderRadius: theme.radius.xs },
+                    ]}
+                  >
+                    <Icon name="star" size={13} color="#403000" />
                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </ScrollView>
         )}
 
-        <View style={styles.hero}>
+        <View
+          style={[
+            styles.hero,
+            { backgroundColor: theme.colors.surfaceCard, borderBottomColor: theme.colors.borderSubtle },
+          ]}
+        >
           <View style={styles.heroHeader}>
-            <Text style={styles.heroName}>{product.name}</Text>
-            <View style={[styles.typeBadge, product.type === 'Service' && styles.serviceBadge]}>
-              <Text style={styles.typeBadgeText}>
-                {product.type === 'Product' ? 'Produto' : 'Serviço'}
-              </Text>
-            </View>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.display,
+                fontSize: theme.fontSize.xl,
+                fontWeight: theme.fontWeight.black,
+                color: theme.colors.textPrimary,
+                flex: 1,
+              }}
+            >
+              {product.name}
+            </Text>
+            <Badge tone={product.type === 'Product' ? 'success' : 'info'}>
+              {product.type === 'Product' ? 'Produto' : 'Serviço'}
+            </Badge>
           </View>
           {!!product.description && (
-            <Text style={styles.heroDesc}>{product.description}</Text>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.base,
+                color: theme.colors.textSecondary,
+                lineHeight: theme.fontSize.base * theme.lineHeight.normal,
+              }}
+            >
+              {product.description}
+            </Text>
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detalhes</Text>
+        <View style={[styles.section, { backgroundColor: theme.colors.surfaceCard }]}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.body,
+              fontSize: theme.fontSize.xs,
+              fontWeight: theme.fontWeight.bold,
+              color: theme.colors.textTertiary,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              marginBottom: 12,
+            }}
+          >
+            Detalhes
+          </Text>
 
           {currentCategory && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Categoria</Text>
-              <Text style={styles.detailValue}>{currentCategory.name}</Text>
+            <View style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}>
+              <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.base, color: theme.colors.textSecondary }}>
+                Categoria
+              </Text>
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  color: theme.colors.textPrimary,
+                  fontWeight: theme.fontWeight.medium,
+                }}
+              >
+                {currentCategory.name}
+              </Text>
             </View>
           )}
 
           {company && (
-            <TouchableOpacity
-              style={styles.detailRow}
+            <Pressable
+              style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}
               onPress={() => router.push(`/(app)/companies/${company.id}`)}
             >
-              <Text style={styles.detailLabel}>Empresa</Text>
-              <Text style={[styles.detailValue, styles.link]}>{company.name}</Text>
-            </TouchableOpacity>
+              <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.base, color: theme.colors.textSecondary }}>
+                Empresa
+              </Text>
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  color: theme.colors.textLink,
+                  fontWeight: theme.fontWeight.medium,
+                }}
+              >
+                {company.name}
+              </Text>
+            </Pressable>
           )}
 
           {product.hasMemberBenefit && (
-            <View style={styles.benefitBox}>
-              <Text style={styles.benefitTitle}>★ Benefício para membros</Text>
+            <View
+              style={[
+                styles.benefitBox,
+                { backgroundColor: theme.colors.infoBg, borderLeftColor: theme.colors.accentPrimary },
+              ]}
+            >
+              <View style={styles.benefitTitleRow}>
+                <Icon name="star" size={14} color={theme.colors.accentPrimary} />
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.body,
+                    fontSize: theme.fontSize.base,
+                    fontWeight: theme.fontWeight.bold,
+                    color: theme.colors.accentPrimary,
+                  }}
+                >
+                  Benefício para membros
+                </Text>
+              </View>
               {!!product.memberBenefitDescription && (
-                <Text style={styles.benefitDesc}>{product.memberBenefitDescription}</Text>
+                <Text
+                  style={{
+                    fontFamily: theme.fontFamily.body,
+                    fontSize: theme.fontSize.sm,
+                    color: theme.colors.textSecondary,
+                    lineHeight: theme.fontSize.sm * theme.lineHeight.normal,
+                  }}
+                >
+                  {product.memberBenefitDescription}
+                </Text>
               )}
             </View>
           )}
         </View>
       </ScrollView>
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Editar Produto</Text>
-            <TouchableOpacity onPress={handleSave} disabled={saving}>
-              <Text style={[styles.saveText, saving && styles.disabled]}>
-                {saving ? '...' : 'Guardar'}
-              </Text>
-            </TouchableOpacity>
+      <Modal
+        visible={modalVisible}
+        title="Editar Produto"
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        saving={saving}
+        saveLabel="Guardar"
+      >
+        {formError && (
+          <View style={{ backgroundColor: theme.colors.errorBg, borderRadius: theme.radius.sm, padding: 10, marginBottom: 12 }}>
+            <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.sm, color: theme.colors.error }}>
+              {formError}
+            </Text>
           </View>
+        )}
 
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
-            {formError && <Text style={styles.formError}>{formError}</Text>}
-
-            <Text style={styles.label}>Categoria *</Text>
-            {flatCategories.map(cat => (
-              <Pressable
-                key={cat.id}
-                style={[styles.pickerOption, form.categoryId === cat.id && styles.pickerOptionSelected]}
-                onPress={() => setForm(f => ({ ...f, categoryId: cat.id }))}
+        <Text style={labelStyle}>Categoria *</Text>
+        {flatCategories.map(cat => {
+          const selected = form.categoryId === cat.id;
+          return (
+            <Pressable
+              key={cat.id}
+              style={[
+                styles.pickerOption,
+                {
+                  borderColor: selected ? theme.colors.accentPrimary : theme.colors.borderDefault,
+                  backgroundColor: selected ? theme.colors.infoBg : theme.colors.surfaceSunken,
+                },
+              ]}
+              onPress={() => setForm(f => ({ ...f, categoryId: cat.id }))}
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  fontWeight: selected ? theme.fontWeight.semibold : theme.fontWeight.regular,
+                  color: selected ? theme.colors.accentPrimary : theme.colors.textPrimary,
+                }}
               >
-                <Text style={form.categoryId === cat.id ? styles.pickerTextSelected : styles.pickerText}>
-                  {cat.name}
-                </Text>
-                {form.categoryId === cat.id && <Text style={styles.checkmark}>✓</Text>}
+                {cat.name}
+              </Text>
+              {selected && <Icon name="check" size={16} color={theme.colors.accentPrimary} />}
+            </Pressable>
+          );
+        })}
+
+        <Text style={labelStyle}>Tipo *</Text>
+        <View style={styles.typeToggle}>
+          {(['Product', 'Service'] as const).map(t => (
+            <Chip
+              key={t}
+              active={form.type === t}
+              onPress={() => setForm(f => ({ ...f, type: t }))}
+              style={styles.typeChip}
+            >
+              {t === 'Product' ? 'Produto' : 'Serviço'}
+            </Chip>
+          ))}
+        </View>
+
+        <Input
+          label="Nome"
+          required
+          value={form.name}
+          onChangeText={text => setForm(f => ({ ...f, name: text }))}
+          autoFocus
+          style={styles.fieldSpacing}
+        />
+
+        <Input
+          label="Descrição"
+          value={form.description}
+          onChangeText={text => setForm(f => ({ ...f, description: text }))}
+          multiline
+          numberOfLines={3}
+          style={styles.fieldSpacing}
+        />
+
+        <View style={styles.switchRow}>
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.body,
+              fontSize: theme.fontSize.sm,
+              fontWeight: theme.fontWeight.semibold,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            Tem benefício para membros
+          </Text>
+          <Switch
+            value={form.hasMemberBenefit}
+            onValueChange={v => setForm(f => ({ ...f, hasMemberBenefit: v }))}
+          />
+        </View>
+
+        {form.hasMemberBenefit && (
+          <Input
+            label="Descrição do benefício"
+            value={form.memberBenefitDescription}
+            onChangeText={text => setForm(f => ({ ...f, memberBenefitDescription: text }))}
+            multiline
+            numberOfLines={2}
+            style={styles.fieldSpacing}
+          />
+        )}
+
+        <Text style={labelStyle}>Galeria de imagens</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.compactGallery}
+          contentContainerStyle={styles.compactGalleryContent}
+        >
+          {product.images.map((img, index) => (
+            <View key={img.id} style={styles.compactItem}>
+              <Pressable onPress={() => setLightboxIndex(index)}>
+                <Image source={{ uri: img.imageUrl }} style={[styles.compactImage, { borderRadius: theme.radius.md }]} />
               </Pressable>
-            ))}
-
-            <Text style={styles.label}>Tipo *</Text>
-            <View style={styles.typeToggle}>
-              {(['Product', 'Service'] as const).map(t => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.typeBtn, form.type === t && styles.typeBtnActive]}
-                  onPress={() => setForm(f => ({ ...f, type: t }))}
+              {img.isFeatured && (
+                <View
+                  style={[
+                    styles.featuredBadgeSmall,
+                    { backgroundColor: theme.colors.featured, borderRadius: theme.radius.xs },
+                  ]}
                 >
-                  <Text style={[styles.typeBtnText, form.type === t && styles.typeBtnTextActive]}>
-                    {t === 'Product' ? 'Produto' : 'Serviço'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.label}>Nome *</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={text => setForm(f => ({ ...f, name: text }))}
-              autoFocus
-            />
-
-            <Text style={styles.label}>Descrição</Text>
-            <TextInput
-              style={[styles.input, styles.textarea]}
-              value={form.description}
-              onChangeText={text => setForm(f => ({ ...f, description: text }))}
-              multiline
-              numberOfLines={3}
-            />
-
-            <View style={styles.switchRow}>
-              <Text style={styles.label}>Tem benefício para membros</Text>
-              <Switch
-                value={form.hasMemberBenefit}
-                onValueChange={v => setForm(f => ({ ...f, hasMemberBenefit: v }))}
-                trackColor={{ true: '#0a7ea4' }}
-              />
-            </View>
-
-            {form.hasMemberBenefit && (
-              <>
-                <Text style={styles.label}>Descrição do benefício</Text>
-                <TextInput
-                  style={[styles.input, styles.textarea]}
-                  value={form.memberBenefitDescription}
-                  onChangeText={text => setForm(f => ({ ...f, memberBenefitDescription: text }))}
-                  multiline
-                  numberOfLines={2}
-                />
-              </>
-            )}
-
-            <Text style={styles.label}>Galeria de imagens</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.compactGallery}
-              contentContainerStyle={styles.compactGalleryContent}
-            >
-              {product.images.map((img, index) => (
-                <View key={img.id} style={styles.compactItem}>
-                  <TouchableOpacity onPress={() => setLightboxIndex(index)} activeOpacity={0.9}>
-                    <Image source={{ uri: img.imageUrl }} style={styles.compactImage} />
-                  </TouchableOpacity>
-                  {img.isFeatured && (
-                    <View style={styles.featuredBadgeSmall}>
-                      <Text style={styles.featuredBadgeText}>★</Text>
-                    </View>
-                  )}
-                  <View style={styles.compactActions}>
-                    {!img.isFeatured && (
-                      <TouchableOpacity
-                        style={styles.compactActionBtn}
-                        onPress={() => handleFeatureImage(img)}
-                      >
-                        <Text style={styles.compactActionText}>☆</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      style={[styles.compactActionBtn, styles.compactDeleteBtn]}
-                      onPress={() => handleDeleteImage(img)}
-                      disabled={deletingImageId === img.id}
-                    >
-                      <Text style={styles.compactActionText}>
-                        {deletingImageId === img.id ? '…' : '✕'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  <Icon name="star" size={11} color="#403000" />
                 </View>
-              ))}
-            </ScrollView>
+              )}
+              <View style={styles.compactActions}>
+                {!img.isFeatured && (
+                  <Pressable
+                    style={[styles.compactActionBtn, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+                    onPress={() => handleFeatureImage(img)}
+                    hitSlop={4}
+                  >
+                    <Icon name="star" size={12} color="#fff" />
+                  </Pressable>
+                )}
+                <Pressable
+                  style={[styles.compactActionBtn, { backgroundColor: theme.colors.error }]}
+                  onPress={() => handleDeleteImage(img)}
+                  disabled={deletingImageId === img.id}
+                  hitSlop={4}
+                >
+                  {deletingImageId === img.id ? (
+                    <Text style={{ color: '#fff', fontSize: theme.fontSize['2xs'] }}>…</Text>
+                  ) : (
+                    <Icon name="x" size={12} color="#fff" />
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
 
-            <TouchableOpacity
-              style={[styles.addImageBtnModal, (uploadingImage || product.images.length >= 15) && styles.addImageBtnDisabled]}
-              onPress={handleAddImage}
-              disabled={uploadingImage || product.images.length >= 15}
-            >
-              {uploadingImage
-                ? <ActivityIndicator size="small" color="#0a7ea4" />
-                : <Text style={styles.addImageText}>
-                    {product.images.length >= 15 ? 'Máx. 15 imagens' : '+ Adicionar imagem'}
-                  </Text>
-              }
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
+        <Button
+          variant="secondary"
+          size="sm"
+          onPress={handleAddImage}
+          loading={uploadingImage}
+          disabled={uploadingImage || product.images.length >= 15}
+          style={styles.addImageBtn}
+        >
+          {product.images.length >= 15 ? 'Máx. 15 imagens' : '+ Adicionar imagem'}
+        </Button>
       </Modal>
 
       <ImageLightbox
@@ -484,12 +606,9 @@ export default function ProductDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   scrollContent: { paddingBottom: 40 },
-  errorText: { color: '#d32f2f', fontSize: 15, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { paddingVertical: 8, paddingHorizontal: 20, borderWidth: 1, borderColor: '#0a7ea4', borderRadius: 8 },
-  retryText: { color: '#0a7ea4', fontSize: 14 },
 
   gallery: { backgroundColor: '#000' },
   galleryItemWrap: { position: 'relative', marginRight: 2 },
@@ -498,80 +617,40 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: '#f5c518',
-    borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  featuredBadgeText: { fontSize: 12, fontWeight: '700', color: '#000' },
-  addImageBtnModal: {
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#0a7ea4',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  addImageBtnDisabled: { borderColor: '#ccc' },
-  addImageText: { color: '#0a7ea4', fontSize: 14, fontWeight: '600' },
-  disabled: { opacity: 0.4 },
+  addImageBtn: { marginTop: 12 },
 
   hero: {
-    backgroundColor: '#fff',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   heroHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8 },
-  heroName: { fontSize: 22, fontWeight: '800', color: '#111', flex: 1 },
-  typeBadge: { backgroundColor: '#e8f5e9', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginTop: 4 },
-  serviceBadge: { backgroundColor: '#e3f2fd' },
-  typeBadgeText: { fontSize: 12, color: '#444', fontWeight: '600' },
-  heroDesc: { fontSize: 14, color: '#555', lineHeight: 20 },
-  section: { backgroundColor: '#fff', marginTop: 12, padding: 16 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#999',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
+  section: { marginTop: 12, padding: 16 },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
-  detailLabel: { fontSize: 14, color: '#666' },
-  detailValue: { fontSize: 14, color: '#111', fontWeight: '500' },
-  link: { color: '#0a7ea4' },
   benefitBox: {
-    backgroundColor: '#f0f8fc',
     borderRadius: 8,
     padding: 12,
     marginTop: 12,
     borderLeftWidth: 3,
-    borderLeftColor: '#0a7ea4',
   },
-  benefitTitle: { fontSize: 14, fontWeight: '700', color: '#0a7ea4', marginBottom: 4 },
-  benefitDesc: { fontSize: 13, color: '#444', lineHeight: 18 },
+  benefitTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   headerActions: { flexDirection: 'row', gap: 4 },
-  headerBtn: { paddingHorizontal: 10, paddingVertical: 6 },
-  headerBtnText: { color: '#0a7ea4', fontSize: 15, fontWeight: '600' },
-  headerDeleteText: { color: '#d32f2f', fontSize: 15, fontWeight: '600' },
 
   compactGallery: { marginTop: 8 },
   compactGalleryContent: { gap: 10, paddingRight: 4 },
   compactItem: { width: 76, position: 'relative' },
-  compactImage: { width: 76, height: 76, borderRadius: 8 },
+  compactImage: { width: 76, height: 76 },
   featuredBadgeSmall: {
     position: 'absolute',
     top: 4,
     left: 4,
-    backgroundColor: '#f5c518',
-    borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
@@ -583,47 +662,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   compactActionBtn: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 4,
     paddingHorizontal: 5,
     paddingVertical: 2,
-  },
-  compactDeleteBtn: { backgroundColor: 'rgba(200,0,0,0.7)' },
-  compactActionText: { color: '#fff', fontSize: 11 },
-
-  modalContainer: { flex: 1, backgroundColor: '#fff' },
-  modalHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    justifyContent: 'center',
   },
-  modalTitle: { fontSize: 16, fontWeight: '700' },
-  cancelText: { color: '#666', fontSize: 15 },
-  saveText: { color: '#0a7ea4', fontSize: 15, fontWeight: '700' },
-  modalBody: { flex: 1, padding: 16 },
-  formError: {
-    color: '#d32f2f',
-    fontSize: 13,
-    marginBottom: 12,
-    backgroundColor: '#fff5f5',
-    padding: 10,
-    borderRadius: 6,
-  },
-  label: { fontSize: 13, fontWeight: '600', color: '#444', marginTop: 16, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    backgroundColor: '#fafafa',
-  },
-  textarea: { minHeight: 72, textAlignVertical: 'top' },
+
   pickerOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -631,28 +676,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
-    backgroundColor: '#fafafa',
     marginBottom: 4,
   },
-  pickerOptionSelected: { borderColor: '#0a7ea4', backgroundColor: '#f0f8fc' },
-  pickerText: { fontSize: 15, color: '#222' },
-  pickerTextSelected: { fontSize: 15, color: '#0a7ea4', fontWeight: '600' },
-  checkmark: { color: '#0a7ea4', fontSize: 16, fontWeight: '700' },
   typeToggle: { flexDirection: 'row', gap: 8 },
-  typeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-  },
-  typeBtnActive: { backgroundColor: '#0a7ea4', borderColor: '#0a7ea4' },
-  typeBtnText: { fontSize: 14, color: '#555', fontWeight: '600' },
-  typeBtnTextActive: { color: '#fff' },
+  typeChip: { flex: 1, justifyContent: 'center' },
+  fieldSpacing: { marginTop: 16 },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
