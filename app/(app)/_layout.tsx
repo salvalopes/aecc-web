@@ -1,8 +1,19 @@
 import { Tabs, router } from 'expo-router';
 import { useEffect } from 'react';
+import { Image } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon } from '@/components/ui';
+
+function HeaderLogo() {
+  return (
+    <Image
+      source={require('../../assets/brand/aecc-logo.webp')}
+      style={{ width: 28, height: 28, marginLeft: 16 }}
+      resizeMode="contain"
+    />
+  );
+}
 
 export default function AppLayout() {
   const { token, user, isLoading } = useAuth();
@@ -36,6 +47,7 @@ export default function AppLayout() {
           title: 'Empresas',
           tabBarLabel: 'Empresas',
           tabBarIcon: ({ color }) => <Icon name="building-2" size={20} color={color} />,
+          headerLeft: HeaderLogo,
         }}
       />
       <Tabs.Screen
@@ -44,6 +56,7 @@ export default function AppLayout() {
           title: 'Produtos',
           tabBarLabel: 'Produtos',
           tabBarIcon: ({ color }) => <Icon name="shopping-bag" size={20} color={color} />,
+          headerLeft: HeaderLogo,
         }}
       />
       <Tabs.Screen
@@ -52,6 +65,7 @@ export default function AppLayout() {
           title: 'Categorias',
           tabBarLabel: 'Categorias',
           tabBarIcon: ({ color }) => <Icon name="folder" size={20} color={color} />,
+          headerLeft: HeaderLogo,
         }}
       />
       <Tabs.Screen
@@ -60,6 +74,7 @@ export default function AppLayout() {
           title: 'Perfil',
           tabBarLabel: 'Perfil',
           tabBarIcon: ({ color }) => <Icon name="user" size={20} color={color} />,
+          headerLeft: HeaderLogo,
         }}
       />
       <Tabs.Screen
@@ -69,6 +84,7 @@ export default function AppLayout() {
           title: 'Utilizadores',
           tabBarLabel: 'Utilizadores',
           tabBarIcon: ({ color }) => <Icon name="shield" size={20} color={color} />,
+          headerLeft: HeaderLogo,
         }}
       />
       {/* Ecrãs de detalhe — ocultos da tab bar */}
