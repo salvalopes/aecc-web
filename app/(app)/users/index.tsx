@@ -1,22 +1,24 @@
-import {
-  Alert,
-  FlatList,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { usersApi } from '@/api/users.api';
 import { ApiError } from '@/api/client';
 import type { ManagedUser, UserRole } from '@/types/api';
+import { useTheme } from '@/theme/ThemeContext';
+import {
+  Icon,
+  Button,
+  Input,
+  Switch,
+  Chip,
+  Badge,
+  Card,
+  Modal,
+  EmptyState,
+  ErrorState,
+  LoadingSpinner,
+} from '@/components/ui';
 
 const ROLES: UserRole[] = ['Admin', 'Associado', 'Cliente'];
 
@@ -36,12 +38,10 @@ const DEFAULT_FORM: FormState = {
   isActive: true,
 };
 
-function RoleBadge({ role }: { role: UserRole }) {
-  return (
-    <View style={[styles.badge, styles[`badge${role}`]]}>
-      <Text style={styles.badgeText}>{role}</Text>
-    </View>
-  );
+function roleBadgeTone(role: UserRole): 'error' | 'info' | 'neutral' {
+  if (role === 'Admin') return 'error';
+  if (role === 'Associado') return 'info';
+  return 'neutral';
 }
 
 function UserRow({
@@ -55,43 +55,108 @@ function UserRow({
   onEdit: (u: ManagedUser) => void;
   onDelete: (u: ManagedUser) => void;
 }) {
+  const theme = useTheme();
+
   return (
-    <View style={styles.card}>
+    <Card>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardName}>{item.fullName}</Text>
-        <RoleBadge role={item.role} />
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.display,
+            fontSize: theme.fontSize.md,
+            fontWeight: theme.fontWeight.bold,
+            color: theme.colors.textPrimary,
+            flex: 1,
+          }}
+        >
+          {item.fullName}
+        </Text>
+        <Badge tone={roleBadgeTone(item.role)}>{item.role}</Badge>
       </View>
-      <Text style={styles.cardEmail}>{item.email}</Text>
+      <Text
+        style={{
+          fontFamily: theme.fontFamily.body,
+          fontSize: theme.fontSize.sm,
+          color: theme.colors.textSecondary,
+          marginBottom: 6,
+        }}
+      >
+        {item.email}
+      </Text>
       <View style={styles.statusRow}>
-        <Text style={[styles.statusText, item.isActive ? styles.activeText : styles.inactiveText]}>
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.body,
+            fontSize: theme.fontSize.xs,
+            fontWeight: theme.fontWeight.semibold,
+            color: item.isActive ? theme.colors.success : theme.colors.error,
+          }}
+        >
           {item.isActive ? 'Ativo' : 'Inativo'}
         </Text>
-        <Text style={styles.statusDot}>·</Text>
-        <Text style={[styles.statusText, item.emailConfirmed ? styles.activeText : styles.pendingText]}>
+        <Text style={{ color: theme.colors.borderStrong }}>·</Text>
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.body,
+            fontSize: theme.fontSize.xs,
+            fontWeight: theme.fontWeight.semibold,
+            color: item.emailConfirmed ? theme.colors.success : theme.colors.warning,
+          }}
+        >
           {item.emailConfirmed ? 'Email confirmado' : 'Email por confirmar'}
         </Text>
         {isSelf && (
           <>
-            <Text style={styles.statusDot}>·</Text>
-            <Text style={styles.selfText}>A tua conta</Text>
+            <Text style={{ color: theme.colors.borderStrong }}>·</Text>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.xs,
+                fontWeight: theme.fontWeight.semibold,
+                color: theme.colors.accentPrimary,
+              }}
+            >
+              A tua conta
+            </Text>
           </>
         )}
       </View>
       <View style={styles.cardActions}>
-        <TouchableOpacity onPress={() => onEdit(item)} style={styles.actionBtn}>
-          <Text style={styles.editText}>Editar</Text>
-        </TouchableOpacity>
+        <Pressable onPress={() => onEdit(item)} style={styles.actionBtn}>
+          <Icon name="pencil" size={14} color={theme.colors.accentPrimary} />
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.body,
+              fontSize: theme.fontSize.sm,
+              fontWeight: theme.fontWeight.semibold,
+              color: theme.colors.accentPrimary,
+            }}
+          >
+            Editar
+          </Text>
+        </Pressable>
         {!isSelf && (
-          <TouchableOpacity onPress={() => onDelete(item)} style={styles.actionBtn}>
-            <Text style={styles.deleteText}>Desativar</Text>
-          </TouchableOpacity>
+          <Pressable onPress={() => onDelete(item)} style={styles.actionBtn}>
+            <Icon name="trash-2" size={14} color={theme.colors.error} />
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.sm,
+                fontWeight: theme.fontWeight.semibold,
+                color: theme.colors.error,
+              }}
+            >
+              Desativar
+            </Text>
+          </Pressable>
         )}
       </View>
-    </View>
+    </Card>
   );
 }
 
 export default function UsersScreen() {
+  const theme = useTheme();
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
 
@@ -225,17 +290,14 @@ export default function UsersScreen() {
   const editingSelf = editTarget ? isSelf(editTarget) : false;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surfaceApp }]}>
       {loading && users.length === 0 ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0a7ea4" />
+          <LoadingSpinner />
         </View>
       ) : error ? (
         <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => load()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Tentar novamente</Text>
-          </TouchableOpacity>
+          <ErrorState message={error} onRetry={() => load()} />
         </View>
       ) : (
         <FlatList
@@ -250,225 +312,167 @@ export default function UsersScreen() {
             />
           )}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>Sem utilizadores.</Text>
-            </View>
-          }
+          ListEmptyComponent={<EmptyState message="Sem utilizadores." />}
           refreshing={loading}
           onRefresh={() => load()}
         />
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={openCreate}>
-        <Text style={styles.fabText}>+ Novo Utilizador</Text>
-      </TouchableOpacity>
+      <Button style={styles.fab} onPress={openCreate}>
+        + Novo Utilizador
+      </Button>
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              {editTarget ? 'Editar Utilizador' : 'Novo Utilizador'}
+      <Modal
+        visible={modalVisible}
+        title={editTarget ? 'Editar Utilizador' : 'Novo Utilizador'}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        saving={saving}
+      >
+        {formError && (
+          <View
+            style={{
+              backgroundColor: theme.colors.errorBg,
+              borderRadius: theme.radius.sm,
+              padding: 10,
+              marginBottom: 12,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.sm,
+                color: theme.colors.error,
+              }}
+            >
+              {formError}
             </Text>
-            <TouchableOpacity onPress={handleSave} disabled={saving}>
-              <Text style={[styles.saveText, saving && styles.disabled]}>
-                {saving ? '...' : 'Guardar'}
-              </Text>
-            </TouchableOpacity>
           </View>
+        )}
+        {editingSelf && (
+          <View
+            style={{
+              backgroundColor: theme.colors.warningBg,
+              borderRadius: theme.radius.sm,
+              padding: 10,
+              marginBottom: 12,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.sm,
+                color: theme.colors.warning,
+              }}
+            >
+              Não podes alterar o teu próprio role ou estado de ativação.
+            </Text>
+          </View>
+        )}
 
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
-            {formError && <Text style={styles.formError}>{formError}</Text>}
-            {editingSelf && (
-              <Text style={styles.selfNotice}>
-                Não podes alterar o teu próprio role ou estado de ativação.
-              </Text>
-            )}
-
-            {!editTarget && (
-              <>
-                <Text style={styles.label}>Email *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={form.email}
-                  onChangeText={text => setForm(f => ({ ...f, email: text }))}
-                  placeholder="utilizador@exemplo.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoFocus
-                />
-
-                <Text style={styles.label}>Password *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={form.password}
-                  onChangeText={text => setForm(f => ({ ...f, password: text }))}
-                  placeholder="Password inicial"
-                  secureTextEntry
-                  autoCapitalize="none"
-                />
-              </>
-            )}
-
-            <Text style={styles.label}>Nome *</Text>
-            <TextInput
-              style={styles.input}
-              value={form.fullName}
-              onChangeText={text => setForm(f => ({ ...f, fullName: text }))}
-              placeholder="Nome completo"
+        {!editTarget && (
+          <>
+            <Input
+              label="Email"
+              required
+              value={form.email}
+              onChangeText={text => setForm(f => ({ ...f, email: text }))}
+              placeholder="utilizador@exemplo.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoFocus
             />
 
-            <Text style={styles.label}>Role</Text>
-            <View style={styles.roleRow}>
-              {ROLES.map(role => (
-                <TouchableOpacity
-                  key={role}
-                  disabled={editingSelf}
-                  onPress={() => setForm(f => ({ ...f, role }))}
-                  style={[
-                    styles.roleChip,
-                    form.role === role && styles.roleChipActive,
-                    editingSelf && styles.disabled,
-                  ]}
-                >
-                  <Text style={[styles.roleChipText, form.role === role && styles.roleChipTextActive]}>
-                    {role}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Input
+              label="Password"
+              required
+              value={form.password}
+              onChangeText={text => setForm(f => ({ ...f, password: text }))}
+              placeholder="Password inicial"
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </>
+        )}
 
-            {editTarget && (
-              <>
-                <Text style={styles.label}>Estado</Text>
-                <TouchableOpacity
-                  disabled={editingSelf}
-                  onPress={() => setForm(f => ({ ...f, isActive: !f.isActive }))}
-                  style={[
-                    styles.roleChip,
-                    form.isActive && styles.roleChipActive,
-                    editingSelf && styles.disabled,
-                  ]}
-                >
-                  <Text style={[styles.roleChipText, form.isActive && styles.roleChipTextActive]}>
-                    {form.isActive ? 'Ativo' : 'Inativo'}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </ScrollView>
-        </SafeAreaView>
+        <Input
+          label="Nome"
+          required
+          value={form.fullName}
+          onChangeText={text => setForm(f => ({ ...f, fullName: text }))}
+          placeholder="Nome completo"
+        />
+
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.body,
+            fontSize: theme.fontSize.sm,
+            fontWeight: theme.fontWeight.semibold,
+            color: theme.colors.textSecondary,
+            marginTop: 16,
+            marginBottom: 6,
+          }}
+        >
+          Role
+        </Text>
+        <View style={styles.roleRow}>
+          {ROLES.map(role => (
+            <Chip
+              key={role}
+              active={form.role === role}
+              onPress={editingSelf ? undefined : () => setForm(f => ({ ...f, role }))}
+            >
+              {role}
+            </Chip>
+          ))}
+        </View>
+
+        {editTarget && (
+          <>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.sm,
+                fontWeight: theme.fontWeight.semibold,
+                color: theme.colors.textSecondary,
+                marginTop: 16,
+                marginBottom: 6,
+              }}
+            >
+              Estado
+            </Text>
+            <View style={styles.estadoRow}>
+              <Switch
+                value={form.isActive}
+                onValueChange={value => setForm(f => ({ ...f, isActive: value }))}
+                disabled={editingSelf}
+              />
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  color: theme.colors.textPrimary,
+                }}
+              >
+                {form.isActive ? 'Ativo' : 'Inativo'}
+              </Text>
+            </View>
+          </>
+        )}
       </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   list: { padding: 12, gap: 10 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardName: { fontSize: 16, fontWeight: '700', color: '#111', flex: 1 },
-  cardEmail: { fontSize: 13, color: '#666', marginBottom: 6 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
-  statusText: { fontSize: 12, fontWeight: '600' },
-  statusDot: { color: '#ccc' },
-  activeText: { color: '#2e7d32' },
-  inactiveText: { color: '#d32f2f' },
-  pendingText: { color: '#b26a00' },
-  selfText: { fontSize: 12, fontWeight: '600', color: '#0a7ea4' },
-  badge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  badgeAdmin: { backgroundColor: '#fde8e8' },
-  badgeAssociado: { backgroundColor: '#e3f4fb' },
-  badgeCliente: { backgroundColor: '#eee' },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#333' },
   cardActions: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  actionBtn: { paddingVertical: 4 },
-  editText: { color: '#0a7ea4', fontSize: 13, fontWeight: '600' },
-  deleteText: { color: '#d32f2f', fontSize: 13, fontWeight: '600' },
-  errorText: { color: '#d32f2f', fontSize: 15, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { paddingVertical: 8, paddingHorizontal: 20, borderWidth: 1, borderColor: '#0a7ea4', borderRadius: 8 },
-  retryText: { color: '#0a7ea4', fontSize: 14 },
-  emptyText: { color: '#999', fontSize: 15 },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    backgroundColor: '#0a7ea4',
-    borderRadius: 28,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  fabText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  modalContainer: { flex: 1, backgroundColor: '#fff' },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: { fontSize: 16, fontWeight: '700' },
-  cancelText: { color: '#666', fontSize: 15 },
-  saveText: { color: '#0a7ea4', fontSize: 15, fontWeight: '700' },
-  disabled: { opacity: 0.4 },
-  modalBody: { flex: 1, padding: 16 },
-  formError: {
-    color: '#d32f2f',
-    fontSize: 13,
-    marginBottom: 12,
-    backgroundColor: '#fff5f5',
-    padding: 10,
-    borderRadius: 6,
-  },
-  selfNotice: {
-    color: '#b26a00',
-    fontSize: 13,
-    marginBottom: 12,
-    backgroundColor: '#fff8e1',
-    padding: 10,
-    borderRadius: 6,
-  },
-  label: { fontSize: 13, fontWeight: '600', color: '#444', marginTop: 16, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    backgroundColor: '#fafafa',
-  },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  fab: { position: 'absolute', bottom: 24, right: 20 },
   roleRow: { flexDirection: 'row', gap: 8 },
-  roleChip: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#fafafa',
-  },
-  roleChipActive: { backgroundColor: '#0a7ea4', borderColor: '#0a7ea4' },
-  roleChipText: { fontSize: 13, fontWeight: '600', color: '#444' },
-  roleChipTextActive: { color: '#fff' },
+  estadoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

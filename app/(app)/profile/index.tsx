@@ -1,9 +1,12 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/theme/ThemeContext';
+import { Button } from '@/components/ui';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { colors, fontFamily, fontSize, fontWeight } = useTheme();
 
   async function handleLogout() {
     await logout();
@@ -11,29 +14,20 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.name}>{user?.fullName ?? '—'}</Text>
-      <Text style={styles.email}>{user?.email ?? '—'}</Text>
-      <Text style={styles.role}>{user?.role ?? '—'}</Text>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.surfaceApp }}>
+      <Text style={{ fontFamily: fontFamily.display, fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.textPrimary, marginBottom: 4 }}>
+        {user?.fullName ?? '—'}
+      </Text>
+      <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.textSecondary, marginBottom: 4 }}>
+        {user?.email ?? '—'}
+      </Text>
+      <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.textTertiary, marginBottom: 40 }}>
+        {user?.role ?? '—'}
+      </Text>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Terminar sessão</Text>
-      </TouchableOpacity>
+      <Button variant="destructive" onPress={handleLogout}>
+        Terminar sessão
+      </Button>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  name: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  email: { fontSize: 15, color: '#555', marginBottom: 4 },
-  role: { fontSize: 13, color: '#999', marginBottom: 40 },
-  logoutButton: {
-    borderWidth: 1,
-    borderColor: '#d32f2f',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-  },
-  logoutText: { color: '#d32f2f', fontSize: 15, fontWeight: '600' },
-});

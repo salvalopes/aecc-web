@@ -1,22 +1,12 @@
-import {
-  Alert,
-  FlatList,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/theme/ThemeContext';
 import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
 import type { Company, CreateCompanyRequest } from '@/types/api';
+import { Icon, Button, Input, Badge, Card, Modal, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
 
 interface FormState {
   name: string;
@@ -43,37 +33,74 @@ function CompanyCard({
   onEdit: (c: Company) => void;
   onDelete: (c: Company) => void;
 }) {
+  const { colors, fontFamily, fontSize, fontWeight, spacing } = useTheme();
+
   return (
-    <TouchableOpacity style={styles.card} onPress={() => router.push(`/(app)/companies/${company.id}`)}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardName}>{company.name}</Text>
-        {isOwner && (
-          <View style={styles.ownerBadge}>
-            <Text style={styles.ownerBadgeText}>Minha</Text>
-          </View>
-        )}
+    <Card interactive onPress={() => router.push(`/(app)/companies/${company.id}`)}>
+      <View style={[styles.cardHeader, { gap: spacing[4] }]}>
+        <Text
+          style={{
+            fontFamily: fontFamily.display,
+            fontSize: fontSize.md,
+            fontWeight: fontWeight.bold,
+            color: colors.textPrimary,
+            flex: 1,
+          }}
+        >
+          {company.name}
+        </Text>
+        {isOwner && <Badge tone="info">Minha</Badge>}
       </View>
       {!!company.description && (
-        <Text style={styles.cardDesc} numberOfLines={2}>
+        <Text
+          style={{
+            fontFamily: fontFamily.body,
+            fontSize: fontSize.sm,
+            color: colors.textSecondary,
+            marginBottom: spacing[4],
+          }}
+          numberOfLines={2}
+        >
           {company.description}
         </Text>
       )}
       {isOwner && (
-        <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => onEdit(company)} style={styles.actionBtn}>
-            <Text style={styles.editText}>Editar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onDelete(company)} style={styles.actionBtn}>
-            <Text style={styles.deleteText}>Apagar</Text>
-          </TouchableOpacity>
+        <View style={[styles.cardActions, { gap: spacing[8], marginTop: spacing[2] }]}>
+          <Pressable onPress={() => onEdit(company)} style={styles.actionBtn} hitSlop={8}>
+            <Icon name="pencil" size={14} color={colors.accentPrimary} />
+            <Text
+              style={{
+                fontFamily: fontFamily.body,
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.accentPrimary,
+              }}
+            >
+              Editar
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => onDelete(company)} style={styles.actionBtn} hitSlop={8}>
+            <Icon name="trash-2" size={14} color={colors.error} />
+            <Text
+              style={{
+                fontFamily: fontFamily.body,
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.error,
+              }}
+            >
+              Apagar
+            </Text>
+          </Pressable>
         </View>
       )}
-    </TouchableOpacity>
+    </Card>
   );
 }
 
 export default function CompaniesScreen() {
   const { user } = useAuth();
+  const { colors, fontFamily, fontSize, spacing, radius } = useTheme();
   const canCreate = user?.role === 'Admin' || user?.role === 'Associado';
 
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -196,10 +223,14 @@ export default function CompaniesScreen() {
     : companies;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchBar}>
-        <TextInput
-          style={styles.searchInput}
+    <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
+      <View
+        style={[
+          styles.searchBar,
+          { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle, padding: spacing[6] },
+        ]}
+      >
+        <Input
           value={search}
           onChangeText={text => {
             setSearch(text);
@@ -207,21 +238,13 @@ export default function CompaniesScreen() {
             else if (text.trim().length === 0) load();
           }}
           placeholder="Pesquisar empresas..."
-          clearButtonMode="while-editing"
         />
       </View>
 
       {loading && companies.length === 0 ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0a7ea4" />
-        </View>
+        <LoadingSpinner />
       ) : error ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => load()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Tentar novamente</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState message={error} onRetry={() => load()} />
       ) : (
         <FlatList
           data={filtered}
@@ -234,173 +257,87 @@ export default function CompaniesScreen() {
               onDelete={handleDelete}
             />
           )}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>Sem empresas.</Text>
-            </View>
-          }
+          contentContainerStyle={[styles.list, { padding: spacing[6], gap: spacing[5] }]}
+          ListEmptyComponent={<EmptyState message="Sem empresas." />}
           refreshing={loading}
           onRefresh={() => load()}
         />
       )}
 
       {canCreate && (
-        <TouchableOpacity style={styles.fab} onPress={openCreate}>
-          <Text style={styles.fabText}>+ Nova Empresa</Text>
-        </TouchableOpacity>
+        <Button onPress={openCreate} style={styles.fab}>
+          + Nova Empresa
+        </Button>
       )}
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              {editTarget ? 'Editar Empresa' : 'Nova Empresa'}
+      <Modal
+        visible={modalVisible}
+        title={editTarget ? 'Editar Empresa' : 'Nova Empresa'}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        saving={saving}
+      >
+        {formError && (
+          <View
+            style={{
+              backgroundColor: colors.errorBg,
+              borderRadius: radius.sm,
+              padding: spacing[5],
+              marginBottom: spacing[6],
+            }}
+          >
+            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}>
+              {formError}
             </Text>
-            <TouchableOpacity onPress={handleSave} disabled={saving}>
-              <Text style={[styles.saveText, saving && styles.disabled]}>
-                {saving ? '...' : 'Guardar'}
-              </Text>
-            </TouchableOpacity>
           </View>
+        )}
 
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
-            {formError && <Text style={styles.formError}>{formError}</Text>}
+        <Input
+          label="Nome"
+          required
+          value={form.name}
+          onChangeText={text => setForm(f => ({ ...f, name: text }))}
+          placeholder="Nome da empresa"
+          autoFocus
+        />
 
-            <Text style={styles.label}>Nome *</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={text => setForm(f => ({ ...f, name: text }))}
-              placeholder="Nome da empresa"
-              autoFocus
-            />
+        <Input
+          label="Descrição"
+          value={form.description}
+          onChangeText={text => setForm(f => ({ ...f, description: text }))}
+          placeholder="Descrição da empresa"
+          multiline
+          numberOfLines={3}
+        />
 
-            <Text style={styles.label}>Descrição</Text>
-            <TextInput
-              style={[styles.input, styles.textarea]}
-              value={form.description}
-              onChangeText={text => setForm(f => ({ ...f, description: text }))}
-              placeholder="Descrição da empresa"
-              multiline
-              numberOfLines={3}
-            />
+        <Input
+          label="Email de destino de leads"
+          required
+          value={form.leadDestinationEmail}
+          onChangeText={text => setForm(f => ({ ...f, leadDestinationEmail: text }))}
+          placeholder="leads@empresa.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-            <Text style={styles.label}>Email de destino de leads *</Text>
-            <TextInput
-              style={styles.input}
-              value={form.leadDestinationEmail}
-              onChangeText={text => setForm(f => ({ ...f, leadDestinationEmail: text }))}
-              placeholder="leads@empresa.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>Cooldown de leads (minutos)</Text>
-            <TextInput
-              style={styles.input}
-              value={form.leadCooldownMinutes}
-              onChangeText={text => setForm(f => ({ ...f, leadCooldownMinutes: text }))}
-              placeholder="60"
-              keyboardType="number-pad"
-            />
-          </ScrollView>
-        </SafeAreaView>
+        <Input
+          label="Cooldown de leads (minutos)"
+          value={form.leadCooldownMinutes}
+          onChangeText={text => setForm(f => ({ ...f, leadCooldownMinutes: text }))}
+          placeholder="60"
+          keyboardType="number-pad"
+        />
       </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  searchBar: { padding: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
-  searchInput: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 15,
-  },
-  list: { padding: 12, gap: 10 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardName: { fontSize: 16, fontWeight: '700', color: '#111', flex: 1 },
-  cardDesc: { fontSize: 13, color: '#666', marginBottom: 8 },
-  ownerBadge: {
-    backgroundColor: '#e3f4fb',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  ownerBadgeText: { fontSize: 11, color: '#0a7ea4', fontWeight: '600' },
-  cardActions: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  actionBtn: { paddingVertical: 4 },
-  editText: { color: '#0a7ea4', fontSize: 13, fontWeight: '600' },
-  deleteText: { color: '#d32f2f', fontSize: 13, fontWeight: '600' },
-  errorText: { color: '#d32f2f', fontSize: 15, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { paddingVertical: 8, paddingHorizontal: 20, borderWidth: 1, borderColor: '#0a7ea4', borderRadius: 8 },
-  retryText: { color: '#0a7ea4', fontSize: 14 },
-  emptyText: { color: '#999', fontSize: 15 },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    backgroundColor: '#0a7ea4',
-    borderRadius: 28,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  fabText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  modalContainer: { flex: 1, backgroundColor: '#fff' },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: { fontSize: 16, fontWeight: '700' },
-  cancelText: { color: '#666', fontSize: 15 },
-  saveText: { color: '#0a7ea4', fontSize: 15, fontWeight: '700' },
-  disabled: { opacity: 0.4 },
-  modalBody: { flex: 1, padding: 16 },
-  formError: {
-    color: '#d32f2f',
-    fontSize: 13,
-    marginBottom: 12,
-    backgroundColor: '#fff5f5',
-    padding: 10,
-    borderRadius: 6,
-  },
-  label: { fontSize: 13, fontWeight: '600', color: '#444', marginTop: 16, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    backgroundColor: '#fafafa',
-  },
-  textarea: { minHeight: 80, textAlignVertical: 'top' },
+  container: { flex: 1 },
+  searchBar: { borderBottomWidth: 1 },
+  list: {},
+  cardHeader: { flexDirection: 'row', alignItems: 'center' },
+  cardActions: { flexDirection: 'row' },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 },
+  fab: { position: 'absolute', bottom: 24, right: 20 },
 });
