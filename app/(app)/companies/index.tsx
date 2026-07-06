@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
 import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, emailFormat, combine } from '@/utils/validators';
 import type { Company, CreateCompanyRequest } from '@/types/api';
 import { Icon, Button, Input, Badge, Card, Modal, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
 
@@ -112,7 +114,7 @@ export default function CompaniesScreen() {
   const [editTarget, setEditTarget] = useState<Company | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const { fieldErrors, formError, validate, clearErrors, applyApiError } = useFormValidation<FormState>();
 
   async function load(name?: string) {
     setLoading(true);
@@ -140,7 +142,7 @@ export default function CompaniesScreen() {
   function openCreate() {
     setEditTarget(null);
     setForm(DEFAULT_FORM);
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -152,7 +154,7 @@ export default function CompaniesScreen() {
       leadCooldownMinutes: String(company.leadCooldownMinutes),
       leadDestinationEmail: company.leadDestinationEmail,
     });
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -182,26 +184,22 @@ export default function CompaniesScreen() {
   }
 
   async function handleSave() {
-    const cooldown = parseInt(form.leadCooldownMinutes, 10);
-    if (!form.name.trim()) {
-      setFormError('O nome é obrigatório.');
-      return;
-    }
-    if (!form.leadDestinationEmail.trim()) {
-      setFormError('O email de destino é obrigatório.');
-      return;
-    }
-    if (Number.isNaN(cooldown) || cooldown < 0) {
-      setFormError('O cooldown deve ser um número positivo.');
-      return;
-    }
+    const isValid = validate(form, {
+      name: required('O nome é obrigatório.'),
+      leadDestinationEmail: combine(required('O email de destino é obrigatório.'), emailFormat()),
+      leadCooldownMinutes: value => {
+        const cooldown = parseInt(value, 10);
+        return Number.isNaN(cooldown) || cooldown < 0 ? 'O cooldown deve ser um número positivo.' : undefined;
+      },
+    });
+    if (!isValid) return;
+
     setSaving(true);
-    setFormError(null);
     try {
       const payload: CreateCompanyRequest = {
         name: form.name.trim(),
         description: form.description.trim(),
-        leadCooldownMinutes: cooldown,
+        leadCooldownMinutes: parseInt(form.leadCooldownMinutes, 10),
         leadDestinationEmail: form.leadDestinationEmail.trim(),
       };
       if (editTarget) {
@@ -212,7 +210,12 @@ export default function CompaniesScreen() {
       setModalVisible(false);
       load();
     } catch (e) {
-      setFormError(e instanceof ApiError ? e.message : 'Erro ao guardar.');
+      applyApiError(e, {
+        Name: 'name',
+        Description: 'description',
+        LeadCooldownMinutes: 'leadCooldownMinutes',
+        LeadDestinationEmail: 'leadDestinationEmail',
+      });
     } finally {
       setSaving(false);
     }
@@ -299,6 +302,7 @@ export default function CompaniesScreen() {
           onChangeText={text => setForm(f => ({ ...f, name: text }))}
           placeholder="Nome da empresa"
           autoFocus
+          error={fieldErrors.name}
         />
 
         <Input
@@ -308,6 +312,7 @@ export default function CompaniesScreen() {
           placeholder="Descrição da empresa"
           multiline
           numberOfLines={3}
+          error={fieldErrors.description}
         />
 
         <Input
@@ -318,6 +323,7 @@ export default function CompaniesScreen() {
           placeholder="leads@empresa.com"
           keyboardType="email-address"
           autoCapitalize="none"
+          error={fieldErrors.leadDestinationEmail}
         />
 
         <Input
@@ -326,6 +332,7 @@ export default function CompaniesScreen() {
           onChangeText={text => setForm(f => ({ ...f, leadCooldownMinutes: text }))}
           placeholder="60"
           keyboardType="number-pad"
+          error={fieldErrors.leadCooldownMinutes}
         />
       </Modal>
     </View>

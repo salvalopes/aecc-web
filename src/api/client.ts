@@ -18,9 +18,17 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public fieldErrors?: Record<string, string[]>,
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+}
+
+export class NetworkError extends Error {
+  constructor(message = 'Sem ligação ao servidor. Verifica a tua ligação à internet.') {
+    super(message);
+    this.name = 'NetworkError';
   }
 }
 
@@ -37,21 +45,29 @@ async function doRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...init,
-    headers,
-    credentials: 'include',
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers,
+      credentials: 'include',
+    });
+  } catch {
+    throw new NetworkError();
+  }
 
   if (!response.ok) {
-    let message = response.statusText;
+    let message = response.statusText || 'Ocorreu um erro.';
+    let fieldErrors: Record<string, string[]> | undefined;
     try {
       const body = await response.json();
-      message = body.detail ?? body.message ?? message;
+      fieldErrors = body.errors;
+      if (body.detail) message = body.detail;
+      else if (!fieldErrors && body.title) message = body.title;
     } catch {
       // ignore parse errors
     }
-    throw new ApiError(response.status, message);
+    throw new ApiError(response.status, message, fieldErrors);
   }
 
   if (response.status === 204) return undefined as T;

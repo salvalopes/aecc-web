@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { usersApi } from '@/api/users.api';
 import { ApiError } from '@/api/client';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, emailFormat, passwordStrength, combine } from '@/utils/validators';
 import type { ManagedUser, UserRole } from '@/types/api';
 import { useTheme } from '@/theme/ThemeContext';
 import {
@@ -174,7 +176,7 @@ export default function UsersScreen() {
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const { fieldErrors, formError, validate, clearErrors, applyApiError } = useFormValidation<FormState>();
 
   async function load() {
     setLoading(true);
@@ -204,7 +206,7 @@ export default function UsersScreen() {
   function openCreate() {
     setEditTarget(null);
     setForm(DEFAULT_FORM);
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -217,7 +219,7 @@ export default function UsersScreen() {
       role: target.role,
       isActive: target.isActive,
     });
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -247,22 +249,16 @@ export default function UsersScreen() {
   }
 
   async function handleSave() {
-    if (!form.fullName.trim()) {
-      setFormError('O nome é obrigatório.');
-      return;
-    }
-    if (!editTarget) {
-      if (!form.email.trim()) {
-        setFormError('O email é obrigatório.');
-        return;
-      }
-      if (!form.password) {
-        setFormError('A password é obrigatória.');
-        return;
-      }
-    }
+    const isValid = editTarget
+      ? validate(form, { fullName: required('O nome é obrigatório.') })
+      : validate(form, {
+          email: combine(required('O email é obrigatório.'), emailFormat()),
+          password: passwordStrength(),
+          fullName: required('O nome é obrigatório.'),
+        });
+    if (!isValid) return;
+
     setSaving(true);
-    setFormError(null);
     try {
       if (editTarget) {
         await usersApi.update(editTarget.id, {
@@ -281,7 +277,20 @@ export default function UsersScreen() {
       setModalVisible(false);
       load();
     } catch (e) {
-      setFormError(e instanceof ApiError ? e.message : 'Erro ao guardar.');
+      applyApiError(e, {
+        Email: 'email',
+        Password: 'password',
+        FullName: 'fullName',
+        DuplicateUserName: 'email',
+        DuplicateEmail: 'email',
+        InvalidEmail: 'email',
+        PasswordTooShort: 'password',
+        PasswordRequiresDigit: 'password',
+        PasswordRequiresLower: 'password',
+        PasswordRequiresUpper: 'password',
+        PasswordRequiresNonAlphanumeric: 'password',
+        PasswordRequiresUniqueChars: 'password',
+      });
     } finally {
       setSaving(false);
     }
@@ -381,6 +390,7 @@ export default function UsersScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoFocus
+              error={fieldErrors.email}
             />
 
             <Input
@@ -391,6 +401,7 @@ export default function UsersScreen() {
               placeholder="Password inicial"
               secureTextEntry
               autoCapitalize="none"
+              error={fieldErrors.password}
             />
           </>
         )}
@@ -401,6 +412,7 @@ export default function UsersScreen() {
           value={form.fullName}
           onChangeText={text => setForm(f => ({ ...f, fullName: text }))}
           placeholder="Nome completo"
+          error={fieldErrors.fullName}
         />
 
         <Text

@@ -29,6 +29,8 @@ import { productsApi } from '@/api/products.api';
 import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, requiredWhen } from '@/utils/validators';
 import type { Product, Company, Category, CreateProductRequest, ProductType } from '@/types/api';
 
 interface FormState {
@@ -171,7 +173,7 @@ export default function ProductsScreen() {
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const { fieldErrors, formError, validate, clearErrors, applyApiError } = useFormValidation<FormState>();
 
   async function loadProducts(type?: 'Product' | 'Service', categoryId?: string) {
     setLoading(true);
@@ -232,7 +234,7 @@ export default function ProductsScreen() {
       ...DEFAULT_FORM,
       companyId: firstCompany?.id ?? '',
     });
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -247,7 +249,7 @@ export default function ProductsScreen() {
       hasMemberBenefit: product.hasMemberBenefit,
       memberBenefitDescription: product.memberBenefitDescription ?? '',
     });
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -274,11 +276,18 @@ export default function ProductsScreen() {
   }
 
   async function handleSave() {
-    if (!form.name.trim()) { setFormError('O nome é obrigatório.'); return; }
-    if (!form.categoryId) { setFormError('Selecione uma categoria.'); return; }
-    if (!form.companyId) { setFormError('Selecione uma empresa.'); return; }
+    const isValid = validate(form, {
+      name: required('O nome é obrigatório.'),
+      categoryId: required('Selecione uma categoria.'),
+      companyId: required('Selecione uma empresa.'),
+      memberBenefitDescription: requiredWhen(
+        v => v.hasMemberBenefit,
+        'Descreva o benefício para membros.'
+      ),
+    });
+    if (!isValid) return;
+
     setSaving(true);
-    setFormError(null);
     try {
       const payload: CreateProductRequest = {
         companyId: form.companyId,
@@ -306,7 +315,13 @@ export default function ProductsScreen() {
       setModalVisible(false);
       loadProducts();
     } catch (e) {
-      setFormError(e instanceof ApiError ? e.message : 'Erro ao guardar.');
+      applyApiError(e, {
+        CompanyId: 'companyId',
+        CategoryId: 'categoryId',
+        Name: 'name',
+        Description: 'description',
+        MemberBenefitDescription: 'memberBenefitDescription',
+      });
     } finally {
       setSaving(false);
     }
@@ -404,6 +419,11 @@ export default function ProductsScreen() {
         {!editTarget && ownedCompanies.length > 1 && (
           <>
             <Text style={labelStyle}>Empresa *</Text>
+            {fieldErrors.companyId && (
+              <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.xs, color: theme.colors.error, marginBottom: 4 }}>
+                {fieldErrors.companyId}
+              </Text>
+            )}
             {ownedCompanies.map(c => {
               const selected = form.companyId === c.id;
               return (
@@ -436,6 +456,11 @@ export default function ProductsScreen() {
         )}
 
         <Text style={labelStyle}>Categoria *</Text>
+        {fieldErrors.categoryId && (
+          <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.xs, color: theme.colors.error, marginBottom: 4 }}>
+            {fieldErrors.categoryId}
+          </Text>
+        )}
         {flatCategories.map(cat => {
           const selected = form.categoryId === cat.id;
           return (
@@ -486,6 +511,7 @@ export default function ProductsScreen() {
           onChangeText={text => setForm(f => ({ ...f, name: text }))}
           placeholder="Nome do produto ou serviço"
           style={styles.fieldSpacing}
+          error={fieldErrors.name}
         />
 
         <Input
@@ -496,6 +522,7 @@ export default function ProductsScreen() {
           multiline
           numberOfLines={3}
           style={styles.fieldSpacing}
+          error={fieldErrors.description}
         />
 
         <View style={styles.switchRow}>
@@ -524,6 +551,7 @@ export default function ProductsScreen() {
             multiline
             numberOfLines={2}
             style={styles.fieldSpacing}
+            error={fieldErrors.memberBenefitDescription}
           />
         )}
       </Modal>

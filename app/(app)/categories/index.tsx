@@ -4,6 +4,8 @@ import { useNavigation } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, combine, slugFormat } from '@/utils/validators';
 import type { Category, CreateCategoryRequest } from '@/types/api';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon, Button, Input, Modal, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
@@ -133,7 +135,7 @@ export default function CategoriesScreen() {
   const [editTarget, setEditTarget] = useState<Category | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const { fieldErrors, formError, validate, clearErrors, applyApiError } = useFormValidation<FormState>();
 
   useLayoutEffect(() => {
     if (isAdmin) {
@@ -168,14 +170,14 @@ export default function CategoriesScreen() {
   function openCreate() {
     setEditTarget(null);
     setForm(DEFAULT_FORM);
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
   function openEdit(category: Category) {
     setEditTarget(category);
     setForm({ name: category.name, slug: category.slug, parentId: category.parentId });
-    setFormError(null);
+    clearErrors();
     setModalVisible(true);
   }
 
@@ -205,12 +207,13 @@ export default function CategoriesScreen() {
   }
 
   async function handleSave() {
-    if (!form.name.trim() || !form.slug.trim()) {
-      setFormError('Nome e slug são obrigatórios.');
-      return;
-    }
+    const isValid = validate(form, {
+      name: required('O nome é obrigatório.'),
+      slug: combine(required('O slug é obrigatório.'), slugFormat()),
+    });
+    if (!isValid) return;
+
     setSaving(true);
-    setFormError(null);
     try {
       const payload: CreateCategoryRequest = {
         name: form.name.trim(),
@@ -225,7 +228,7 @@ export default function CategoriesScreen() {
       setModalVisible(false);
       load();
     } catch (e) {
-      setFormError(e instanceof ApiError ? e.message : 'Erro ao guardar.');
+      applyApiError(e, { Name: 'name', Slug: 'slug' });
     } finally {
       setSaving(false);
     }
@@ -309,6 +312,7 @@ export default function CategoriesScreen() {
           }
           placeholder="Nome da categoria"
           autoFocus
+          error={fieldErrors.name}
         />
 
         <Input
@@ -318,6 +322,7 @@ export default function CategoriesScreen() {
           onChangeText={text => setForm(f => ({ ...f, slug: text }))}
           placeholder="slug-da-categoria"
           autoCapitalize="none"
+          error={fieldErrors.slug}
         />
 
         <Text
