@@ -28,6 +28,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundler: 'metro',
     output: 'single',
     favicon: './assets/favicon.png',
+    themeColor: '#0b6e8f',
+    description: 'Associação Empresarial do Concelho de Cascais',
   },
   plugins: ['expo-router', 'expo-secure-store'],
   experiments: {
