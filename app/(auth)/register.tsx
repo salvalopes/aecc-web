@@ -1,49 +1,59 @@
 import { useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
+import { authApi } from '@/api/auth.api';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
 
 interface FormState {
   email: string;
-  password: string;
 }
 
-export default function LoginScreen() {
-  const { login } = useAuth();
+export default function RegisterScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const { fieldErrors, formError, validate, applyApiError } = useFormValidation<FormState>();
 
-  async function handleLogin() {
+  async function handleRegister() {
     const isValid = validate(
-      { email, password },
-      {
-        email: combine(required('O email é obrigatório.'), emailFormat()),
-        password: required('A password é obrigatória.'),
-      }
+      { email },
+      { email: combine(required('O email é obrigatório.'), emailFormat()) }
     );
     if (!isValid) return;
 
     setLoading(true);
     try {
-      // login() does: POST /auth/login (cookie) → PKCE → window.location.href redirect
-      // The browser navigates away on success; no router.replace() needed here.
-      await login({ email, password });
+      await authApi.register({ email });
+      setSubmitted(true);
     } catch (e) {
-      applyApiError(e, { Email: 'email', Password: 'password' });
+      applyApiError(e, { Email: 'email', DuplicateEmail: 'email', DuplicateUserName: 'email' });
+    } finally {
       setLoading(false);
     }
-    // On success the page navigates away — intentionally no finally setLoading(false)
-    // to avoid a loading flicker before the browser redirect completes.
+  }
+
+  if (submitted) {
+    return (
+      <View style={styles.container}>
+        <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.message}>
+          Verifica o teu email para confirmares a conta e definires a tua palavra-passe.
+        </Text>
+        <TouchableOpacity
+          style={[styles.button, styles.buttonOutline]}
+          onPress={() => router.replace('/(auth)/login')}
+        >
+          <Text style={styles.buttonOutlineText}>Ir para login</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
     <View style={styles.container}>
       <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
-      <Text style={styles.subtitle}>Associação de Empresários de Cascais</Text>
+      <Text style={styles.subtitle}>Criar conta</Text>
 
       <TextInput
         style={[styles.input, fieldErrors.email && styles.inputError]}
@@ -56,38 +66,18 @@ export default function LoginScreen() {
       />
       {fieldErrors.email && <Text style={styles.error}>{fieldErrors.email}</Text>}
 
-      <TextInput
-        style={[styles.input, fieldErrors.password && styles.inputError]}
-        placeholder="Palavra-passe"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoComplete="current-password"
-      />
-      {fieldErrors.password && <Text style={styles.error}>{fieldErrors.password}</Text>}
-
       {formError && <Text style={styles.error}>{formError}</Text>}
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Entrar</Text>
+          <Text style={styles.buttonText}>Criar conta</Text>
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.push('/(auth)/forgot-password')}
-        style={styles.forgotLink}
-      >
-        <Text style={styles.forgotLinkText}>Esqueci-me da palavra-passe</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => router.push('/(auth)/register')}
-        style={styles.registerLink}
-      >
-        <Text style={styles.registerLinkText}>Ainda não tens conta? Regista-te</Text>
+      <TouchableOpacity onPress={() => router.replace('/(auth)/login')} style={styles.loginLink}>
+        <Text style={styles.loginLinkText}>Já tens conta? Entrar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -114,9 +104,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#0a7ea4',
+    marginTop: 24,
+  },
+  buttonOutlineText: { color: '#0a7ea4', fontSize: 16, fontWeight: '600' },
   error: { color: '#d32f2f', marginBottom: 8, textAlign: 'left', fontSize: 13 },
-  forgotLink: { marginTop: 16, alignItems: 'center' },
-  forgotLinkText: { color: '#0a7ea4', fontSize: 14 },
-  registerLink: { marginTop: 12, alignItems: 'center' },
-  registerLinkText: { color: '#0a7ea4', fontSize: 14 },
+  message: { fontSize: 16, textAlign: 'center', color: '#333', marginBottom: 8 },
+  loginLink: { marginTop: 16, alignItems: 'center' },
+  loginLinkText: { color: '#0a7ea4', fontSize: 14 },
 });

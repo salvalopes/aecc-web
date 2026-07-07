@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type {
   User,
   LoginRequest,
+  RegisterRequest,
   TokenResponse,
   ExchangeCodeParams,
   ConfirmEmailRequest,
@@ -35,6 +36,7 @@ async function tokenRequest(body: URLSearchParams): Promise<TokenResponse> {
 
 export const authApi = {
   loginWithCookie: (data: LoginRequest) => apiClient.post<void>('/auth/login', data),
+  register: (data: RegisterRequest) => apiClient.post<void>('/auth/register', data),
 
   exchangeCode: ({ code, codeVerifier, redirectUri }: ExchangeCodeParams) =>
     tokenRequest(

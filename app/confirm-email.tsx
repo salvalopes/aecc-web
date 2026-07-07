@@ -1,70 +1,119 @@
-import { startTransition, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { authApi } from '@/api/auth.api';
+import { useAuth } from '@/hooks/useAuth';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, passwordStrength, matches, combine } from '@/utils/validators';
 
-type ScreenState = 'loading' | 'success' | 'error';
+interface FormState {
+  fullName: string;
+  password: string;
+  confirmPassword: string;
+}
 
 export default function ConfirmEmailScreen() {
   const { userId, token } = useLocalSearchParams<{ userId?: string; token?: string }>();
-  const [state, setState] = useState<ScreenState>('loading');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { redirectToAuthorize } = useAuth();
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { fieldErrors, formError, validate, applyApiError } = useFormValidation<FormState>();
 
-  useEffect(() => {
-    if (!userId || !token) {
-      startTransition(() => {
-        setErrorMessage('Link inválido: parâmetros em falta.');
-        setState('error');
+  if (!userId || !token) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>AECC</Text>
+        <Text style={styles.subtitle}>Confirmação de email</Text>
+        <Text style={styles.error}>Link inválido: parâmetros em falta.</Text>
+        <TouchableOpacity
+          style={[styles.button, styles.buttonOutline]}
+          onPress={() => router.replace('/(auth)/login')}
+        >
+          <Text style={styles.buttonOutlineText}>Ir para login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  async function handleSubmit() {
+    const isValid = validate(
+      { fullName, password, confirmPassword },
+      {
+        fullName: required('O nome é obrigatório.'),
+        password: passwordStrength(),
+        confirmPassword: combine(
+          required('Confirma a palavra-passe.'),
+          matches('password', 'As palavras-passe não coincidem.')
+        ),
+      }
+    );
+    if (!isValid) return;
+
+    setLoading(true);
+    try {
+      await authApi.confirmEmail({ userId: userId!, token: token!, fullName, password });
+      // Sessão (cookie) já foi criada no backend — segue directamente para o PKCE.
+      await redirectToAuthorize();
+    } catch (e) {
+      applyApiError(e, {
+        FullName: 'fullName',
+        Password: 'password',
+        UserAlreadyHasPassword: 'password',
       });
-      return;
+      setLoading(false);
     }
-
-    authApi
-      .confirmEmail({ userId, token })
-      .then(() => startTransition(() => setState('success')))
-      .catch((e: unknown) => {
-        startTransition(() => {
-          setErrorMessage(e instanceof Error ? e.message : 'Erro ao confirmar email.');
-          setState('error');
-        });
-      });
-  }, [userId, token]);
+    // No sucesso o browser navega para fora (redirectToAuthorize) — sem setLoading(false)
+    // para não haver flicker antes do redirect.
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>AECC</Text>
-      <Text style={styles.subtitle}>Confirmação de email</Text>
+      <Text style={styles.subtitle}>Confirma a tua conta</Text>
+      <Text style={styles.description}>
+        Define o teu nome e uma palavra-passe para ativares a conta.
+      </Text>
 
-      {state === 'loading' && (
-        <>
-          <ActivityIndicator size="large" color="#0a7ea4" style={styles.spinner} />
-          <Text style={styles.message}>A confirmar o teu email…</Text>
-        </>
-      )}
+      <TextInput
+        style={[styles.input, fieldErrors.fullName && styles.inputError]}
+        placeholder="Nome completo"
+        value={fullName}
+        onChangeText={setFullName}
+        autoComplete="name"
+      />
+      {fieldErrors.fullName && <Text style={styles.error}>{fieldErrors.fullName}</Text>}
 
-      {state === 'success' && (
-        <>
-          <Text style={styles.message}>Email confirmado com sucesso! Já podes entrar na aplicação.</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.replace('/(auth)/login')}>
-            <Text style={styles.buttonText}>Ir para login</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <TextInput
+        style={[styles.input, fieldErrors.password && styles.inputError]}
+        placeholder="Palavra-passe"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="new-password"
+      />
+      {fieldErrors.password && <Text style={styles.error}>{fieldErrors.password}</Text>}
 
-      {state === 'error' && (
-        <>
-          <Text style={styles.error}>{errorMessage}</Text>
-          <Text style={styles.hint}>
-            Se o link expirou, pede um novo email de confirmação ao suporte.
-          </Text>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline]}
-            onPress={() => router.replace('/(auth)/login')}
-          >
-            <Text style={styles.buttonOutlineText}>Ir para login</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <TextInput
+        style={[styles.input, fieldErrors.confirmPassword && styles.inputError]}
+        placeholder="Confirmar palavra-passe"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+        autoComplete="new-password"
+      />
+      {fieldErrors.confirmPassword && <Text style={styles.error}>{fieldErrors.confirmPassword}</Text>}
+
+      {formError && <Text style={styles.error}>{formError}</Text>}
+
+      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Confirmar e entrar</Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -72,22 +121,31 @@ export default function ConfirmEmailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
   title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 40 },
-  spinner: { marginBottom: 16 },
-  message: { fontSize: 16, textAlign: 'center', color: '#333', marginBottom: 24 },
-  error: { color: '#d32f2f', fontSize: 16, textAlign: 'center', marginBottom: 12 },
-  hint: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 24 },
+  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 16 },
+  description: { fontSize: 14, textAlign: 'center', color: '#555', marginBottom: 24 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 4,
+    fontSize: 16,
+  },
+  inputError: { borderColor: '#d32f2f' },
   button: {
     backgroundColor: '#0a7ea4',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
+    marginTop: 8,
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   buttonOutline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#0a7ea4',
+    marginTop: 8,
   },
   buttonOutlineText: { color: '#0a7ea4', fontSize: 16, fontWeight: '600' },
+  error: { color: '#d32f2f', marginBottom: 8, textAlign: 'left', fontSize: 13 },
 });

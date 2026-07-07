@@ -47,6 +47,7 @@ interface AuthContextValue {
   token: string | null;
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
+  redirectToAuthorize: () => Promise<void>;
   completeOAuthLogin: (code: string, state: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -119,10 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // Step 1 + 2: validate credentials (sets Identity cookie), then redirect to PKCE authorize
-  const login = useCallback(async (credentials: LoginRequest) => {
-    await authApi.loginWithCookie(credentials);
-
+  // Step 2: redirect to PKCE authorize once the Identity cookie is set (by login or
+  // by confirm-email, which signs the user in right after they set their password).
+  const redirectToAuthorize = useCallback(async () => {
     const verifier = await generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
     const state = generateState();
@@ -132,6 +132,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     window.location.href = buildAuthorizationUrl(challenge, state);
   }, []);
+
+  // Step 1: validate credentials (sets Identity cookie), then redirect to PKCE authorize
+  const login = useCallback(async (credentials: LoginRequest) => {
+    await authApi.loginWithCookie(credentials);
+    await redirectToAuthorize();
+  }, [redirectToAuthorize]);
 
   // Step 3: called by the /auth/callback route after the browser returns with ?code=...
   const completeOAuthLogin = useCallback(async (code: string, state: string) => {
@@ -177,7 +183,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, completeOAuthLogin, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, isLoading, login, redirectToAuthorize, completeOAuthLogin, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

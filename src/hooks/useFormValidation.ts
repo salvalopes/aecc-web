@@ -16,6 +16,7 @@ const IDENTITY_ERROR_MESSAGES: Record<string, string> = {
   PasswordRequiresUpper: 'A password deve conter pelo menos uma letra maiúscula.',
   PasswordRequiresNonAlphanumeric: 'A password deve conter pelo menos um caráter especial.',
   PasswordRequiresUniqueChars: 'A password contém demasiados caracteres repetidos.',
+  UserAlreadyHasPassword: 'Este link já foi utilizado. Usa "Esqueci-me da palavra-passe" para definir uma nova.',
 };
 
 /**

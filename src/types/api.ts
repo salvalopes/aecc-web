@@ -85,6 +85,10 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+}
+
 // OAuth 2.0 token response (snake_case per spec)
 export interface TokenResponse {
   access_token: string;
@@ -102,6 +106,8 @@ export interface ExchangeCodeParams {
 export interface ConfirmEmailRequest {
   userId: string;
   token: string;
+  fullName: string;
+  password: string;
 }
 
 export interface ForgotPasswordRequest {

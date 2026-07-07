@@ -46,3 +46,7 @@ export function combine(...rules: FieldRule[]): FieldRule {
 export function requiredWhen(condition: (values: any) => boolean, message = 'Este campo é obrigatório.'): FieldRule {
   return (value, values) => (condition(values) && (!value || !value.trim()) ? message : undefined);
 }
+
+export function matches(otherField: string, message = 'Os valores não coincidem.'): FieldRule {
+  return (value, values) => (value !== values[otherField] ? message : undefined);
+}
