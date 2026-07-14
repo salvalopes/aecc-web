@@ -1,5 +1,5 @@
 import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, startTransition } from 'react';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/useAuth';
@@ -66,7 +66,7 @@ function ProductItem({ product }: { product: Product }) {
 }
 
 export default function CompanyDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, edit } = useLocalSearchParams<{ id: string; edit?: string }>();
   const { user } = useAuth();
   const navigation = useNavigation();
   const theme = useTheme();
@@ -89,6 +89,19 @@ export default function CompanyDetailScreen() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const isOwner = !!user && !!company && company.ownerUserId === user.id;
+  const autoOpenHandledRef = useRef(false);
+
+  // Permite ao ecrã "As minhas empresas" abrir diretamente o modal de edição
+  // via ?edit=1, sem duplicar o formulário (que já vive só aqui, com upload de logo).
+  useEffect(() => {
+    if (autoOpenHandledRef.current) return;
+    if (!company || !isOwner) return;
+    if (edit === '1') {
+      autoOpenHandledRef.current = true;
+      openEdit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [company, isOwner, edit]);
 
   useLayoutEffect(() => {
     if (isOwner) {

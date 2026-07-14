@@ -19,6 +19,7 @@ export default function AppLayout() {
   const { token, user, isLoading } = useAuth();
   const theme = useTheme();
   const isAdmin = user?.role === 'Admin';
+  const isAssociateOrAdmin = user?.role === 'Admin' || user?.role === 'Associado';
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -44,9 +45,19 @@ export default function AppLayout() {
       <Tabs.Screen
         name="companies/index"
         options={{
-          title: 'Empresas',
-          tabBarLabel: 'Empresas',
+          title: 'Yellow Pages',
+          tabBarLabel: 'Yellow Pages',
           tabBarIcon: ({ color }) => <Icon name="building-2" size={20} color={color} />,
+          headerLeft: HeaderLogo,
+        }}
+      />
+      <Tabs.Screen
+        name="my-companies/index"
+        options={{
+          href: isAssociateOrAdmin ? undefined : null,
+          title: 'As minhas empresas',
+          tabBarLabel: 'As minhas empresas',
+          tabBarIcon: ({ color }) => <Icon name="pencil" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
       />

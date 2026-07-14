@@ -4,13 +4,6 @@ import type { Company, CompanyDirectoryEntry, CreateCompanyRequest, PagedResult,
 import type { ImagePickerAsset } from 'expo-image-picker';
 
 export const companiesApi = {
-  list: (params?: { name?: string; categoryId?: string }) => {
-    const qs = new URLSearchParams();
-    if (params?.name) qs.set('name', params.name);
-    if (params?.categoryId) qs.set('categoryId', params.categoryId);
-    const query = qs.toString() ? `?${qs}` : '';
-    return apiClient.get<Company[]>(`/companies${query}`);
-  },
   directory: (params?: { name?: string; page?: number; pageSize?: number }) => {
     const qs = new URLSearchParams();
     if (params?.name) qs.set('name', params.name);
