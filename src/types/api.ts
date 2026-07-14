@@ -34,7 +34,7 @@ export interface Category {
 
 export interface Company {
   id: string;
-  ownerUserId: string;
+  ownerUserId: string | null;
   name: string;
   description: string;
   logoUrl: string | null;
@@ -44,6 +44,40 @@ export interface Company {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  tradeName: string | null;
+  caeDescription: string | null;
+  phone: string | null;
+  contactEmail: string | null;
+  website: string | null;
+  address: string | null;
+  locality: string | null;
+  postalCode: string | null;
+  postalCodeLocality: string | null;
+}
+
+// Diretório público de empresas (GET /companies/directory) — sem TaxId/ownerUserId (RGPD).
+export interface CompanyDirectoryEntry {
+  id: string;
+  name: string;
+  tradeName: string | null;
+  caeDescription: string | null;
+  phone: string | null;
+  contactEmail: string | null;
+  website: string | null;
+  address: string | null;
+  locality: string | null;
+  postalCode: string | null;
+  postalCodeLocality: string | null;
+  hasOwner: boolean;
+  logoUrl: string | null;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 export interface ProductImage {

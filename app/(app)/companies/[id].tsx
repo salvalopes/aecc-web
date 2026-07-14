@@ -17,6 +17,13 @@ interface FormState {
   leadDestinationEmail: string;
 }
 
+function buildAddressLine(company: Company): string | null {
+  const parts = [company.address, company.postalCode, company.postalCodeLocality ?? company.locality].filter(
+    (part): part is string => !!part && part.trim().length > 0
+  );
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
 function ProductItem({ product }: { product: Product }) {
   const { colors, fontFamily, fontSize, fontWeight, spacing } = useTheme();
 
@@ -87,11 +94,18 @@ export default function CompanyDetailScreen() {
     if (isOwner) {
       navigation.setOptions({
         headerRight: () => (
-          <Pressable onPress={openEdit} style={styles.headerBtn} hitSlop={8}>
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.accentPrimary }}>
-              Editar
-            </Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable onPress={handleDelete} style={styles.headerBtn} hitSlop={8}>
+              <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.error }}>
+                Apagar
+              </Text>
+            </Pressable>
+            <Pressable onPress={openEdit} style={styles.headerBtn} hitSlop={8}>
+              <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.accentPrimary }}>
+                Editar
+              </Text>
+            </Pressable>
+          </View>
         ),
       });
     }
@@ -123,6 +137,29 @@ export default function CompanyDetailScreen() {
   useEffect(() => {
     load();
   }, [id]);
+
+  function handleDelete() {
+    if (!company) return;
+    Alert.alert(
+      'Apagar empresa',
+      `Tem a certeza que quer apagar "${company.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Apagar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await companiesApi.delete(company.id);
+              router.back();
+            } catch (e) {
+              Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar empresa.');
+            }
+          },
+        },
+      ]
+    );
+  }
 
   function openEdit() {
     if (!company) return;
@@ -199,6 +236,13 @@ export default function CompanyDetailScreen() {
   }
 
   const currentLogoUri = pendingLogoAsset?.uri ?? company.logoUrl;
+  const profileFields = [
+    { label: 'Atividade', value: company.caeDescription },
+    { label: 'Telefone', value: company.phone },
+    { label: 'Email', value: company.contactEmail },
+    { label: 'Website', value: company.website },
+    { label: 'Morada', value: buildAddressLine(company) },
+  ].filter((f): f is { label: string; value: string } => !!f.value);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
@@ -231,6 +275,18 @@ export default function CompanyDetailScreen() {
               >
                 {company.name}
               </Text>
+              {!!company.tradeName && (
+                <Text
+                  style={{
+                    fontFamily: fontFamily.body,
+                    fontSize: fontSize.base,
+                    color: colors.textSecondary,
+                    marginBottom: spacing[3],
+                  }}
+                >
+                  {company.tradeName}
+                </Text>
+              )}
               {!!company.description && (
                 <Text
                   style={{
@@ -243,6 +299,19 @@ export default function CompanyDetailScreen() {
                 >
                   {company.description}
                 </Text>
+              )}
+              {profileFields.length > 0 && (
+                <View style={{ gap: spacing[3], marginBottom: spacing[4] }}>
+                  {profileFields.map(f => (
+                    <Text
+                      key={f.label}
+                      style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.textSecondary }}
+                    >
+                      <Text style={{ fontWeight: fontWeight.semibold, color: colors.textPrimary }}>{f.label}: </Text>
+                      {f.value}
+                    </Text>
+                  ))}
+                </View>
               )}
               <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.textTertiary }}>
                 Cooldown leads: {company.leadCooldownMinutes} min
@@ -391,6 +460,7 @@ const styles = StyleSheet.create({
   productCard: { marginHorizontal: 12, marginBottom: 8 },
   productHeader: { flexDirection: 'row', alignItems: 'center' },
   benefitTag: { flexDirection: 'row', alignItems: 'center' },
+  headerActions: { flexDirection: 'row' },
   headerBtn: { paddingHorizontal: 12, paddingVertical: 6 },
   logoPicker: {
     width: 100,
