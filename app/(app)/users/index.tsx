@@ -485,6 +485,6 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: 'row', gap: 16, marginTop: 4 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
   fab: { position: 'absolute', bottom: 24, right: 20 },
-  roleRow: { flexDirection: 'row', gap: 8 },
+  roleRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   estadoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

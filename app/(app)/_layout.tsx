@@ -1,6 +1,6 @@
 import { Tabs, router } from 'expo-router';
 import { useEffect } from 'react';
-import { Image } from 'react-native';
+import { Image, Text, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon } from '@/components/ui';
@@ -9,15 +9,31 @@ function HeaderLogo() {
   return (
     <Image
       source={require('../../assets/brand/aecc-logo.webp')}
-      style={{ width: 28, height: 28, marginLeft: 16 }}
+      style={{ width: 40, height: 40, marginLeft: 16 }}
       resizeMode="contain"
     />
+  );
+}
+
+// Renderer partilhado por todos os separadores: em vez de cortar o texto quando
+// não cabe (ex. "As minhas empresas" em ecrãs estreitos), reduz o tamanho da
+// fonte consoante a largura da janela e permite quebra em 2 linhas. Aplica-se
+// por igual a todos os separadores — não é um ajuste específico de um label.
+function TabLabel({ label, color, width }: { label: string; color: string; width: number }) {
+  const { fontFamily } = useTheme();
+  const fontSize = width < 400 ? 10 : width < 600 ? 11 : 12;
+
+  return (
+    <Text style={{ fontFamily: fontFamily.body, fontSize, color, textAlign: 'center', width: '100%' }}>
+      {label}
+    </Text>
   );
 }
 
 export default function AppLayout() {
   const { token, user, isLoading } = useAuth();
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const isAdmin = user?.role === 'Admin';
   const isAssociateOrAdmin = user?.role === 'Admin' || user?.role === 'Associado';
 
@@ -35,10 +51,12 @@ export default function AppLayout() {
       screenOptions={{
         tabBarActiveTintColor: theme.colors.accentPrimary,
         tabBarInactiveTintColor: theme.colors.textTertiary,
-        tabBarStyle: { backgroundColor: theme.colors.surfaceCard, borderTopColor: theme.colors.borderSubtle },
+        tabBarStyle: { backgroundColor: theme.colors.surfaceCard, borderTopColor: theme.colors.borderSubtle, height: 76 },
+        tabBarItemStyle: { paddingVertical: 6 },
+        tabBarIconStyle: { marginBottom: 2 },
         headerStyle: { backgroundColor: theme.colors.surfaceCard },
-        headerTitleStyle: { fontFamily: theme.fontFamily.display, fontWeight: theme.fontWeight.bold },
         headerTintColor: theme.colors.textPrimary,
+        headerTitle: () => null,
         headerShown: true,
       }}
     >
@@ -46,7 +64,7 @@ export default function AppLayout() {
         name="companies/index"
         options={{
           title: 'Yellow Pages',
-          tabBarLabel: 'Yellow Pages',
+          tabBarLabel: ({ color }) => <TabLabel label="Yellow Pages" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="building-2" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
@@ -56,7 +74,7 @@ export default function AppLayout() {
         options={{
           href: isAssociateOrAdmin ? undefined : null,
           title: 'As minhas empresas',
-          tabBarLabel: 'As minhas empresas',
+          tabBarLabel: ({ color }) => <TabLabel label="As minhas empresas" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="pencil" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
@@ -65,7 +83,7 @@ export default function AppLayout() {
         name="products/index"
         options={{
           title: 'Produtos',
-          tabBarLabel: 'Produtos',
+          tabBarLabel: ({ color }) => <TabLabel label="Produtos" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="shopping-bag" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
@@ -74,7 +92,7 @@ export default function AppLayout() {
         name="categories/index"
         options={{
           title: 'Categorias',
-          tabBarLabel: 'Categorias',
+          tabBarLabel: ({ color }) => <TabLabel label="Categorias" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="folder" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
@@ -83,7 +101,7 @@ export default function AppLayout() {
         name="profile/index"
         options={{
           title: 'Perfil',
-          tabBarLabel: 'Perfil',
+          tabBarLabel: ({ color }) => <TabLabel label="Perfil" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="user" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
@@ -93,15 +111,15 @@ export default function AppLayout() {
         options={{
           href: isAdmin ? undefined : null,
           title: 'Utilizadores',
-          tabBarLabel: 'Utilizadores',
+          tabBarLabel: ({ color }) => <TabLabel label="Utilizadores" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="shield" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
       />
       {/* Ecrãs de detalhe — ocultos da tab bar */}
       <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="companies/[id]" options={{ href: null, title: 'Empresa' }} />
-      <Tabs.Screen name="products/[id]" options={{ href: null, title: 'Produto' }} />
+      <Tabs.Screen name="companies/[id]" options={{ href: null, title: 'Empresa', headerLeft: HeaderLogo }} />
+      <Tabs.Screen name="products/[id]" options={{ href: null, title: 'Produto', headerLeft: HeaderLogo }} />
     </Tabs>
   );
 }
