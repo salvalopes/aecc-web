@@ -119,6 +119,7 @@ export default function AppLayout() {
       {/* Ecrãs de detalhe — ocultos da tab bar */}
       <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="companies/[id]" options={{ href: null, title: 'Empresa', headerLeft: HeaderLogo }} />
+      <Tabs.Screen name="companies/category/[categoryId]" options={{ href: null, title: 'Empresas', headerLeft: HeaderLogo }} />
       <Tabs.Screen name="products/[id]" options={{ href: null, title: 'Produto', headerLeft: HeaderLogo }} />
     </Tabs>
   );

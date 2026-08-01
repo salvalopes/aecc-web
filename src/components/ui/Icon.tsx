@@ -17,7 +17,19 @@ export type IconName =
   | 'pencil'
   | 'trash-2'
   | 'image'
-  | 'search';
+  | 'search'
+  | 'utensils'
+  | 'cake'
+  | 'wrench'
+  | 'shirt'
+  | 'plane'
+  | 'hard-hat'
+  | 'scissors'
+  | 'shopping-basket'
+  | 'cross'
+  | 'house'
+  | 'briefcase'
+  | 'layout-grid';
 
 interface IconProps {
   name: IconName;
@@ -125,6 +137,101 @@ export function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 2 
         <>
           <Path d="m21 21-4.34-4.34" {...common} />
           <Circle cx="11" cy="11" r="8" {...common} />
+        </>
+      )}
+      {name === 'utensils' && (
+        <>
+          <Path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" {...common} />
+          <Path d="M7 2v20" {...common} />
+          <Path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" {...common} />
+        </>
+      )}
+      {name === 'cake' && (
+        <>
+          <Path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" {...common} />
+          <Path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1" {...common} />
+          <Path d="M2 21h20" {...common} />
+          <Path d="M7 8v3" {...common} />
+          <Path d="M12 8v3" {...common} />
+          <Path d="M17 8v3" {...common} />
+          <Path d="M7 4h.01" {...common} />
+          <Path d="M12 4h.01" {...common} />
+          <Path d="M17 4h.01" {...common} />
+        </>
+      )}
+      {name === 'wrench' && (
+        <Path
+          d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"
+          {...common}
+        />
+      )}
+      {name === 'shirt' && (
+        <Path
+          d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"
+          {...common}
+        />
+      )}
+      {name === 'plane' && (
+        <Path
+          d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"
+          {...common}
+        />
+      )}
+      {name === 'hard-hat' && (
+        <>
+          <Path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" {...common} />
+          <Path d="M14 6a6 6 0 0 1 6 6v3" {...common} />
+          <Path d="M4 15v-3a6 6 0 0 1 6-6" {...common} />
+          <Rect x="2" y="15" width="20" height="4" rx="1" {...common} />
+        </>
+      )}
+      {name === 'scissors' && (
+        <>
+          <Circle cx="6" cy="6" r="3" {...common} />
+          <Path d="M8.12 8.12 12 12" {...common} />
+          <Path d="M20 4 8.12 15.88" {...common} />
+          <Circle cx="6" cy="18" r="3" {...common} />
+          <Path d="M14.8 14.8 20 20" {...common} />
+        </>
+      )}
+      {name === 'shopping-basket' && (
+        <>
+          <Path d="m15 11-1 9" {...common} />
+          <Path d="m19 11-4-7" {...common} />
+          <Path d="M2 11h20" {...common} />
+          <Path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4" {...common} />
+          <Path d="M4.5 15.5h15" {...common} />
+          <Path d="m5 11 4-7" {...common} />
+          <Path d="m9 11 1 9" {...common} />
+        </>
+      )}
+      {name === 'cross' && (
+        <Path
+          d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z"
+          {...common}
+        />
+      )}
+      {name === 'house' && (
+        <>
+          <Path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" {...common} />
+          <Path
+            d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+            {...common}
+          />
+        </>
+      )}
+      {name === 'briefcase' && (
+        <>
+          <Path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" {...common} />
+          <Rect width="20" height="14" x="2" y="6" rx="2" {...common} />
+        </>
+      )}
+      {name === 'layout-grid' && (
+        <>
+          <Rect width="7" height="7" x="3" y="3" rx="1" {...common} />
+          <Rect width="7" height="7" x="14" y="3" rx="1" {...common} />
+          <Rect width="7" height="7" x="14" y="14" rx="1" {...common} />
+          <Rect width="7" height="7" x="3" y="14" rx="1" {...common} />
         </>
       )}
     </Svg>
