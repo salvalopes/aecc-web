@@ -1,6 +1,5 @@
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState, startTransition } from 'react';
-import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { usersApi } from '@/api/users.api';
 import { ApiError } from '@/api/client';
@@ -21,6 +20,7 @@ import {
   ErrorState,
   LoadingSpinner,
 } from '@/components/ui';
+import { RoleGuard } from '@/components/RoleGuard';
 
 const ROLES: UserRole[] = ['Admin', 'Associado', 'Cliente'];
 
@@ -158,15 +158,16 @@ function UserRow({
 }
 
 export default function UsersScreen() {
+  return (
+    <RoleGuard allow={['Admin']}>
+      <UsersContent />
+    </RoleGuard>
+  );
+}
+
+function UsersContent() {
   const theme = useTheme();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'Admin';
-
-  useEffect(() => {
-    if (user && !isAdmin) {
-      router.replace('/(app)');
-    }
-  }, [user, isAdmin]);
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -194,10 +195,8 @@ export default function UsersScreen() {
   }
 
   useEffect(() => {
-    if (isAdmin) load();
-  }, [isAdmin]);
-
-  if (!isAdmin) return null;
+    load();
+  }, []);
 
   function isSelf(u: ManagedUser) {
     return !!user && u.id === user.id;
@@ -479,7 +478,7 @@ export default function UsersScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  list: { padding: 12, gap: 10 },
+  list: { padding: 12, gap: 10, paddingBottom: 80 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
   cardActions: { flexDirection: 'row', gap: 16, marginTop: 4 },

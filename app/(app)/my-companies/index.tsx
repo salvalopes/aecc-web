@@ -8,6 +8,7 @@ import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
 import type { Company, CreateCompanyRequest } from '@/types/api';
 import { Button, Input, Card, Modal, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
+import { RoleGuard } from '@/components/RoleGuard';
 
 interface FormState {
   name: string;
@@ -79,6 +80,14 @@ function MyCompanyCard({ company }: { company: Company }) {
 }
 
 export default function MyCompaniesScreen() {
+  return (
+    <RoleGuard allow={['Associado', 'Admin']}>
+      <MyCompaniesContent />
+    </RoleGuard>
+  );
+}
+
+function MyCompaniesContent() {
   const { colors, fontFamily, fontSize, spacing, radius } = useTheme();
 
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -160,7 +169,7 @@ export default function MyCompaniesScreen() {
           data={companies}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <MyCompanyCard company={item} />}
-          contentContainerStyle={[styles.list, { padding: spacing[6], gap: spacing[5] }]}
+          contentContainerStyle={[styles.list, { padding: spacing[6], paddingBottom: 80, gap: spacing[5] }]}
           ListEmptyComponent={<EmptyState message="Ainda não tem empresas." />}
           refreshing={loading}
           onRefresh={load}
