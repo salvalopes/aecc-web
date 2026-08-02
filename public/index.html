@@ -16,6 +16,14 @@
     <meta name="apple-mobile-web-app-title" content="AECC" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 
+    <!-- Colors the Safari status bar / bottom toolbar chrome. Two variants
+         (instead of app.config.ts web.themeColor, which only allows one
+         static value) so each matches surfaceApp from src/theme/colors.ts
+         for the OS color scheme actually in effect — otherwise Safari falls
+         back to white for whichever scheme isn't covered. -->
+    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#10181d" media="(prefers-color-scheme: dark)" />
+
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
@@ -25,6 +33,21 @@
         /* Tracks Safari's dynamic viewport (address bar collapsing/expanding)
            instead of a stale height computed before it collapses. */
         height: 100dvh;
+      }
+      /* Matches surfaceApp from src/theme/colors.ts so the safe-area /
+         overscroll regions under the Safari status bar and bottom toolbar
+         (and the pre-hydration paint) aren't the browser's default white. */
+      html,
+      body,
+      #root {
+        background-color: #f5f5f5;
+      }
+      @media (prefers-color-scheme: dark) {
+        html,
+        body,
+        #root {
+          background-color: #10181d;
+        }
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
       body {
