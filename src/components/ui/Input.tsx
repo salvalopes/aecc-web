@@ -62,7 +62,9 @@ export function Input({
         onBlur={() => setFocused(false)}
         style={{
           fontFamily: fontFamily.body,
-          fontSize: fontSize.base,
+          // Must stay >= 16px: Safari iOS auto-zooms the page on focus of any
+          // <input>/<textarea>/<select> with a computed font-size below that.
+          fontSize: fontSize.md,
           color: colors.textPrimary,
           backgroundColor: colors.surfaceSunken,
           borderWidth: 1,
