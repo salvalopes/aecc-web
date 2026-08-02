@@ -73,27 +73,9 @@ export default function AppLayout() {
         name="my-companies/index"
         options={{
           href: isAssociateOrAdmin ? undefined : null,
-          title: 'As minhas empresas',
-          tabBarLabel: ({ color }) => <TabLabel label="As minhas empresas" color={color} width={width} />,
+          title: 'Editar',
+          tabBarLabel: ({ color }) => <TabLabel label="Editar" color={color} width={width} />,
           tabBarIcon: ({ color }) => <Icon name="pencil" size={20} color={color} />,
-          headerLeft: HeaderLogo,
-        }}
-      />
-      <Tabs.Screen
-        name="products/index"
-        options={{
-          title: 'Produtos',
-          tabBarLabel: ({ color }) => <TabLabel label="Produtos" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="shopping-bag" size={20} color={color} />,
-          headerLeft: HeaderLogo,
-        }}
-      />
-      <Tabs.Screen
-        name="categories/index"
-        options={{
-          title: 'Categorias',
-          tabBarLabel: ({ color }) => <TabLabel label="Categorias" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="folder" size={20} color={color} />,
           headerLeft: HeaderLogo,
         }}
       />

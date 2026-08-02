@@ -85,9 +85,9 @@ mobile/
 ├── app/                     # Rotas Expo Router (file-based)
 │   ├── (auth)/login.tsx     # Ecrã de login
 │   └── (app)/               # Área autenticada
-│       ├── companies/       # Listagem + detalhe de empresas
-│       ├── products/        # Listagem + detalhe de produtos
-│       ├── categories/      # Listagem de categorias
+│       ├── companies/       # Yellow Pages (diretório) + detalhe de empresas
+│       ├── my-companies/    # "Editar" — empresas geridas pelo utilizador
+│       ├── products/[id]    # Detalhe de produto (sem listagem standalone)
 │       └── profile/         # Perfil do utilizador
 └── src/
     ├── api/                 # Camada HTTP tipada

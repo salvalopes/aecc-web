@@ -6,9 +6,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
 import { companiesApi } from '@/api/companies.api';
 import { productsApi } from '@/api/products.api';
+import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
-import type { Company, Product, UpdateCompanyRequest } from '@/types/api';
-import { Icon, Badge, Card, Input, Modal, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, requiredWhen } from '@/utils/validators';
+import type { Category, Company, CreateProductRequest, Product, ProductType, UpdateCompanyRequest } from '@/types/api';
+import { Button, Chip, Icon, Badge, Card, Input, Modal, Switch, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
 
 interface FormState {
   name: string;
@@ -16,6 +19,24 @@ interface FormState {
   leadCooldownMinutes: string;
   leadDestinationEmail: string;
 }
+
+interface ProductFormState {
+  categoryId: string;
+  type: ProductType;
+  name: string;
+  description: string;
+  hasMemberBenefit: boolean;
+  memberBenefitDescription: string;
+}
+
+const DEFAULT_PRODUCT_FORM: ProductFormState = {
+  categoryId: '',
+  type: 'Product',
+  name: '',
+  description: '',
+  hasMemberBenefit: false,
+  memberBenefitDescription: '',
+};
 
 function buildAddressLine(company: Company): string | null {
   const parts = [company.address, company.postalCode, company.postalCodeLocality ?? company.locality].filter(
@@ -88,6 +109,18 @@ export default function CompanyDetailScreen() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [productModalVisible, setProductModalVisible] = useState(false);
+  const [productForm, setProductForm] = useState<ProductFormState>(DEFAULT_PRODUCT_FORM);
+  const [productSaving, setProductSaving] = useState(false);
+  const {
+    fieldErrors: productFieldErrors,
+    formError: productFormError,
+    validate: validateProduct,
+    clearErrors: clearProductErrors,
+    applyApiError: applyProductApiError,
+  } = useFormValidation<ProductFormState>();
+
   const isOwner = !!user && !!company && company.ownerUserId === user.id;
   const autoOpenHandledRef = useRef(false);
 
@@ -150,6 +183,13 @@ export default function CompanyDetailScreen() {
   useEffect(() => {
     load();
   }, [id]);
+
+  // Categorias só são precisas para o formulário de "Novo Produto", que só o
+  // dono da empresa vê — evita o pedido extra para todos os outros visitantes.
+  useEffect(() => {
+    if (!isOwner) return;
+    categoriesApi.list().then(cats => startTransition(() => setCategories(cats))).catch(() => {});
+  }, [isOwner]);
 
   function handleDelete() {
     if (!company) return;
@@ -232,6 +272,53 @@ export default function CompanyDetailScreen() {
     }
   }
 
+  function openCreateProduct() {
+    setProductForm(DEFAULT_PRODUCT_FORM);
+    clearProductErrors();
+    setProductModalVisible(true);
+  }
+
+  async function handleSaveProduct() {
+    if (!company) return;
+    const isValid = validateProduct(productForm, {
+      name: required('O nome é obrigatório.'),
+      categoryId: required('Selecione uma categoria.'),
+      memberBenefitDescription: requiredWhen(
+        v => v.hasMemberBenefit,
+        'Descreva o benefício para membros.'
+      ),
+    });
+    if (!isValid) return;
+
+    setProductSaving(true);
+    try {
+      const payload: CreateProductRequest = {
+        companyId: company.id,
+        categoryId: productForm.categoryId,
+        type: productForm.type,
+        name: productForm.name.trim(),
+        description: productForm.description.trim(),
+        hasMemberBenefit: productForm.hasMemberBenefit,
+        memberBenefitDescription: productForm.hasMemberBenefit
+          ? productForm.memberBenefitDescription.trim() || null
+          : null,
+      };
+      await productsApi.create(payload);
+      setProductModalVisible(false);
+      const prods = await productsApi.list({ companyId: company.id });
+      startTransition(() => setProducts(prods));
+    } catch (e) {
+      applyProductApiError(e, {
+        CategoryId: 'categoryId',
+        Name: 'name',
+        Description: 'description',
+        MemberBenefitDescription: 'memberBenefitDescription',
+      });
+    } finally {
+      setProductSaving(false);
+    }
+  }
+
   if (loading && !company) {
     return (
       <View style={[styles.center, { backgroundColor: colors.surfaceApp }]}>
@@ -249,6 +336,17 @@ export default function CompanyDetailScreen() {
   }
 
   const currentLogoUri = pendingLogoAsset?.uri ?? company.logoUrl;
+  const flatCategories = (function flatten(cats: Category[]): Category[] {
+    return cats.flatMap(c => [c, ...flatten(c.children)]);
+  })(categories);
+  const productLabelStyle = {
+    fontFamily: fontFamily.body,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold as any,
+    color: colors.textSecondary,
+    marginTop: 16,
+    marginBottom: 6,
+  };
   const profileFields = [
     { label: 'Atividade', value: company.caeDescription },
     { label: 'Telefone', value: company.phone },
@@ -353,6 +451,12 @@ export default function CompanyDetailScreen() {
         refreshing={loading}
         onRefresh={load}
       />
+
+      {isOwner && (
+        <Button onPress={openCreateProduct} style={styles.fab}>
+          + Novo Produto
+        </Button>
+      )}
 
       <Modal
         visible={modalVisible}
@@ -459,6 +563,130 @@ export default function CompanyDetailScreen() {
           />
         </View>
       </Modal>
+
+      <Modal
+        visible={productModalVisible}
+        title="Novo Produto"
+        onClose={() => setProductModalVisible(false)}
+        onSave={handleSaveProduct}
+        saving={productSaving}
+        saveLabel="Guardar"
+      >
+        {productFormError && (
+          <View
+            style={{
+              backgroundColor: colors.errorBg,
+              borderRadius: radius.sm,
+              padding: spacing[5],
+              marginBottom: spacing[6],
+            }}
+          >
+            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}>
+              {productFormError}
+            </Text>
+          </View>
+        )}
+
+        <Text style={productLabelStyle}>Categoria *</Text>
+        {productFieldErrors.categoryId && (
+          <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.error, marginBottom: 4 }}>
+            {productFieldErrors.categoryId}
+          </Text>
+        )}
+        {flatCategories.map(cat => {
+          const selected = productForm.categoryId === cat.id;
+          return (
+            <Pressable
+              key={cat.id}
+              style={[
+                styles.pickerOption,
+                {
+                  borderColor: selected ? colors.accentPrimary : colors.borderDefault,
+                  backgroundColor: selected ? colors.infoBg : colors.surfaceSunken,
+                },
+              ]}
+              onPress={() => setProductForm(f => ({ ...f, categoryId: cat.id }))}
+            >
+              <Text
+                style={{
+                  fontFamily: fontFamily.body,
+                  fontSize: fontSize.base,
+                  fontWeight: selected ? fontWeight.semibold : fontWeight.regular,
+                  color: selected ? colors.accentPrimary : colors.textPrimary,
+                }}
+              >
+                {cat.name}
+              </Text>
+              {selected && <Icon name="check" size={16} color={colors.accentPrimary} />}
+            </Pressable>
+          );
+        })}
+
+        <Text style={productLabelStyle}>Tipo *</Text>
+        <View style={styles.typeToggle}>
+          {(['Product', 'Service'] as const).map(t => (
+            <Chip
+              key={t}
+              active={productForm.type === t}
+              onPress={() => setProductForm(f => ({ ...f, type: t }))}
+              style={styles.typeChip}
+            >
+              {t === 'Product' ? 'Produto' : 'Serviço'}
+            </Chip>
+          ))}
+        </View>
+
+        <Input
+          label="Nome"
+          required
+          value={productForm.name}
+          onChangeText={text => setProductForm(f => ({ ...f, name: text }))}
+          placeholder="Nome do produto ou serviço"
+          style={styles.fieldSpacing}
+          error={productFieldErrors.name}
+        />
+
+        <Input
+          label="Descrição"
+          value={productForm.description}
+          onChangeText={text => setProductForm(f => ({ ...f, description: text }))}
+          placeholder="Descrição"
+          multiline
+          numberOfLines={3}
+          style={styles.fieldSpacing}
+          error={productFieldErrors.description}
+        />
+
+        <View style={styles.switchRow}>
+          <Text
+            style={{
+              fontFamily: fontFamily.body,
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.textSecondary,
+            }}
+          >
+            Tem benefício para membros
+          </Text>
+          <Switch
+            value={productForm.hasMemberBenefit}
+            onValueChange={v => setProductForm(f => ({ ...f, hasMemberBenefit: v }))}
+          />
+        </View>
+
+        {productForm.hasMemberBenefit && (
+          <Input
+            label="Descrição do benefício"
+            value={productForm.memberBenefitDescription}
+            onChangeText={text => setProductForm(f => ({ ...f, memberBenefitDescription: text }))}
+            placeholder="Descreva o benefício para membros"
+            multiline
+            numberOfLines={2}
+            style={styles.fieldSpacing}
+            error={productFieldErrors.memberBenefitDescription}
+          />
+        )}
+      </Modal>
     </View>
   );
 }
@@ -485,4 +713,24 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   logoPreview: { width: 100, height: 100 },
+  fab: { position: 'absolute', bottom: 24, right: 20 },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  typeToggle: { flexDirection: 'row', gap: 8 },
+  typeChip: { flex: 1, justifyContent: 'center' },
+  fieldSpacing: { marginTop: 16 },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
 });
