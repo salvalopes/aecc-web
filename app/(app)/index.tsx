@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
+import { focusRingStyle, suppressNativeOutline } from '@/theme/tokens';
 import { categoriesApi } from '@/api/categories.api';
 import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
@@ -38,6 +39,7 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
 
   const [search, setSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<CompanyDirectoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,16 +116,26 @@ export default function HomeScreen() {
             <View
               style={[
                 styles.searchBar,
-                { borderRadius: glassRadius.control, borderColor: glass.neutral.border, backgroundColor: glass.neutral.tint },
+                {
+                  borderRadius: glassRadius.control,
+                  borderColor: glass.neutral.border,
+                  backgroundColor: glass.neutral.tint,
+                },
+                focusRingStyle(colors.focusRing, searchFocused),
               ]}
             >
               <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
               <TextInput
                 value={search}
                 onChangeText={setSearch}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
                 placeholder="Pesquisar empresas..."
                 placeholderTextColor={colors.textTertiary}
-                style={{ flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary }}
+                style={[
+                  { flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary },
+                  suppressNativeOutline,
+                ]}
               />
             </View>
             <Button variant="gold" fullWidth onPress={() => goToCompanies({ search: search.trim() || undefined })}>

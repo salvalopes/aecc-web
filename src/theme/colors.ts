@@ -21,6 +21,8 @@ export interface ThemeColors {
   textTertiary: string;
   textOnAccent: string;
   textOnGold: string;
+  /** Text/icon color for anything painted over glass.primary or accentPrimary — resolves to textOnAccent in light (navy primary) and textOnGold in dark (gold primary). */
+  textOnPrimary: string;
   textLink: string;
 
   accentPrimary: string;
@@ -65,6 +67,7 @@ export const lightColors: ThemeColors = {
   textTertiary: '#8a7d66',
   textOnAccent: '#ffffff',
   textOnGold: '#0a2637',
+  textOnPrimary: '#ffffff',
   textLink: '#134d6f',
 
   accentPrimary: '#134d6f',
@@ -74,7 +77,7 @@ export const lightColors: ThemeColors = {
   accentGoldHover: '#d29a1a',
   accentGoldText: '#7f580c',
 
-  focusRing: 'rgba(19, 77, 111, 0.45)',
+  focusRing: '#7f580c',
 
   success: '#0b743f',
   successBg: '#e6f5ec',
@@ -108,6 +111,7 @@ export const darkColors: ThemeColors = {
   textTertiary: '#7793a5',
   textOnAccent: '#ffffff',
   textOnGold: '#1f1600',
+  textOnPrimary: '#1f1600',
   textLink: '#f2c85a',
 
   // Dark mode leads with gold: the primary accent becomes gold rather than a
@@ -119,7 +123,7 @@ export const darkColors: ThemeColors = {
   accentGoldHover: '#f2c85a',
   accentGoldText: '#f2c85a',
 
-  focusRing: 'rgba(237, 177, 45, 0.55)',
+  focusRing: '#f2c85a',
 
   success: '#2fb371',
   successBg: '#0b2a1b',

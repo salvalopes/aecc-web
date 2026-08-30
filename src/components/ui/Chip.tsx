@@ -33,7 +33,7 @@ export function Chip({ children, active = false, onPress, style }: ChipProps) {
           fontFamily: fontFamily.body,
           fontSize: fontSize.sm,
           fontWeight: active ? fontWeight.semibold : fontWeight.regular,
-          color: active ? colors.textOnAccent : colors.textSecondary,
+          color: active ? colors.textOnPrimary : colors.textSecondary,
         }}
       >
         {children}

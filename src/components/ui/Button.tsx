@@ -40,7 +40,7 @@ export function Button({
   style,
 }: ButtonProps) {
   const theme = useTheme();
-  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight, isDark } = theme;
+  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight } = theme;
   const s = SIZES[size];
 
   const destructive: GlassVariant = {
@@ -53,7 +53,7 @@ export function Button({
   };
 
   const config: Record<ButtonVariant, { glass: GlassVariant | null; fg: string }> = {
-    primary: { glass: glass.primary, fg: isDark ? colors.textOnGold : colors.textOnAccent },
+    primary: { glass: glass.primary, fg: colors.textOnPrimary },
     gold: { glass: glass.gold, fg: colors.textOnGold },
     secondary: { glass: glass.neutral, fg: colors.accentPrimary },
     destructive: { glass: destructive, fg: '#ffffff' },

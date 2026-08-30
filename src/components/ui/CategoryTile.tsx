@@ -52,7 +52,7 @@ export function CategoryTile({ slug, label, count = null, active = false, onPres
                   },
                 ]}
               >
-                <Icon name={categoryIcon(slug)} size={22} color={active ? colors.textOnAccent : colors.accentGoldText} />
+                <Icon name={categoryIcon(slug)} size={22} color={active ? colors.textOnPrimary : colors.accentGoldText} />
               </View>
               <Text
                 numberOfLines={2}
@@ -60,7 +60,7 @@ export function CategoryTile({ slug, label, count = null, active = false, onPres
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.semibold,
-                  color: active ? colors.textOnAccent : colors.textPrimary,
+                  color: active ? colors.textOnPrimary : colors.textPrimary,
                   textAlign: 'center',
                   lineHeight: fontSize.xs * 1.25,
                 }}
