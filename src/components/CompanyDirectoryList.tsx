@@ -62,7 +62,7 @@ function CompanyDirectoryRow({
           )}
         </Pressable>
         <IconButton
-          icon="chevron-right"
+          icon="caret-right"
           label={expanded ? 'Colapsar detalhes' : 'Expandir detalhes'}
           onPress={onToggle}
           style={[styles.chevron, { transform: [{ rotate: expanded ? '90deg' : '0deg' }] }]}

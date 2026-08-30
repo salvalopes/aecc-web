@@ -64,7 +64,7 @@ export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageL
               onPress={showPrev}
               hitSlop={12}
             >
-              <Icon name="chevron-left" size={22} color="#fff" />
+              <Icon name="caret-left" size={22} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
               style={{
@@ -79,7 +79,7 @@ export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageL
               onPress={showNext}
               hitSlop={12}
             >
-              <Icon name="chevron-right" size={22} color="#fff" />
+              <Icon name="caret-right" size={22} color="#fff" />
             </TouchableOpacity>
             <Text
               style={{

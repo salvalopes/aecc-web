@@ -32,6 +32,14 @@ export const radius = {
 // Minimum interactive target (WCAG 2.5.5 / brief requirement)
 export const hitTargetMin = 44;
 
+// Radii used only by the "seamless glass" surfaces (buttons, bars, tiles) —
+// see tokens/glass.css in the AECC design system. Every other radius lives
+// in `radius` above.
+export const glassRadius = {
+  control: 14,
+  panel: 20,
+} as const;
+
 export const fontFamily = {
   display: 'LibreFranklin',
   body: 'SourceSans3',

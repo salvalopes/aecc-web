@@ -3,21 +3,21 @@ import type { IconName } from '@/components/ui';
 // Mapeado por slug (estável) — ver AECC.Infrastructure/Import/CompanyCategorizationService.cs
 // para a lista canónica das 13 categorias de negócio.
 const CATEGORY_ICONS: Record<string, IconName> = {
-  restaurantes: 'utensils',
+  restaurantes: 'fork-knife',
   pastelarias: 'cake',
   oficinas: 'wrench',
-  seguros: 'shield',
-  vestuario: 'shirt',
-  viagens: 'plane',
+  seguros: 'shield-check',
+  vestuario: 't-shirt',
+  viagens: 'airplane-tilt',
   construcao: 'hard-hat',
   'beleza-e-bem-estar': 'scissors',
-  'comercio-alimentar': 'shopping-basket',
-  saude: 'cross',
-  imobiliario: 'house',
+  'comercio-alimentar': 'basket',
+  saude: 'first-aid-kit',
+  imobiliario: 'house-line',
   'servicos-profissionais': 'briefcase',
-  outros: 'layout-grid',
+  outros: 'squares-four',
 };
 
 export function categoryIcon(slug: string): IconName {
-  return CATEGORY_ICONS[slug] ?? 'layout-grid';
+  return CATEGORY_ICONS[slug] ?? 'squares-four';
 }

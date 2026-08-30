@@ -74,8 +74,8 @@ export default function ProductDetailScreen() {
       navigation.setOptions({
         headerRight: () => (
           <View style={styles.headerActions}>
-            <IconButton icon="pencil" label="Editar" onPress={openEdit} />
-            <IconButton icon="trash-2" label="Apagar" tone="danger" onPress={handleDelete} />
+            <IconButton icon="pencil-simple" label="Editar" onPress={openEdit} />
+            <IconButton icon="trash" label="Apagar" tone="danger" onPress={handleDelete} />
           </View>
         ),
       });

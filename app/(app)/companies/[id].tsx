@@ -506,7 +506,7 @@ export default function CompanyDetailScreen() {
             <Image source={{ uri: currentLogoUri }} style={[styles.logoPreview, { borderRadius: radius.lg }]} />
           ) : (
             <>
-              <Icon name="image" size={20} color={colors.textTertiary} />
+              <Icon name="image-square" size={20} color={colors.textTertiary} />
               <Text
                 style={{
                   fontFamily: fontFamily.body,

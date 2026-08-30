@@ -1,109 +1,79 @@
-import { FlatList, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useCallback, useEffect, useState, startTransition } from 'react';
-import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/theme/ThemeContext';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
 import type { Category } from '@/types/api';
-import { Card, Icon, Input, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
+import { Chip, Icon } from '@/components/ui';
 import { CompanyDirectoryList } from '@/components/CompanyDirectoryList';
-import { categoryIcon } from '@/utils/categoryIcons';
 
-function CategoryCard({ category, width }: { category: Category; width: number }) {
-  const { colors, fontFamily, fontSize, fontWeight, spacing } = useTheme();
-
-  return (
-    <Card
-      interactive
-      onPress={() =>
-        router.push({
-          pathname: '/(app)/companies/category/[categoryId]',
-          params: { categoryId: category.id, name: category.name },
-        })
-      }
-      style={{ width, alignItems: 'center', gap: spacing[3], paddingVertical: spacing[6] }}
-    >
-      <Icon name={categoryIcon(category.slug)} size={28} color={colors.accentPrimary} />
-      <Text
-        style={{
-          fontFamily: fontFamily.body,
-          fontSize: fontSize.sm,
-          fontWeight: fontWeight.semibold,
-          color: colors.textPrimary,
-          textAlign: 'center',
-        }}
-      >
-        {category.name}
-      </Text>
-    </Card>
-  );
-}
-
+// Diretório único e pesquisável, com chips de categoria e expansão inline por
+// linha — substitui a antiga grelha de categorias em 2 passos. `categoryId`/
+// `search` chegam por query param quando se navega a partir do Início ou de
+// um link antigo para /companies/category/[categoryId].
 export default function CompaniesScreen() {
-  const { colors, spacing } = useTheme();
-  const { width } = useWindowDimensions();
+  const params = useLocalSearchParams<{ categoryId?: string; name?: string; search?: string }>();
+  const { colors, glass, glassRadius, fontFamily, fontSize } = useTheme();
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(params.search ?? '');
+  const [categoryId, setCategoryId] = useState(params.categoryId ?? '');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadCategories = useCallback(() => {
-    setLoading(true);
-    setError(null);
     categoriesApi
       .list()
       .then(data => startTransition(() => setCategories(data)))
-      .catch(e =>
-        startTransition(() => setError(e instanceof ApiError ? e.message : 'Erro ao carregar categorias.'))
-      )
-      .finally(() => startTransition(() => setLoading(false)));
+      .catch(e => {
+        // Silenciosa — os chips de categoria são um filtro opcional; a lista
+        // de empresas em baixo tem o seu próprio ErrorState/retry.
+        if (!(e instanceof ApiError)) throw e;
+      });
   }, []);
 
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
 
-  const trimmedSearch = search.trim();
-  const gridPadding = spacing[6];
-  const cardGap = spacing[5];
-  const numColumns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
-  const cardWidth = (Math.min(width, 1100) - gridPadding * 2 - cardGap * (numColumns - 1)) / numColumns;
-
   return (
     <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
-      <View
-        style={[
-          styles.searchBar,
-          { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle, padding: spacing[6] },
-        ]}
-      >
-        <Input value={search} onChangeText={setSearch} placeholder="Pesquisar empresas..." />
+      <View style={[styles.header, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle }]}>
+        <View
+          style={[
+            styles.searchBar,
+            { borderRadius: glassRadius.control, borderColor: glass.neutral.border, backgroundColor: glass.neutral.tint },
+          ]}
+        >
+          <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Pesquisar empresas..."
+            placeholderTextColor={colors.textTertiary}
+            style={{ flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary }}
+          />
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <Chip active={!categoryId} onPress={() => setCategoryId('')}>
+            Todas
+          </Chip>
+          {categories.map(c => (
+            <Chip key={c.id} active={categoryId === c.id} onPress={() => setCategoryId(categoryId === c.id ? '' : c.id)}>
+              {c.name}
+            </Chip>
+          ))}
+        </ScrollView>
       </View>
 
-      {trimmedSearch.length > 0 ? (
-        <CompanyDirectoryList search={trimmedSearch} />
-      ) : loading ? (
-        <LoadingSpinner />
-      ) : error ? (
-        <ErrorState message={error} onRetry={loadCategories} />
-      ) : (
-        <FlatList
-          data={categories}
-          key={numColumns}
-          numColumns={numColumns}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <CategoryCard category={item} width={cardWidth} />}
-          contentContainerStyle={{ padding: gridPadding, gap: cardGap }}
-          columnWrapperStyle={numColumns > 1 ? { gap: cardGap } : undefined}
-          ListEmptyComponent={<EmptyState message="Nenhuma categoria encontrada." />}
-        />
-      )}
+      <CompanyDirectoryList search={search} categoryId={categoryId || undefined} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  searchBar: { borderBottomWidth: 1 },
+  header: { borderBottomWidth: 1, padding: 12, gap: 10 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingHorizontal: 14, borderWidth: 1 },
+  chipRow: { flexDirection: 'row', gap: 7, paddingBottom: 2 },
 });

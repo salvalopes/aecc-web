@@ -125,7 +125,7 @@ function UserRow({
       </View>
       <View style={styles.cardActions}>
         <Pressable onPress={() => onEdit(item)} style={styles.actionBtn}>
-          <Icon name="pencil" size={14} color={theme.colors.accentPrimary} />
+          <Icon name="pencil-simple" size={14} color={theme.colors.accentPrimary} />
           <Text
             style={{
               fontFamily: theme.fontFamily.body,
@@ -139,7 +139,7 @@ function UserRow({
         </Pressable>
         {!isSelf && (
           <Pressable onPress={() => onDelete(item)} style={styles.actionBtn}>
-            <Icon name="trash-2" size={14} color={theme.colors.error} />
+            <Icon name="trash" size={14} color={theme.colors.error} />
             <Text
               style={{
                 fontFamily: theme.fontFamily.body,

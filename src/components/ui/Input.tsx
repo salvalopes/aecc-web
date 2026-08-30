@@ -78,7 +78,7 @@ export function Input({
       />
       {error && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Icon name="triangle-alert" size={14} color={colors.error} />
+          <Icon name="warning-circle" size={14} color={colors.error} />
           <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.error }}>{error}</Text>
         </View>
       )}
