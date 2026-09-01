@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
-import { focusRingStyle, suppressNativeOutline } from '@/theme/tokens';
 import { categoriesApi } from '@/api/categories.api';
 import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
@@ -39,7 +38,6 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
 
   const [search, setSearch] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<CompanyDirectoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,26 +114,24 @@ export default function HomeScreen() {
             <View
               style={[
                 styles.searchBar,
-                {
-                  borderRadius: glassRadius.control,
-                  borderColor: glass.neutral.border,
-                  backgroundColor: glass.neutral.tint,
-                },
-                focusRingStyle(colors.focusRing, searchFocused),
+                { borderRadius: glassRadius.control, borderColor: glass.neutral.border, backgroundColor: glass.neutral.tint },
               ]}
             >
               <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
               <TextInput
+                // Anchors the scoped :focus-visible ring in public/index.html — that
+                // rule targets only this one id, nothing else on the page.
+                nativeID="aecc-search-input"
                 value={search}
                 onChangeText={setSearch}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
+                // Without this the browser defaults to autoComplete="on" (RNW's own
+                // default): Safari then offers a "previous entries for this field"
+                // suggestions dropdown on focus, which renders as an opaque box that
+                // can overlap whatever sits below the field (the gold CTA here).
+                autoComplete="off"
                 placeholder="Pesquisar empresas..."
                 placeholderTextColor={colors.textTertiary}
-                style={[
-                  { flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary },
-                  suppressNativeOutline,
-                ]}
+                style={{ flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary }}
               />
             </View>
             <Button variant="gold" fullWidth onPress={() => goToCompanies({ search: search.trim() || undefined })}>

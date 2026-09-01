@@ -29,7 +29,7 @@ export function TopBar({ authenticated = false, userName = null, onLogin, onRegi
       <View style={[styles.row, { paddingVertical: compact ? 10 : 14, paddingHorizontal: compact ? 16 : 24 }]}>
         <Image
           source={require('../../../assets/brand/aecc-logo.webp')}
-          style={{ height: compact ? 36 : 48, width: compact ? 110 : 146 }}
+          style={{ height: compact ? 36 : 48, width: compact ? 110 : 146, flexShrink: 0 }}
           resizeMode="contain"
           accessibilityLabel="AECC — Associação Empresarial do Concelho de Cascais"
         />
@@ -70,8 +70,17 @@ export function TopBar({ authenticated = false, userName = null, onLogin, onRegi
               ]}
             >
               <Icon name="user" size={18} color={colors.accentPrimary} />
+              {/* minWidth: 0 is load-bearing on web — RNW compiles flex to real
+                  CSS flexbox, where a flex item's default min-width is `auto`
+                  (its content size), not 0. Without it here and on profileChip/
+                  actions above, this Text never shrinks below the full name's
+                  width no matter how narrow the screen, and numberOfLines'
+                  ellipsis never gets a chance to kick in — the chip just
+                  overflows the header instead of truncating. */}
               <Text
                 style={{
+                  flexShrink: 1,
+                  minWidth: 0,
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
@@ -100,9 +109,12 @@ export function TopBar({ authenticated = false, userName = null, onLogin, onRegi
 
 const styles = StyleSheet.create({
   wrap: {},
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  themeToggle: { alignItems: 'center', justifyContent: 'center' },
-  profileChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14 },
-  authActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, minWidth: 0 },
+  // flexShrink so the chip/buttons give way instead of overflowing the header
+  // on narrow phones; minWidth: 0 lets that shrink go below content size on
+  // web (see the Text comment above for why RNW needs it explicitly).
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0 },
+  themeToggle: { alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  profileChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, flexShrink: 1, minWidth: 0 },
+  authActions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0 },
 });

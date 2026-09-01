@@ -21,8 +21,8 @@
          static value) so each matches surfaceApp from src/theme/colors.ts
          for the OS color scheme actually in effect — otherwise Safari falls
          back to white for whichever scheme isn't covered. -->
-    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#10181d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1a24" media="(prefers-color-scheme: dark)" />
 
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
@@ -34,20 +34,39 @@
            instead of a stale height computed before it collapses. */
         height: 100dvh;
       }
-      /* Matches surfaceApp from src/theme/colors.ts so the safe-area /
-         overscroll regions under the Safari status bar and bottom toolbar
-         (and the pre-hydration paint) aren't the browser's default white. */
+      /* --aecc-surface-app / --aecc-focus-ring mirror colors.ts's surfaceApp /
+         focusRing. The values below are only the pre-hydration/no-JS guess,
+         keyed off the OS scheme; ThemeContext overwrites both custom
+         properties on <html> the instant it mounts, so once React is running
+         these track the app's own light/dark toggle (which the user can set
+         independently of the OS scheme) rather than prefers-color-scheme.
+         html/body/#root read the var so the safe-area / overscroll regions
+         under the Safari status bar and bottom toolbar (and the
+         pre-hydration paint) are never the browser's default white. */
+      :root {
+        --aecc-surface-app: #fdf9f0;
+        --aecc-focus-ring: #7f580c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --aecc-surface-app: #0b1a24;
+          --aecc-focus-ring: #f2c85a;
+        }
+      }
       html,
       body,
       #root {
-        background-color: #f5f5f5;
+        background-color: var(--aecc-surface-app);
       }
-      @media (prefers-color-scheme: dark) {
-        html,
-        body,
-        #root {
-          background-color: #10181d;
-        }
+      /* Focus ring for the Início search field only (id set in
+         app/(app)/index.tsx) — keyboard focus only (:focus-visible), never
+         on tap/click, and touches no other element on the page. */
+      #aecc-search-input:focus {
+        outline: none;
+      }
+      #aecc-search-input:focus-visible {
+        outline: 2px solid var(--aecc-focus-ring);
+        outline-offset: 2px;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
       body {

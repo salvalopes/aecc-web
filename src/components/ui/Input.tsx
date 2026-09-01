@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Text, TextInput, View, type KeyboardTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { focusRingStyle } from '@/theme/tokens';
 import { Icon } from './Icon';
 
 interface InputProps {
@@ -39,7 +38,6 @@ export function Input({
   const [focused, setFocused] = useState(false);
 
   const borderColor = error ? colors.error : focused ? colors.accentPrimary : colors.borderDefault;
-  const ringColor = error ? colors.error : colors.focusRing;
 
   return (
     <View style={[{ gap: 6, marginBottom: 4 }, style]}>
@@ -62,24 +60,21 @@ export function Input({
         autoFocus={autoFocus}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={[
-          {
-            fontFamily: fontFamily.body,
-            // Must stay >= 16px: Safari iOS auto-zooms the page on focus of any
-            // <input>/<textarea>/<select> with a computed font-size below that.
-            fontSize: fontSize.md,
-            color: colors.textPrimary,
-            backgroundColor: colors.surfaceSunken,
-            borderWidth: 1,
-            borderColor,
-            borderRadius: radius.md,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            minHeight: multiline ? 80 : 44,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-          focusRingStyle(ringColor, focused),
-        ]}
+        style={{
+          fontFamily: fontFamily.body,
+          // Must stay >= 16px: Safari iOS auto-zooms the page on focus of any
+          // <input>/<textarea>/<select> with a computed font-size below that.
+          fontSize: fontSize.md,
+          color: colors.textPrimary,
+          backgroundColor: colors.surfaceSunken,
+          borderWidth: 1,
+          borderColor,
+          borderRadius: radius.md,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          minHeight: multiline ? 80 : 44,
+          textAlignVertical: multiline ? 'top' : 'center',
+        }}
       />
       {error && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, type ThemeColors } from './colors';
 import { lightGlass, darkGlass, type GlassTokens } from './glass';
@@ -52,6 +52,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const mode: ThemeMode = override ?? (systemScheme === 'dark' ? 'dark' : 'light');
   const isDark = mode === 'dark';
+  const colors = isDark ? darkColors : lightColors;
+
+  // public/index.html paints html/body/#root and the search-field focus
+  // ring from CSS custom properties, guessed from prefers-color-scheme
+  // before any JS runs. That guess breaks the moment a user's manual
+  // toggle (persisted above, independent of the OS scheme) disagrees with
+  // it — e.g. OS in light mode, app manually switched to dark — leaving
+  // those surfaces on the wrong color. Once mounted, this is the single
+  // place that overwrites them to the theme actually in effect, keeping
+  // every background on the page — including the ones CSS alone can't
+  // reach — on the same colors.surfaceApp the rest of the app already uses.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    document.documentElement.style.setProperty('--aecc-surface-app', colors.surfaceApp);
+    document.documentElement.style.setProperty('--aecc-focus-ring', colors.focusRing);
+  }, [colors]);
 
   function toggleTheme() {
     const next: ThemeMode = isDark ? 'light' : 'dark';
@@ -61,7 +77,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const theme = useMemo<Theme>(
     () => ({
-      colors: isDark ? darkColors : lightColors,
+      colors,
       glass: isDark ? darkGlass : lightGlass,
       isDark,
       mode,
@@ -76,7 +92,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       fontWeight,
       shadow,
     }),
-    [isDark, mode]
+    [colors, isDark, mode]
   );
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;

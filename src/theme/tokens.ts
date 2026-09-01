@@ -3,26 +3,6 @@
 // tokens/typography.css), which in turn lifted them from this app's own
 // shipped StyleSheets. Never rounded to a generic 4/8 grid.
 
-import type { ViewStyle } from 'react-native';
-
-// react-native-web maps outline* style props straight to CSS `outline`
-// (confirmed supported in the installed react-native-web version), but
-// they aren't part of React Native's own TS style types — the cast is
-// contained here so call sites stay plain ViewStyle/TextStyle objects.
-export function focusRingStyle(color: string, focused: boolean): ViewStyle {
-  return {
-    outlineStyle: focused ? 'solid' : 'none',
-    outlineColor: color,
-    outlineWidth: 2,
-    outlineOffset: 2,
-  } as ViewStyle;
-}
-
-// Suppresses the browser/OS default focus outline on web so a custom
-// focusRingStyle() drawn elsewhere (e.g. on a wrapping container) is the
-// only visible indicator, without ever removing focus visibility itself.
-export const suppressNativeOutline: ViewStyle = { outlineStyle: 'none' } as ViewStyle;
-
 export const spacing = {
   1: 2,
   2: 4,
