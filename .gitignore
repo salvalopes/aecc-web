@@ -22,3 +22,6 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
+.DS_Store
+.claude/worktrees/
+.claude/settings.local.json

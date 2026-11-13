@@ -1,0 +1,14 @@
+## Regra de precedência — stack de design (redesign Nov 2026)
+
+- Stack obrigatória: Expo (SDK 52) + React Native + react-native-web + StyleSheet/estilos inline + tokens de `src/theme/` via `useTheme()`. Este projeto NÃO usa Tailwind nem NativeWind; não os introduzir. A arquitetura de estilos (createStyles(theme) / Unistyles / NativeWind) é decisão pendente da Fase 3 do redesign — até lá, manter o padrão atual.
+- Não instalar dependências novas (incl. react-native-reanimated, react-native-gesture-handler, react-native-worklets, expo-haptics, expo-linear-gradient, bibliotecas de ícones) sem aprovação explícita.
+- design-taste-frontend-v1: é opt-in (não carrega sozinha) — invocar explicitamente pelo nome em qualquer tarefa de design visual (direção visual, tokens, mockups, implementação de ecrãs). Decide apenas layout, cor, tipografia e hierarquia, em todas as plataformas. Ignorar Tailwind, Next.js, Motion/Framer, CSS e "above the fold". Estados de hover só se aplicam ao build web.
+- Motion — divisão por plataforma:
+  - iOS e Android: animate-expo decide o motion (se anima ou não, springs, durações, gestos, haptics, reduced motion) e o padrão de implementação.
+  - Web (build react-native-web): apple-design decide o comportamento de motion (resposta imediata, interrupção, springs, hierarquia espacial). A implementação nunca é CSS nem Motion/Framer; usa a mesma base que o nativo.
+  - Componentes partilhados (caso por omissão — hoje não há ficheiros `.web.tsx`): animate-expo define o comportamento base. Diferenças para web só via `Platform.OS === 'web'` ou ficheiro `.web.tsx`, e apenas onde a apple-design exija algo diferente.
+  - Enquanto as dependências de animação não forem aprovadas, as decisões de motion ficam como especificação, sem código.
+- Plugin Expo: decide APIs Expo, Expo Router, EAS e versões (sempre `npx expo install`). Em animações, a skill de motion da plataforma decide o comportamento; Expo decide APIs e versões.
+- Validação: agent-browser para o build web; Maestro para iOS e Android.
+- Conflitos: design-taste-frontend-v1 prevalece no visual estático; animate-expo no motion nativo e nos componentes partilhados; apple-design no motion específico da web; Expo na implementação; este ficheiro prevalece sobre qualquer skill.
+- Superpowers: usar o fluxo (plano, TDD) em features e alterações de código. Em tarefas de só-leitura, inventário ou configuração, não iniciar brainstorming nem plano.
