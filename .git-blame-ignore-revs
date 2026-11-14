@@ -1,0 +1,5 @@
+# Commits só de formatação, ignorados pelo git blame.
+# Local: git config blame.ignoreRevsFile .git-blame-ignore-revs (o GitHub lê-o automaticamente).
+
+# style: formatação Prettier (eslint --fix)
+b7b310f75686cd9c0ecc74ebd6b06a4dbe3ea252
