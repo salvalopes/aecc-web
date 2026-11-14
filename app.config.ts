@@ -30,7 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
     description: 'Associação Empresarial do Concelho de Cascais',
   },
-  plugins: ['expo-router', 'expo-secure-store'],
+  plugins: ['expo-router', 'expo-secure-store', 'expo-asset', 'expo-font'],
   experiments: {
     typedRoutes: true,
   },
