@@ -22,7 +22,14 @@ export function RoleGuard({ allow, fallback, children }: RoleGuardProps) {
 
   if (checking) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceApp }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.surfaceApp,
+        }}
+      >
         <LoadingSpinner />
       </View>
     );

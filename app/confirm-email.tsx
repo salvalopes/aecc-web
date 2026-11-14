@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,9 +52,9 @@ export default function ConfirmEmailScreen() {
         password: passwordStrength(),
         confirmPassword: combine(
           required('Confirma a palavra-passe.'),
-          matches('password', 'As palavras-passe não coincidem.')
+          matches('password', 'As palavras-passe não coincidem.'),
         ),
-      }
+      },
     );
     if (!isValid) return;
 
@@ -103,7 +110,9 @@ export default function ConfirmEmailScreen() {
         secureTextEntry
         autoComplete="new-password"
       />
-      {fieldErrors.confirmPassword && <Text style={styles.error}>{fieldErrors.confirmPassword}</Text>}
+      {fieldErrors.confirmPassword && (
+        <Text style={styles.error}>{fieldErrors.confirmPassword}</Text>
+      )}
 
       {formError && <Text style={styles.error}>{formError}</Text>}
 

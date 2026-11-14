@@ -23,8 +23,8 @@ export default function CompaniesScreen() {
   const loadCategories = useCallback(() => {
     categoriesApi
       .list()
-      .then(data => startTransition(() => setCategories(data)))
-      .catch(e => {
+      .then((data) => startTransition(() => setCategories(data)))
+      .catch((e) => {
         // Silenciosa — os chips de categoria são um filtro opcional; a lista
         // de empresas em baixo tem o seu próprio ErrorState/retry.
         if (!(e instanceof ApiError)) throw e;
@@ -36,12 +36,24 @@ export default function CompaniesScreen() {
   }, [loadCategories]);
 
   return (
-    <View testID="companies.screen" style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
-      <View style={[styles.header, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle }]}>
+    <View
+      testID="companies.screen"
+      style={[styles.container, { backgroundColor: colors.surfaceApp }]}
+    >
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle },
+        ]}
+      >
         <View
           style={[
             styles.searchBar,
-            { borderRadius: glassRadius.control, borderColor: glass.neutral.border, backgroundColor: glass.neutral.tint },
+            {
+              borderRadius: glassRadius.control,
+              borderColor: glass.neutral.border,
+              backgroundColor: glass.neutral.tint,
+            },
           ]}
         >
           <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
@@ -51,16 +63,35 @@ export default function CompaniesScreen() {
             onChangeText={setSearch}
             placeholder="Pesquisar empresas..."
             placeholderTextColor={colors.textTertiary}
-            style={{ flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary }}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              fontFamily: fontFamily.body,
+              fontSize: fontSize.md,
+              color: colors.textPrimary,
+            }}
           />
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <Chip testID="companies.category-chip-all" active={!categoryId} onPress={() => setCategoryId('')}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          <Chip
+            testID="companies.category-chip-all"
+            active={!categoryId}
+            onPress={() => setCategoryId('')}
+          >
             Todas
           </Chip>
-          {categories.map(c => (
-            <Chip key={c.id} testID={`companies.category-chip-${c.slug}`} active={categoryId === c.id} onPress={() => setCategoryId(categoryId === c.id ? '' : c.id)}>
+          {categories.map((c) => (
+            <Chip
+              key={c.id}
+              testID={`companies.category-chip-${c.slug}`}
+              active={categoryId === c.id}
+              onPress={() => setCategoryId(categoryId === c.id ? '' : c.id)}
+            >
               {c.name}
             </Chip>
           ))}
@@ -75,6 +106,13 @@ export default function CompaniesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { borderBottomWidth: 1, padding: 12, gap: 10 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingHorizontal: 14, borderWidth: 1 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 46,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
   chipRow: { flexDirection: 'row', gap: 7, paddingBottom: 2 },
 });

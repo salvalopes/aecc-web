@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Text, TextInput, View, type KeyboardTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Text,
+  TextInput,
+  View,
+  type KeyboardTypeOptions,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon } from './Icon';
 
@@ -44,7 +51,14 @@ export function Input({
   return (
     <View style={[{ gap: 6, marginBottom: 4 }, style]}>
       {label && (
-        <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textSecondary }}>
+        <Text
+          style={{
+            fontFamily: fontFamily.body,
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.textSecondary,
+          }}
+        >
           {label}
           {required && <Text style={{ color: colors.error }}> *</Text>}
         </Text>
@@ -82,7 +96,9 @@ export function Input({
       {error && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Icon name="warning-circle" size={14} color={colors.error} />
-          <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.error }}>{error}</Text>
+          <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.error }}>
+            {error}
+          </Text>
         </View>
       )}
     </View>

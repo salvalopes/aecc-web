@@ -7,7 +7,15 @@ import { ApiError } from '@/api/client';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
 import type { Company, CreateCompanyRequest } from '@/types/api';
-import { Button, Input, Card, Modal, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
+import {
+  Button,
+  Input,
+  Card,
+  Modal,
+  EmptyState,
+  ErrorState,
+  LoadingSpinner,
+} from '@/components/ui';
 import { RoleGuard } from '@/components/RoleGuard';
 
 interface FormState {
@@ -99,7 +107,8 @@ function MyCompaniesContent() {
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const { fieldErrors, formError, validate, clearErrors, applyApiError } = useFormValidation<FormState>();
+  const { fieldErrors, formError, validate, clearErrors, applyApiError } =
+    useFormValidation<FormState>();
 
   async function load() {
     setLoading(true);
@@ -109,7 +118,7 @@ function MyCompaniesContent() {
       startTransition(() => setCompanies(data));
     } catch (e) {
       startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar as suas empresas.')
+        setError(e instanceof ApiError ? e.message : 'Erro ao carregar as suas empresas.'),
       );
     } finally {
       startTransition(() => setLoading(false));
@@ -130,9 +139,11 @@ function MyCompaniesContent() {
     const isValid = validate(form, {
       name: required('O nome é obrigatório.'),
       leadDestinationEmail: combine(required('O email de destino é obrigatório.'), emailFormat()),
-      leadCooldownMinutes: value => {
+      leadCooldownMinutes: (value) => {
         const cooldown = parseInt(value, 10);
-        return Number.isNaN(cooldown) || cooldown < 0 ? 'O cooldown deve ser um número positivo.' : undefined;
+        return Number.isNaN(cooldown) || cooldown < 0
+          ? 'O cooldown deve ser um número positivo.'
+          : undefined;
       },
     });
     if (!isValid) return;
@@ -169,9 +180,12 @@ function MyCompaniesContent() {
       ) : (
         <FlatList
           data={companies}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => <MyCompanyCard company={item} />}
-          contentContainerStyle={[styles.list, { padding: spacing[6], paddingBottom: 80, gap: spacing[5] }]}
+          contentContainerStyle={[
+            styles.list,
+            { padding: spacing[6], paddingBottom: 80, gap: spacing[5] },
+          ]}
           ListEmptyComponent={<EmptyState message="Ainda não tem empresas." />}
           refreshing={loading}
           onRefresh={load}
@@ -198,7 +212,9 @@ function MyCompaniesContent() {
               marginBottom: spacing[6],
             }}
           >
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}>
+            <Text
+              style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}
+            >
               {formError}
             </Text>
           </View>
@@ -208,7 +224,7 @@ function MyCompaniesContent() {
           label="Nome"
           required
           value={form.name}
-          onChangeText={text => setForm(f => ({ ...f, name: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, name: text }))}
           placeholder="Nome da empresa"
           autoFocus
           error={fieldErrors.name}
@@ -217,7 +233,7 @@ function MyCompaniesContent() {
         <Input
           label="Descrição"
           value={form.description}
-          onChangeText={text => setForm(f => ({ ...f, description: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, description: text }))}
           placeholder="Descrição da empresa"
           multiline
           numberOfLines={3}
@@ -228,7 +244,7 @@ function MyCompaniesContent() {
           label="Email de destino de leads"
           required
           value={form.leadDestinationEmail}
-          onChangeText={text => setForm(f => ({ ...f, leadDestinationEmail: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, leadDestinationEmail: text }))}
           placeholder="leads@empresa.com"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -238,7 +254,7 @@ function MyCompaniesContent() {
         <Input
           label="Cooldown de leads (minutos)"
           value={form.leadCooldownMinutes}
-          onChangeText={text => setForm(f => ({ ...f, leadCooldownMinutes: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, leadCooldownMinutes: text }))}
           placeholder="60"
           keyboardType="number-pad"
           error={fieldErrors.leadCooldownMinutes}

@@ -22,8 +22,23 @@ export function Badge({ children, tone = 'neutral' }: BadgeProps) {
   const t = tones[tone];
 
   return (
-    <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs, backgroundColor: t.bg, alignSelf: 'flex-start' }}>
-      <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize['2xs'], fontWeight: fontWeight.bold, color: t.fg }}>
+    <View
+      style={{
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: radius.xs,
+        backgroundColor: t.bg,
+        alignSelf: 'flex-start',
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: fontFamily.body,
+          fontSize: fontSize['2xs'],
+          fontWeight: fontWeight.bold,
+          color: t.fg,
+        }}
+      >
         {children}
       </Text>
     </View>

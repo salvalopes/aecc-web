@@ -1,12 +1,4 @@
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,7 +21,14 @@ import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
 import { ImageLightbox } from '@/components/ImageLightbox';
-import type { Product, ProductImage, Company, Category, UpdateProductRequest, ProductType } from '@/types/api';
+import type {
+  Product,
+  ProductImage,
+  Company,
+  Category,
+  UpdateProductRequest,
+  ProductType,
+} from '@/types/api';
 
 interface FormState {
   categoryId: string;
@@ -99,7 +98,7 @@ export default function ProductDetailScreen() {
       });
     } catch (e) {
       startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar produto.')
+        setError(e instanceof ApiError ? e.message : 'Erro ao carregar produto.'),
       );
     } finally {
       startTransition(() => setLoading(false));
@@ -126,30 +125,32 @@ export default function ProductDetailScreen() {
 
   function handleDelete() {
     if (!product) return;
-    Alert.alert(
-      'Apagar produto',
-      `Tem a certeza que quer apagar "${product.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Apagar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await productsApi.delete(product.id);
-              router.back();
-            } catch (e) {
-              Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar produto.');
-            }
-          },
+    Alert.alert('Apagar produto', `Tem a certeza que quer apagar "${product.name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Apagar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await productsApi.delete(product.id);
+            router.back();
+          } catch (e) {
+            Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar produto.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   }
 
   async function handleSave() {
-    if (!form.name.trim()) { setFormError('O nome é obrigatório.'); return; }
-    if (!form.categoryId) { setFormError('Selecione uma categoria.'); return; }
+    if (!form.name.trim()) {
+      setFormError('O nome é obrigatório.');
+      return;
+    }
+    if (!form.categoryId) {
+      setFormError('Selecione uma categoria.');
+      return;
+    }
     setSaving(true);
     setFormError(null);
     try {
@@ -188,9 +189,7 @@ export default function ProductDetailScreen() {
     try {
       const newImage = await productsApi.addImage(id!, asset);
       startTransition(() =>
-        setProduct(prev =>
-          prev ? { ...prev, images: [...prev.images, newImage] } : prev
-        )
+        setProduct((prev) => (prev ? { ...prev, images: [...prev.images, newImage] } : prev)),
       );
     } catch (e) {
       Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao enviar imagem.');
@@ -204,15 +203,15 @@ export default function ProductDetailScreen() {
     try {
       await productsApi.featureImage(product.id, img.id);
       startTransition(() =>
-        setProduct(prev =>
+        setProduct((prev) =>
           prev
             ? {
                 ...prev,
                 imageUrl: img.imageUrl,
-                images: prev.images.map(i => ({ ...i, isFeatured: i.id === img.id })),
+                images: prev.images.map((i) => ({ ...i, isFeatured: i.id === img.id })),
               }
-            : prev
-        )
+            : prev,
+        ),
       );
     } catch (e) {
       Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao marcar imagem.');
@@ -225,12 +224,12 @@ export default function ProductDetailScreen() {
     try {
       await productsApi.deleteImage(product.id, img.id);
       startTransition(() =>
-        setProduct(prev => {
+        setProduct((prev) => {
           if (!prev) return prev;
-          const remaining = prev.images.filter(i => i.id !== img.id);
-          const newFeatured = remaining.find(i => i.isFeatured) ?? remaining[0];
+          const remaining = prev.images.filter((i) => i.id !== img.id);
+          const newFeatured = remaining.find((i) => i.isFeatured) ?? remaining[0];
           return { ...prev, imageUrl: newFeatured?.imageUrl ?? null, images: remaining };
-        })
+        }),
       );
     } catch (e) {
       Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar imagem.');
@@ -240,10 +239,10 @@ export default function ProductDetailScreen() {
   }
 
   const flatCategories = (function flatten(cats: Category[]): Category[] {
-    return cats.flatMap(c => [c, ...flatten(c.children)]);
+    return cats.flatMap((c) => [c, ...flatten(c.children)]);
   })(categories);
 
-  const currentCategory = flatCategories.find(c => c.id === product?.categoryId);
+  const currentCategory = flatCategories.find((c) => c.id === product?.categoryId);
 
   const labelStyle = {
     fontFamily: theme.fontFamily.body,
@@ -304,7 +303,10 @@ export default function ProductDetailScreen() {
         <View
           style={[
             styles.hero,
-            { backgroundColor: theme.colors.surfaceCard, borderBottomColor: theme.colors.borderSubtle },
+            {
+              backgroundColor: theme.colors.surfaceCard,
+              borderBottomColor: theme.colors.borderSubtle,
+            },
           ]}
         >
           <View style={styles.heroHeader}>
@@ -354,7 +356,13 @@ export default function ProductDetailScreen() {
 
           {currentCategory && (
             <View style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}>
-              <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.base, color: theme.colors.textSecondary }}>
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  color: theme.colors.textSecondary,
+                }}
+              >
                 Categoria
               </Text>
               <Text
@@ -375,7 +383,13 @@ export default function ProductDetailScreen() {
               style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}
               onPress={() => router.push(`/(app)/companies/${company.id}`)}
             >
-              <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.base, color: theme.colors.textSecondary }}>
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.body,
+                  fontSize: theme.fontSize.base,
+                  color: theme.colors.textSecondary,
+                }}
+              >
                 Empresa
               </Text>
               <Text
@@ -395,7 +409,10 @@ export default function ProductDetailScreen() {
             <View
               style={[
                 styles.benefitBox,
-                { backgroundColor: theme.colors.infoBg, borderLeftColor: theme.colors.accentPrimary },
+                {
+                  backgroundColor: theme.colors.infoBg,
+                  borderLeftColor: theme.colors.accentPrimary,
+                },
               ]}
             >
               <View style={styles.benefitTitleRow}>
@@ -437,15 +454,28 @@ export default function ProductDetailScreen() {
         saveLabel="Guardar"
       >
         {formError && (
-          <View style={{ backgroundColor: theme.colors.errorBg, borderRadius: theme.radius.sm, padding: 10, marginBottom: 12 }}>
-            <Text style={{ fontFamily: theme.fontFamily.body, fontSize: theme.fontSize.sm, color: theme.colors.error }}>
+          <View
+            style={{
+              backgroundColor: theme.colors.errorBg,
+              borderRadius: theme.radius.sm,
+              padding: 10,
+              marginBottom: 12,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.body,
+                fontSize: theme.fontSize.sm,
+                color: theme.colors.error,
+              }}
+            >
               {formError}
             </Text>
           </View>
         )}
 
         <Text style={labelStyle}>Categoria *</Text>
-        {flatCategories.map(cat => {
+        {flatCategories.map((cat) => {
           const selected = form.categoryId === cat.id;
           return (
             <Pressable
@@ -457,7 +487,7 @@ export default function ProductDetailScreen() {
                   backgroundColor: selected ? theme.colors.infoBg : theme.colors.surfaceSunken,
                 },
               ]}
-              onPress={() => setForm(f => ({ ...f, categoryId: cat.id }))}
+              onPress={() => setForm((f) => ({ ...f, categoryId: cat.id }))}
             >
               <Text
                 style={{
@@ -476,11 +506,11 @@ export default function ProductDetailScreen() {
 
         <Text style={labelStyle}>Tipo *</Text>
         <View style={styles.typeToggle}>
-          {(['Product', 'Service'] as const).map(t => (
+          {(['Product', 'Service'] as const).map((t) => (
             <Chip
               key={t}
               active={form.type === t}
-              onPress={() => setForm(f => ({ ...f, type: t }))}
+              onPress={() => setForm((f) => ({ ...f, type: t }))}
               style={styles.typeChip}
             >
               {t === 'Product' ? 'Produto' : 'Serviço'}
@@ -492,7 +522,7 @@ export default function ProductDetailScreen() {
           label="Nome"
           required
           value={form.name}
-          onChangeText={text => setForm(f => ({ ...f, name: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, name: text }))}
           autoFocus
           style={styles.fieldSpacing}
         />
@@ -500,7 +530,7 @@ export default function ProductDetailScreen() {
         <Input
           label="Descrição"
           value={form.description}
-          onChangeText={text => setForm(f => ({ ...f, description: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, description: text }))}
           multiline
           numberOfLines={3}
           style={styles.fieldSpacing}
@@ -519,7 +549,7 @@ export default function ProductDetailScreen() {
           </Text>
           <Switch
             value={form.hasMemberBenefit}
-            onValueChange={v => setForm(f => ({ ...f, hasMemberBenefit: v }))}
+            onValueChange={(v) => setForm((f) => ({ ...f, hasMemberBenefit: v }))}
           />
         </View>
 
@@ -527,7 +557,7 @@ export default function ProductDetailScreen() {
           <Input
             label="Descrição do benefício"
             value={form.memberBenefitDescription}
-            onChangeText={text => setForm(f => ({ ...f, memberBenefitDescription: text }))}
+            onChangeText={(text) => setForm((f) => ({ ...f, memberBenefitDescription: text }))}
             multiline
             numberOfLines={2}
             style={styles.fieldSpacing}
@@ -544,7 +574,10 @@ export default function ProductDetailScreen() {
           {product.images.map((img, index) => (
             <View key={img.id} style={styles.compactItem}>
               <Pressable onPress={() => setLightboxIndex(index)}>
-                <Image source={{ uri: img.imageUrl }} style={[styles.compactImage, { borderRadius: theme.radius.md }]} />
+                <Image
+                  source={{ uri: img.imageUrl }}
+                  style={[styles.compactImage, { borderRadius: theme.radius.md }]}
+                />
               </Pressable>
               {img.isFeatured && (
                 <View

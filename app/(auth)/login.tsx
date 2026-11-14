@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
@@ -23,7 +31,7 @@ export default function LoginScreen() {
       {
         email: combine(required('O email é obrigatório.'), emailFormat()),
         password: required('A password é obrigatória.'),
-      }
+      },
     );
     if (!isValid) return;
 
@@ -42,7 +50,11 @@ export default function LoginScreen() {
 
   return (
     <View testID="login.screen" style={styles.container}>
-      <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
+      <Image
+        source={require('../../assets/brand/aecc-logo.webp')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.subtitle}>Associação de Empresários de Cascais</Text>
 
       <TextInput
@@ -55,7 +67,11 @@ export default function LoginScreen() {
         keyboardType="email-address"
         autoComplete="email"
       />
-      {fieldErrors.email && <Text testID="login.email-error" style={styles.error}>{fieldErrors.email}</Text>}
+      {fieldErrors.email && (
+        <Text testID="login.email-error" style={styles.error}>
+          {fieldErrors.email}
+        </Text>
+      )}
 
       <TextInput
         testID="login.password"
@@ -66,11 +82,24 @@ export default function LoginScreen() {
         secureTextEntry
         autoComplete="current-password"
       />
-      {fieldErrors.password && <Text testID="login.password-error" style={styles.error}>{fieldErrors.password}</Text>}
+      {fieldErrors.password && (
+        <Text testID="login.password-error" style={styles.error}>
+          {fieldErrors.password}
+        </Text>
+      )}
 
-      {formError && <Text testID="login.form-error" style={styles.error}>{formError}</Text>}
+      {formError && (
+        <Text testID="login.form-error" style={styles.error}>
+          {formError}
+        </Text>
+      )}
 
-      <TouchableOpacity testID="login.submit" style={styles.button} onPress={handleLogin} disabled={loading}>
+      <TouchableOpacity
+        testID="login.submit"
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={loading}
+      >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (

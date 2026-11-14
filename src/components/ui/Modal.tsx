@@ -47,13 +47,27 @@ function useBodyScrollLock(visible: boolean) {
   }, [visible]);
 }
 
-export function Modal({ visible, title, onClose, onSave, saving = false, saveLabel = 'Guardar', saveTestID, children }: ModalProps) {
+export function Modal({
+  visible,
+  title,
+  onClose,
+  onSave,
+  saving = false,
+  saveLabel = 'Guardar',
+  saveTestID,
+  children,
+}: ModalProps) {
   const { colors, fontFamily, fontSize, fontWeight } = useTheme();
   const insets = useSafeAreaInsets();
   useBodyScrollLock(visible);
 
   return (
-    <RNModal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <RNModal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.surfaceCard }}>
         <View
           style={{
@@ -67,9 +81,24 @@ export function Modal({ visible, title, onClose, onSave, saving = false, saveLab
           }}
         >
           <TouchableOpacity onPress={onClose}>
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.textSecondary }}>Cancelar</Text>
+            <Text
+              style={{
+                fontFamily: fontFamily.body,
+                fontSize: fontSize.base,
+                color: colors.textSecondary,
+              }}
+            >
+              Cancelar
+            </Text>
           </TouchableOpacity>
-          <Text style={{ fontFamily: fontFamily.display, fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.textPrimary }}>
+          <Text
+            style={{
+              fontFamily: fontFamily.display,
+              fontSize: fontSize.md,
+              fontWeight: fontWeight.bold,
+              color: colors.textPrimary,
+            }}
+          >
             {title}
           </Text>
           {onSave ? (

@@ -29,16 +29,23 @@ export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageL
   const current = images[Math.min(index, images.length - 1)];
 
   function showPrev() {
-    setIndex(i => (i - 1 + images.length) % images.length);
+    setIndex((i) => (i - 1 + images.length) % images.length);
   }
 
   function showNext() {
-    setIndex(i => (i + 1) % images.length);
+    setIndex((i) => (i + 1) % images.length);
   }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.92)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <TouchableOpacity
           style={{ position: 'absolute', top: 48, right: 20, zIndex: 10, padding: 8 }}
           onPress={onClose}
@@ -47,7 +54,11 @@ export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageL
           <Icon name="x" size={24} color="#fff" />
         </TouchableOpacity>
 
-        <Image source={{ uri: current.imageUrl }} style={{ width, height: height * 0.7 }} resizeMode="contain" />
+        <Image
+          source={{ uri: current.imageUrl }}
+          style={{ width, height: height * 0.7 }}
+          resizeMode="contain"
+        />
 
         {images.length > 1 && (
           <>

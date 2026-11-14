@@ -39,14 +39,14 @@ export function useCompanyDirectory({ search, categoryId }: UseCompanyDirectoryP
       });
       if (requestId !== requestIdRef.current) return;
       startTransition(() => {
-        setEntries(prev => (replace ? result.items : [...prev, ...result.items]));
+        setEntries((prev) => (replace ? result.items : [...prev, ...result.items]));
         setPage(result.page);
         setTotalPages(result.totalPages);
       });
     } catch (e) {
       if (requestId !== requestIdRef.current) return;
       startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar empresas.')
+        setError(e instanceof ApiError ? e.message : 'Erro ao carregar empresas.'),
       );
     } finally {
       if (requestId === requestIdRef.current) {

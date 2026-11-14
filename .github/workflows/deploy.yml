@@ -1,11 +1,139 @@
+# CI + deploy do aecc-web.
+#
+#   e2e    → lint + tsc + Playwright (5 fluxos) contra uma stack E2E levantada no runner.
+#            Corre em PRs para main, em push para main e manualmente (workflow_dispatch).
+#   deploy → expo export + rsync para o servidor. Só em push para main e só se o e2e passar.
+#
+# ACOPLAMENTO: o gate usa a imagem ghcr.io/salvalopes/aecc-api:latest (ambiente E2E,
+# comando seed-e2e). Um push no aecc-api que publique uma `latest` incompatível pode
+# fazer falhar este gate sem nenhuma alteração no aecc-web — e vice-versa, o gate só
+# valida o web contra a API que está em `latest` nesse momento.
+# Acesso: o repo aecc-web tem permissão de leitura ao pacote no GHCR; o login usa o
+# GITHUB_TOKEN (permissions: packages: read), sem PATs.
+
 name: Deploy aecc-web
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Em PRs, um novo push cancela o run anterior; em main nunca se cancela um deploy.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build-and-deploy:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    services:
+      # BD descartável (mesmos valores do docker-compose.e2e.yml do aecc-api; não são segredos).
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: aecc_e2e
+          POSTGRES_USER: aecc
+          POSTGRES_PASSWORD: aecc_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aecc -d aecc_e2e"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Login no GHCR
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gerar password do seed (aleatória, mascarada)
+        run: |
+          # Maiúscula + minúscula + dígito, ≥ 8 caracteres (política do Identity).
+          pw="$(openssl rand -hex 16)Aa1"
+          echo "::add-mask::$pw"
+          echo "E2E_SEED_PASSWORD=$pw" >> "$GITHUB_ENV"
+
+      - name: Levantar a API (ambiente E2E)
+        run: |
+          # A API corre como appuser (uid 1001): HOME (certificados OpenIddict, DataProtection)
+          # e uploads (storage local E2E) em tmpfs graváveis por esse uid.
+          docker run -d --name aecc-api \
+            -p 127.0.0.1:5080:8080 \
+            --add-host=host.docker.internal:host-gateway \
+            -e ASPNETCORE_ENVIRONMENT=E2E \
+            -e HOME=/data/home \
+            -e "ConnectionStrings__Postgres=Host=host.docker.internal;Port=5432;Database=aecc_e2e;Username=aecc;Password=aecc_e2e" \
+            --tmpfs /data/home:rw,uid=1001,gid=1001,mode=0700 \
+            --tmpfs /data/uploads:rw,uid=1001,gid=1001,mode=0755 \
+            ghcr.io/salvalopes/aecc-api:latest
+          docker inspect --format 'aecc-api: {{.Config.Image}} @ {{.Image}}' aecc-api
+
+      - name: Esperar pela API
+        run: |
+          # -fs (sem -S): as tentativas falhadas enquanto a API arranca não enchem o log.
+          if ! curl -fs -o /dev/null \
+                 --retry 60 --retry-delay 2 --retry-all-errors --max-time 5 \
+                 http://localhost:5080/api/companies/directory; then
+            echo "::error::A API não respondeu em http://localhost:5080"
+            docker logs aecc-api
+            exit 1
+          fi
+          echo "API pronta."
+
+      - name: Seed E2E
+        # -e sem valor: o docker herda E2E_SEED_PASSWORD do ambiente do step (não vai na linha de comando).
+        run: docker exec -e E2E_SEED_PASSWORD aecc-api dotnet AECC.Api.dll seed-e2e
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Instalar Chromium (Playwright)
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright
+        run: npx playwright test
+
+      - name: Upload artefactos do Playwright (traces, vídeos, relatório)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: e2e/web/.artifacts/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Logs da API
+        if: always()
+        run: docker logs aecc-api || true
+
+  deploy:
+    needs: e2e
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -40,9 +40,7 @@ export default function ResetPasswordScreen() {
       <View style={styles.container}>
         <Text style={styles.title}>AECC</Text>
         <Text style={styles.subtitle}>Redefinir palavra-passe</Text>
-        <Text style={styles.successMessage}>
-          Palavra-passe redefinida com sucesso!
-        </Text>
+        <Text style={styles.successMessage}>Palavra-passe redefinida com sucesso!</Text>
         <TouchableOpacity style={styles.button} onPress={() => router.replace('/(auth)/login')}>
           <Text style={styles.buttonText}>Ir para login</Text>
         </TouchableOpacity>

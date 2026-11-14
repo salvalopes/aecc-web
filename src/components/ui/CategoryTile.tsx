@@ -17,7 +17,13 @@ interface CategoryTileProps {
 // Soft glass tile for one business category: icon in a gold-tinted round
 // well, label underneath, optional company count. A grid of these is the
 // Yellow Pages entry point on the Início screen.
-export function CategoryTile({ slug, label, count = null, active = false, onPress }: CategoryTileProps) {
+export function CategoryTile({
+  slug,
+  label,
+  count = null,
+  active = false,
+  onPress,
+}: CategoryTileProps) {
   const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight } = useTheme();
   const v = active ? glass.primary : glass.neutral;
 
@@ -39,9 +45,16 @@ export function CategoryTile({ slug, label, count = null, active = false, onPres
       >
         {({ pressed }) => (
           <>
-            <BlurView intensity={v.blurIntensity} tint={v.blurTint} style={StyleSheet.absoluteFillObject} />
+            <BlurView
+              intensity={v.blurIntensity}
+              tint={v.blurTint}
+              style={StyleSheet.absoluteFillObject}
+            />
             <View
-              style={[StyleSheet.absoluteFillObject, { backgroundColor: pressed ? v.tintActive : v.tint }]}
+              style={[
+                StyleSheet.absoluteFillObject,
+                { backgroundColor: pressed ? v.tintActive : v.tint },
+              ]}
             />
             <View style={styles.content}>
               <View
@@ -52,7 +65,11 @@ export function CategoryTile({ slug, label, count = null, active = false, onPres
                   },
                 ]}
               >
-                <Icon name={categoryIcon(slug)} size={22} color={active ? colors.textOnPrimary : colors.accentGoldText} />
+                <Icon
+                  name={categoryIcon(slug)}
+                  size={22}
+                  color={active ? colors.textOnPrimary : colors.accentGoldText}
+                />
               </View>
               <Text
                 numberOfLines={2}

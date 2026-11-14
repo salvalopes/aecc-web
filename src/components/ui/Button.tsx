@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
 import type { GlassVariant } from '@/theme/glass';
@@ -64,13 +72,7 @@ export function Button({
   const { glass: v, fg } = config[variant];
 
   return (
-    <View
-      style={[
-        fullWidth && { width: '100%' },
-        v ? v.shadow : null,
-        style,
-      ]}
-    >
+    <View style={[fullWidth && { width: '100%' }, v ? v.shadow : null, style]}>
       <Pressable
         testID={testID}
         onPress={onPress}
@@ -89,7 +91,13 @@ export function Button({
       >
         {({ pressed }) => (
           <>
-            {v && <BlurView intensity={v.blurIntensity} tint={v.blurTint} style={StyleSheet.absoluteFillObject} />}
+            {v && (
+              <BlurView
+                intensity={v.blurIntensity}
+                tint={v.blurTint}
+                style={StyleSheet.absoluteFillObject}
+              />
+            )}
             {v && (
               <View
                 style={[

@@ -25,7 +25,9 @@ function TabLabel({ label, color, width }: { label: string; color: string; width
   const fontSize = width < 400 ? 10 : width < 600 ? 11 : 12;
 
   return (
-    <Text style={{ fontFamily: fontFamily.body, fontSize, color, textAlign: 'center', width: '100%' }}>
+    <Text
+      style={{ fontFamily: fontFamily.body, fontSize, color, textAlign: 'center', width: '100%' }}
+    >
       {label}
     </Text>
   );
@@ -53,7 +55,13 @@ export default function AppLayout() {
   // screens (companies/[id], products/[id]...) keep the plain HeaderLogo
   // header below, since `header` would otherwise swallow their back arrow.
   function renderTopBar() {
-    return <TopBar authenticated userName={user?.fullName} onProfile={() => router.push('/(app)/profile')} />;
+    return (
+      <TopBar
+        authenticated
+        userName={user?.fullName}
+        onProfile={() => router.push('/(app)/profile')}
+      />
+    );
   }
 
   return (
@@ -69,7 +77,11 @@ export default function AppLayout() {
         },
         tabBarBackground: () => (
           <View style={StyleSheet.absoluteFillObject}>
-            <BlurView intensity={glass.panel.blurIntensity} tint={glass.panel.blurTint} style={StyleSheet.absoluteFillObject} />
+            <BlurView
+              intensity={glass.panel.blurIntensity}
+              tint={glass.panel.blurTint}
+              style={StyleSheet.absoluteFillObject}
+            />
             <View style={[StyleSheet.absoluteFillObject, { backgroundColor: glass.panel.tint }]} />
           </View>
         ),
@@ -138,9 +150,18 @@ export default function AppLayout() {
         }}
       />
       {/* Ecrãs de detalhe — ocultos da tab bar, header simples com o logótipo */}
-      <Tabs.Screen name="companies/[id]" options={{ href: null, title: 'Empresa', headerLeft: HeaderLogo }} />
-      <Tabs.Screen name="companies/category/[categoryId]" options={{ href: null, title: 'Empresas', headerLeft: HeaderLogo }} />
-      <Tabs.Screen name="products/[id]" options={{ href: null, title: 'Produto', headerLeft: HeaderLogo }} />
+      <Tabs.Screen
+        name="companies/[id]"
+        options={{ href: null, title: 'Empresa', headerLeft: HeaderLogo }}
+      />
+      <Tabs.Screen
+        name="companies/category/[categoryId]"
+        options={{ href: null, title: 'Empresas', headerLeft: HeaderLogo }}
+      />
+      <Tabs.Screen
+        name="products/[id]"
+        options={{ href: null, title: 'Produto', headerLeft: HeaderLogo }}
+      />
     </Tabs>
   );
 }

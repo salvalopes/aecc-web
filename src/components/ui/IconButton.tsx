@@ -14,9 +14,22 @@ interface IconButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function IconButton({ icon, label, tone = 'default', size = 20, disabled = false, onPress, style }: IconButtonProps) {
+export function IconButton({
+  icon,
+  label,
+  tone = 'default',
+  size = 20,
+  disabled = false,
+  onPress,
+  style,
+}: IconButtonProps) {
   const { colors, radius, hitTargetMin } = useTheme();
-  const color = tone === 'danger' ? colors.error : tone === 'accent' ? colors.accentPrimary : colors.textSecondary;
+  const color =
+    tone === 'danger'
+      ? colors.error
+      : tone === 'accent'
+        ? colors.accentPrimary
+        : colors.textSecondary;
 
   return (
     <Pressable
