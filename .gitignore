@@ -25,3 +25,12 @@ expo-env.d.ts
 .DS_Store
 .claude/worktrees/
 .claude/settings.local.json
+
+# Playwright (E2E web): build exportado, traces, vídeos, relatórios e sessões
+e2e/web/.dist/
+e2e/web/.artifacts/
+e2e/web/.auth/
+
+# Builds nativos locais (expo run:ios / run:android)
+/ios
+/android
