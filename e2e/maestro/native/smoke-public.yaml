@@ -1,0 +1,43 @@
+# Smoke test nativo (Fase 0B-2b): build + arranque + ecrãs públicos. O login nativo
+# não funciona (depende de window.location) e será refeito noutra fase — não é testado aqui.
+# Pré-requisito: build de desenvolvimento instalado e Metro a correr
+#   (npx expo run:ios  |  npx expo run:android).
+# Correr (o Maestro só escreve screenshots dentro da pasta de output da execução,
+# em <test-output-dir>/takeScreenshot/; depois copiam-se para docs/redesign/baseline/<plataforma>/):
+#   maestro test --test-output-dir <tmp> e2e/maestro/native/smoke-public.yaml
+appId: com.aecc.app
+name: smoke-public (nativo)
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 120000
+- waitForAnimationToEnd
+- takeScreenshot: login
+
+- tapOn:
+    id: "login.register"
+- extendedWaitUntil:
+    notVisible:
+      id: "login.screen"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: register
+
+# Volta ao login reabrindo a app (sem depender de gestos/botões de voltar por plataforma).
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 60000
+- tapOn:
+    id: "login.forgot-password"
+- extendedWaitUntil:
+    visible:
+      id: "forgot-password.email"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: forgot-password
