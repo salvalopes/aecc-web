@@ -177,7 +177,8 @@ function UsersContent() {
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
-  const { fieldErrors, formError, validate, clearErrors, applyApiError } = useFormValidation<FormState>();
+  const { fieldErrors, formError, validate, clearErrors, applyApiError } =
+    useFormValidation<FormState>();
 
   async function load() {
     setLoading(true);
@@ -187,7 +188,7 @@ function UsersContent() {
       startTransition(() => setUsers(data));
     } catch (e) {
       startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar utilizadores.')
+        setError(e instanceof ApiError ? e.message : 'Erro ao carregar utilizadores.'),
       );
     } finally {
       startTransition(() => setLoading(false));
@@ -223,28 +224,24 @@ function UsersContent() {
   }
 
   function handleDelete(target: ManagedUser) {
-    Alert.alert(
-      'Desativar utilizador',
-      `Tem a certeza que quer desativar "${target.fullName}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Desativar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await usersApi.delete(target.id);
-              load();
-            } catch (e) {
-              Alert.alert(
-                'Erro',
-                e instanceof ApiError ? e.message : 'Erro ao desativar utilizador.'
-              );
-            }
-          },
+    Alert.alert('Desativar utilizador', `Tem a certeza que quer desativar "${target.fullName}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Desativar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await usersApi.delete(target.id);
+            load();
+          } catch (e) {
+            Alert.alert(
+              'Erro',
+              e instanceof ApiError ? e.message : 'Erro ao desativar utilizador.',
+            );
+          }
         },
-      ]
-    );
+      },
+    ]);
   }
 
   async function handleSave() {
@@ -310,14 +307,9 @@ function UsersContent() {
       ) : (
         <FlatList
           data={users}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <UserRow
-              item={item}
-              isSelf={isSelf(item)}
-              onEdit={openEdit}
-              onDelete={handleDelete}
-            />
+            <UserRow item={item} isSelf={isSelf(item)} onEdit={openEdit} onDelete={handleDelete} />
           )}
           contentContainerStyle={styles.list}
           ListEmptyComponent={<EmptyState message="Sem utilizadores." />}
@@ -384,7 +376,7 @@ function UsersContent() {
               label="Email"
               required
               value={form.email}
-              onChangeText={text => setForm(f => ({ ...f, email: text }))}
+              onChangeText={(text) => setForm((f) => ({ ...f, email: text }))}
               placeholder="utilizador@exemplo.com"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -396,7 +388,7 @@ function UsersContent() {
               label="Password"
               required
               value={form.password}
-              onChangeText={text => setForm(f => ({ ...f, password: text }))}
+              onChangeText={(text) => setForm((f) => ({ ...f, password: text }))}
               placeholder="Password inicial"
               secureTextEntry
               autoCapitalize="none"
@@ -409,7 +401,7 @@ function UsersContent() {
           label="Nome"
           required
           value={form.fullName}
-          onChangeText={text => setForm(f => ({ ...f, fullName: text }))}
+          onChangeText={(text) => setForm((f) => ({ ...f, fullName: text }))}
           placeholder="Nome completo"
           error={fieldErrors.fullName}
         />
@@ -427,11 +419,11 @@ function UsersContent() {
           Role
         </Text>
         <View style={styles.roleRow}>
-          {ROLES.map(role => (
+          {ROLES.map((role) => (
             <Chip
               key={role}
               active={form.role === role}
-              onPress={editingSelf ? undefined : () => setForm(f => ({ ...f, role }))}
+              onPress={editingSelf ? undefined : () => setForm((f) => ({ ...f, role }))}
             >
               {role}
             </Chip>
@@ -455,7 +447,7 @@ function UsersContent() {
             <View style={styles.estadoRow}>
               <Switch
                 value={form.isActive}
-                onValueChange={value => setForm(f => ({ ...f, isActive: value }))}
+                onValueChange={(value) => setForm((f) => ({ ...f, isActive: value }))}
                 disabled={editingSelf}
               />
               <Text
@@ -480,7 +472,13 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   list: { padding: 12, gap: 10, paddingBottom: 80 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+    flexWrap: 'wrap',
+  },
   cardActions: { flexDirection: 'row', gap: 16, marginTop: 4 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
   fab: { position: 'absolute', bottom: 24, right: 20 },

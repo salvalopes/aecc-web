@@ -16,7 +16,8 @@ const IDENTITY_ERROR_MESSAGES: Record<string, string> = {
   PasswordRequiresUpper: 'A password deve conter pelo menos uma letra maiúscula.',
   PasswordRequiresNonAlphanumeric: 'A password deve conter pelo menos um caráter especial.',
   PasswordRequiresUniqueChars: 'A password contém demasiados caracteres repetidos.',
-  UserAlreadyHasPassword: 'Este link já foi utilizado. Usa "Esqueci-me da palavra-passe" para definir uma nova.',
+  UserAlreadyHasPassword:
+    'Este link já foi utilizado. Usa "Esqueci-me da palavra-passe" para definir uma nova.',
 };
 
 /**
@@ -30,7 +31,7 @@ export function useFormValidation<T extends Record<string, any>>() {
 
   const validate = useCallback((values: T, rules: Rules<T>): boolean => {
     const errors: FieldErrors<T> = {};
-    (Object.keys(rules) as (keyof T)[]).forEach(key => {
+    (Object.keys(rules) as (keyof T)[]).forEach((key) => {
       const rule = rules[key];
       if (!rule) return;
       const msg = rule(values[key], values);
@@ -47,7 +48,7 @@ export function useFormValidation<T extends Record<string, any>>() {
   }, []);
 
   const clearFieldError = useCallback((field: keyof T) => {
-    setFieldErrors(prev => {
+    setFieldErrors((prev) => {
       if (!(field in prev)) return prev;
       const next = { ...prev };
       delete next[field];
@@ -56,33 +57,44 @@ export function useFormValidation<T extends Record<string, any>>() {
   }, []);
 
   /** Call from a catch block. `fieldMap` maps backend keys (FluentValidation property names or Identity error codes) to local form field names. */
-  const applyApiError = useCallback((e: unknown, fieldMap: Partial<Record<string, keyof T>> = {}) => {
-    if (e instanceof NetworkError) {
-      setFieldErrors({});
-      setFormError(e.message);
-      return;
-    }
-    if (e instanceof ApiError) {
-      if (e.fieldErrors) {
-        const mapped: FieldErrors<T> = {};
-        const unmapped: string[] = [];
-        for (const [code, msgs] of Object.entries(e.fieldErrors)) {
-          const message = IDENTITY_ERROR_MESSAGES[code] ?? msgs.join(' ');
-          const localField = fieldMap[code];
-          if (localField) mapped[localField] = message;
-          else unmapped.push(message);
+  const applyApiError = useCallback(
+    (e: unknown, fieldMap: Partial<Record<string, keyof T>> = {}) => {
+      if (e instanceof NetworkError) {
+        setFieldErrors({});
+        setFormError(e.message);
+        return;
+      }
+      if (e instanceof ApiError) {
+        if (e.fieldErrors) {
+          const mapped: FieldErrors<T> = {};
+          const unmapped: string[] = [];
+          for (const [code, msgs] of Object.entries(e.fieldErrors)) {
+            const message = IDENTITY_ERROR_MESSAGES[code] ?? msgs.join(' ');
+            const localField = fieldMap[code];
+            if (localField) mapped[localField] = message;
+            else unmapped.push(message);
+          }
+          setFieldErrors(mapped);
+          setFormError(unmapped.length > 0 ? unmapped.join(' ') : null);
+          return;
         }
-        setFieldErrors(mapped);
-        setFormError(unmapped.length > 0 ? unmapped.join(' ') : null);
+        setFieldErrors({});
+        setFormError(e.message);
         return;
       }
       setFieldErrors({});
-      setFormError(e.message);
-      return;
-    }
-    setFieldErrors({});
-    setFormError('Ocorreu um erro inesperado. Tenta novamente.');
-  }, []);
+      setFormError('Ocorreu um erro inesperado. Tenta novamente.');
+    },
+    [],
+  );
 
-  return { fieldErrors, formError, setFormError, validate, clearErrors, clearFieldError, applyApiError };
+  return {
+    fieldErrors,
+    formError,
+    setFormError,
+    validate,
+    clearErrors,
+    clearFieldError,
+    applyApiError,
+  };
 }

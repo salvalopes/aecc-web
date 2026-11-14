@@ -1,4 +1,13 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useCallback, useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { BlurView } from 'expo-blur';
@@ -20,11 +29,25 @@ function SectionHeader({ title, onAction }: { title: string; onAction: () => voi
   const { colors, fontFamily, fontSize, fontWeight } = useTheme();
   return (
     <View style={styles.sectionHeader}>
-      <Text style={{ fontFamily: fontFamily.display, fontWeight: fontWeight.bold, fontSize: fontSize.md, color: colors.textPrimary }}>
+      <Text
+        style={{
+          fontFamily: fontFamily.display,
+          fontWeight: fontWeight.bold,
+          fontSize: fontSize.md,
+          color: colors.textPrimary,
+        }}
+      >
         {title}
       </Text>
       <Pressable onPress={onAction}>
-        <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.accentGoldText }}>
+        <Text
+          style={{
+            fontFamily: fontFamily.body,
+            fontSize: fontSize.xs,
+            fontWeight: fontWeight.semibold,
+            color: colors.accentGoldText,
+          }}
+        >
           Ver todas
         </Text>
       </Pressable>
@@ -34,7 +57,8 @@ function SectionHeader({ title, onAction }: { title: string; onAction: () => voi
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight, lineHeight, spacing } = theme;
+  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight, lineHeight, spacing } =
+    theme;
   const { width } = useWindowDimensions();
 
   const [search, setSearch] = useState('');
@@ -51,10 +75,12 @@ export default function HomeScreen() {
         startTransition(() => {
           setCategories(cats);
           setCompanies(companiesPage.items);
-        })
+        }),
       )
-      .catch(e =>
-        startTransition(() => setError(e instanceof ApiError ? e.message : 'Erro ao carregar o início.'))
+      .catch((e) =>
+        startTransition(() =>
+          setError(e instanceof ApiError ? e.message : 'Erro ao carregar o início.'),
+        ),
       )
       .finally(() => startTransition(() => setLoading(false)));
   }, []);
@@ -70,12 +96,36 @@ export default function HomeScreen() {
   const numColumns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
 
   return (
-    <ScrollView testID="home.screen" style={{ flex: 1, backgroundColor: colors.surfaceApp }} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      testID="home.screen"
+      style={{ flex: 1, backgroundColor: colors.surfaceApp }}
+      contentContainerStyle={styles.scrollContent}
+    >
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <View style={[styles.hero, { backgroundColor: colors.surfaceSunken, borderBottomColor: colors.borderSubtle }]}>
-        <View style={[styles.heroPanel, glass.heroPanel.shadow, { borderRadius: glassRadius.panel, borderColor: glass.heroPanel.border }]}>
-          <BlurView intensity={glass.heroPanel.blurIntensity} tint={glass.heroPanel.blurTint} style={StyleSheet.absoluteFillObject} />
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: glass.heroPanel.tint, borderRadius: glassRadius.panel }]} />
+      <View
+        style={[
+          styles.hero,
+          { backgroundColor: colors.surfaceSunken, borderBottomColor: colors.borderSubtle },
+        ]}
+      >
+        <View
+          style={[
+            styles.heroPanel,
+            glass.heroPanel.shadow,
+            { borderRadius: glassRadius.panel, borderColor: glass.heroPanel.border },
+          ]}
+        >
+          <BlurView
+            intensity={glass.heroPanel.blurIntensity}
+            tint={glass.heroPanel.blurTint}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View
+            style={[
+              StyleSheet.absoluteFillObject,
+              { backgroundColor: glass.heroPanel.tint, borderRadius: glassRadius.panel },
+            ]}
+          />
 
           <Image
             source={require('../../assets/brand/aecc-logo.webp')}
@@ -114,7 +164,11 @@ export default function HomeScreen() {
             <View
               style={[
                 styles.searchBar,
-                { borderRadius: glassRadius.control, borderColor: glass.neutral.border, backgroundColor: glass.neutral.tint },
+                {
+                  borderRadius: glassRadius.control,
+                  borderColor: glass.neutral.border,
+                  backgroundColor: glass.neutral.tint,
+                },
               ]}
             >
               <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
@@ -132,10 +186,21 @@ export default function HomeScreen() {
                 autoComplete="off"
                 placeholder="Pesquisar empresas..."
                 placeholderTextColor={colors.textTertiary}
-                style={{ flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontFamily: fontFamily.body,
+                  fontSize: fontSize.md,
+                  color: colors.textPrimary,
+                }}
               />
             </View>
-            <Button testID="home.search-submit" variant="gold" fullWidth onPress={() => goToCompanies({ search: search.trim() || undefined })}>
+            <Button
+              testID="home.search-submit"
+              variant="gold"
+              fullWidth
+              onPress={() => goToCompanies({ search: search.trim() || undefined })}
+            >
               Ver empresas
             </Button>
           </View>
@@ -147,7 +212,16 @@ export default function HomeScreen() {
       ) : error ? (
         <View style={styles.errorWrap}>
           <Icon name="warning-circle" size={18} color={colors.error} />
-          <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.error, textAlign: 'center' }}>{error}</Text>
+          <Text
+            style={{
+              fontFamily: fontFamily.body,
+              fontSize: fontSize.base,
+              color: colors.error,
+              textAlign: 'center',
+            }}
+          >
+            {error}
+          </Text>
           <Button variant="secondary" size="sm" onPress={load}>
             Tentar novamente
           </Button>
@@ -156,12 +230,16 @@ export default function HomeScreen() {
         <>
           {/* ── Value props ────────────────────────────────────────────────── */}
           <View style={styles.valueProps}>
-            {VALUE_PROPS.map(v => (
+            {VALUE_PROPS.map((v) => (
               <View key={v.icon} style={styles.valueProp}>
                 <View
                   style={[
                     styles.valuePropWell,
-                    { borderRadius: 999, borderColor: glass.neutral.border, backgroundColor: glass.neutral.tint },
+                    {
+                      borderRadius: 999,
+                      borderColor: glass.neutral.border,
+                      backgroundColor: glass.neutral.tint,
+                    },
                   ]}
                 >
                   <Icon name={v.icon} size={22} color={colors.accentPrimary} />
@@ -185,9 +263,13 @@ export default function HomeScreen() {
           {/* ── Categories ───────────────────────────────────────────────────── */}
           <SectionHeader title="Categorias" onAction={() => goToCompanies()} />
           <View style={[styles.grid, { paddingHorizontal: spacing[6] }]}>
-            {categories.slice(0, 8).map(c => (
+            {categories.slice(0, 8).map((c) => (
               <View key={c.id} style={{ width: `${100 / numColumns}%`, padding: spacing[3] }}>
-                <CategoryTile slug={c.slug} label={c.name} onPress={() => goToCompanies({ categoryId: c.id, name: c.name })} />
+                <CategoryTile
+                  slug={c.slug}
+                  label={c.name}
+                  onPress={() => goToCompanies({ categoryId: c.id, name: c.name })}
+                />
               </View>
             ))}
           </View>
@@ -195,7 +277,7 @@ export default function HomeScreen() {
           {/* ── Featured companies ───────────────────────────────────────────── */}
           <SectionHeader title="Empresas em destaque" onAction={() => goToCompanies()} />
           <View style={[styles.companyList, { paddingHorizontal: spacing[6], gap: spacing[5] }]}>
-            {companies.map(co => (
+            {companies.map((co) => (
               <Card
                 key={co.id}
                 interactive
@@ -204,23 +286,43 @@ export default function HomeScreen() {
                 style={styles.companyRow}
               >
                 {co.logoUrl ? (
-                  <Image source={{ uri: co.logoUrl }} style={[styles.companyLogo, { borderRadius: theme.radius.md }]} />
+                  <Image
+                    source={{ uri: co.logoUrl }}
+                    style={[styles.companyLogo, { borderRadius: theme.radius.md }]}
+                  />
                 ) : (
-                  <View style={[styles.companyLogo, styles.companyLogoFallback, { backgroundColor: colors.surfaceSunken, borderRadius: theme.radius.md }]}>
+                  <View
+                    style={[
+                      styles.companyLogo,
+                      styles.companyLogoFallback,
+                      { backgroundColor: colors.surfaceSunken, borderRadius: theme.radius.md },
+                    ]}
+                  >
                     <Icon name="storefront" size={20} color={colors.textTertiary} />
                   </View>
                 )}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text
                     numberOfLines={1}
-                    style={{ fontFamily: fontFamily.body, fontWeight: fontWeight.bold, fontSize: fontSize.base, color: colors.textPrimary }}
+                    style={{
+                      fontFamily: fontFamily.body,
+                      fontWeight: fontWeight.bold,
+                      fontSize: fontSize.base,
+                      color: colors.textPrimary,
+                    }}
                   >
                     {co.name}
                   </Text>
                   {!!co.locality && (
                     <View style={styles.companyLocality}>
                       <Icon name="house-line" size={11} color={colors.textTertiary} />
-                      <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize['2xs'], color: colors.textTertiary }}>
+                      <Text
+                        style={{
+                          fontFamily: fontFamily.body,
+                          fontSize: fontSize['2xs'],
+                          color: colors.textTertiary,
+                        }}
+                      >
                         {co.locality}
                       </Text>
                     </View>
@@ -242,12 +344,32 @@ const styles = StyleSheet.create({
   heroPanel: { alignItems: 'center', padding: 20, borderWidth: 1, overflow: 'hidden' },
   heroLogo: { width: '70%', maxWidth: 220, height: 64, marginBottom: 6 },
   heroForm: { width: '100%', maxWidth: 320, marginTop: 20, gap: 10 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: 14, borderWidth: 1 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 48,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
   errorWrap: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 48 },
   valueProps: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingTop: 20 },
   valueProp: { width: '25%', alignItems: 'center', gap: 7, paddingHorizontal: 4, marginBottom: 8 },
-  valuePropWell: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10 },
+  valuePropWell: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   companyList: { flexDirection: 'column', paddingBottom: 8 },
   companyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },

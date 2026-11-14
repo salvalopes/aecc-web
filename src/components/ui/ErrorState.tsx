@@ -14,7 +14,14 @@ export function ErrorState({ message = 'Ocorreu um erro.', onRetry }: ErrorState
     <View style={{ alignItems: 'center', justifyContent: 'center', gap: 12, padding: 48 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Icon name="warning-circle" size={18} color={colors.error} />
-        <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.error, textAlign: 'center' }}>
+        <Text
+          style={{
+            fontFamily: fontFamily.body,
+            fontSize: fontSize.base,
+            color: colors.error,
+            textAlign: 'center',
+          }}
+        >
           {message}
         </Text>
       </View>

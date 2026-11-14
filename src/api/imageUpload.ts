@@ -15,7 +15,12 @@ export function createImageFormData(asset: UploadableImageAsset, fieldName = 'fi
   }
 
   const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const mime = asset.mimeType ?? (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
-  formData.append(fieldName, { uri: asset.uri, name: `photo.${ext}`, type: mime } as unknown as Blob);
+  const mime =
+    asset.mimeType ?? (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+  formData.append(fieldName, {
+    uri: asset.uri,
+    name: `photo.${ext}`,
+    type: mime,
+  } as unknown as Blob);
   return formData;
 }

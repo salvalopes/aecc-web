@@ -1,10 +1,21 @@
 import { apiClient } from './client';
 import { createImageFormData } from './imageUpload';
-import type { Company, CompanyDirectoryEntry, CreateCompanyRequest, PagedResult, UpdateCompanyRequest } from '@/types/api';
+import type {
+  Company,
+  CompanyDirectoryEntry,
+  CreateCompanyRequest,
+  PagedResult,
+  UpdateCompanyRequest,
+} from '@/types/api';
 import type { ImagePickerAsset } from 'expo-image-picker';
 
 export const companiesApi = {
-  directory: (params?: { name?: string; categoryId?: string; page?: number; pageSize?: number }) => {
+  directory: (params?: {
+    name?: string;
+    categoryId?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.name) qs.set('name', params.name);
     if (params?.categoryId) qs.set('categoryId', params.categoryId);

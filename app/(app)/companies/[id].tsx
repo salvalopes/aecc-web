@@ -10,8 +10,27 @@ import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, requiredWhen } from '@/utils/validators';
-import type { Category, Company, CreateProductRequest, Product, ProductType, UpdateCompanyRequest } from '@/types/api';
-import { Button, Chip, Icon, Badge, Card, Input, Modal, Switch, EmptyState, ErrorState, LoadingSpinner } from '@/components/ui';
+import type {
+  Category,
+  Company,
+  CreateProductRequest,
+  Product,
+  ProductType,
+  UpdateCompanyRequest,
+} from '@/types/api';
+import {
+  Button,
+  Chip,
+  Icon,
+  Badge,
+  Card,
+  Input,
+  Modal,
+  Switch,
+  EmptyState,
+  ErrorState,
+  LoadingSpinner,
+} from '@/components/ui';
 
 interface FormState {
   name: string;
@@ -39,9 +58,11 @@ const DEFAULT_PRODUCT_FORM: ProductFormState = {
 };
 
 function buildAddressLine(company: Company): string | null {
-  const parts = [company.address, company.postalCode, company.postalCodeLocality ?? company.locality].filter(
-    (part): part is string => !!part && part.trim().length > 0
-  );
+  const parts = [
+    company.address,
+    company.postalCode,
+    company.postalCodeLocality ?? company.locality,
+  ].filter((part): part is string => !!part && part.trim().length > 0);
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
@@ -49,7 +70,11 @@ function ProductItem({ product }: { product: Product }) {
   const { colors, fontFamily, fontSize, fontWeight, spacing } = useTheme();
 
   return (
-    <Card interactive onPress={() => router.push(`/(app)/products/${product.id}`)} style={styles.productCard}>
+    <Card
+      interactive
+      onPress={() => router.push(`/(app)/products/${product.id}`)}
+      style={styles.productCard}
+    >
       <View style={[styles.productHeader, { gap: spacing[4] }]}>
         <Text
           style={{
@@ -68,7 +93,11 @@ function ProductItem({ product }: { product: Product }) {
       </View>
       {!!product.description && (
         <Text
-          style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.textSecondary }}
+          style={{
+            fontFamily: fontFamily.body,
+            fontSize: fontSize.sm,
+            color: colors.textSecondary,
+          }}
           numberOfLines={2}
         >
           {product.description}
@@ -77,7 +106,14 @@ function ProductItem({ product }: { product: Product }) {
       {product.hasMemberBenefit && (
         <View style={[styles.benefitTag, { marginTop: spacing[3], gap: spacing[2] }]}>
           <Icon name="star" size={13} color={colors.accentPrimary} />
-          <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: colors.accentPrimary }}>
+          <Text
+            style={{
+              fontFamily: fontFamily.body,
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.semibold,
+              color: colors.accentPrimary,
+            }}
+          >
             Benefício membro
           </Text>
         </View>
@@ -105,7 +141,9 @@ export default function CompanyDetailScreen() {
     leadCooldownMinutes: '60',
     leadDestinationEmail: '',
   });
-  const [pendingLogoAsset, setPendingLogoAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [pendingLogoAsset, setPendingLogoAsset] = useState<ImagePicker.ImagePickerAsset | null>(
+    null,
+  );
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -142,12 +180,26 @@ export default function CompanyDetailScreen() {
         headerRight: () => (
           <View style={styles.headerActions}>
             <Pressable onPress={handleDelete} style={styles.headerBtn} hitSlop={8}>
-              <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.error }}>
+              <Text
+                style={{
+                  fontFamily: fontFamily.body,
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.error,
+                }}
+              >
                 Apagar
               </Text>
             </Pressable>
             <Pressable onPress={openEdit} style={styles.headerBtn} hitSlop={8}>
-              <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.accentPrimary }}>
+              <Text
+                style={{
+                  fontFamily: fontFamily.body,
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.accentPrimary,
+                }}
+              >
                 Editar
               </Text>
             </Pressable>
@@ -173,7 +225,7 @@ export default function CompanyDetailScreen() {
       });
     } catch (e) {
       startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar empresa.')
+        setError(e instanceof ApiError ? e.message : 'Erro ao carregar empresa.'),
       );
     } finally {
       startTransition(() => setLoading(false));
@@ -188,30 +240,29 @@ export default function CompanyDetailScreen() {
   // dono da empresa vê — evita o pedido extra para todos os outros visitantes.
   useEffect(() => {
     if (!isOwner) return;
-    categoriesApi.list().then(cats => startTransition(() => setCategories(cats))).catch(() => {});
+    categoriesApi
+      .list()
+      .then((cats) => startTransition(() => setCategories(cats)))
+      .catch(() => {});
   }, [isOwner]);
 
   function handleDelete() {
     if (!company) return;
-    Alert.alert(
-      'Apagar empresa',
-      `Tem a certeza que quer apagar "${company.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Apagar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await companiesApi.delete(company.id);
-              router.back();
-            } catch (e) {
-              Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar empresa.');
-            }
-          },
+    Alert.alert('Apagar empresa', `Tem a certeza que quer apagar "${company.name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Apagar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await companiesApi.delete(company.id);
+            router.back();
+          } catch (e) {
+            Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar empresa.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   }
 
   function openEdit() {
@@ -241,9 +292,18 @@ export default function CompanyDetailScreen() {
 
   async function handleSave() {
     const cooldown = parseInt(form.leadCooldownMinutes, 10);
-    if (!form.name.trim()) { setFormError('O nome é obrigatório.'); return; }
-    if (!form.leadDestinationEmail.trim()) { setFormError('O email de destino é obrigatório.'); return; }
-    if (Number.isNaN(cooldown) || cooldown < 0) { setFormError('Cooldown inválido.'); return; }
+    if (!form.name.trim()) {
+      setFormError('O nome é obrigatório.');
+      return;
+    }
+    if (!form.leadDestinationEmail.trim()) {
+      setFormError('O email de destino é obrigatório.');
+      return;
+    }
+    if (Number.isNaN(cooldown) || cooldown < 0) {
+      setFormError('Cooldown inválido.');
+      return;
+    }
     setSaving(true);
     setFormError(null);
     try {
@@ -284,8 +344,8 @@ export default function CompanyDetailScreen() {
       name: required('O nome é obrigatório.'),
       categoryId: required('Selecione uma categoria.'),
       memberBenefitDescription: requiredWhen(
-        v => v.hasMemberBenefit,
-        'Descreva o benefício para membros.'
+        (v) => v.hasMemberBenefit,
+        'Descreva o benefício para membros.',
       ),
     });
     if (!isValid) return;
@@ -337,7 +397,7 @@ export default function CompanyDetailScreen() {
 
   const currentLogoUri = pendingLogoAsset?.uri ?? company.logoUrl;
   const flatCategories = (function flatten(cats: Category[]): Category[] {
-    return cats.flatMap(c => [c, ...flatten(c.children)]);
+    return cats.flatMap((c) => [c, ...flatten(c.children)]);
   })(categories);
   const productLabelStyle = {
     fontFamily: fontFamily.body,
@@ -359,14 +419,18 @@ export default function CompanyDetailScreen() {
     <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
       <FlatList
         data={products}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ProductItem product={item} />}
         ListHeaderComponent={
           <View>
             <View
               style={[
                 styles.hero,
-                { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle, padding: spacing[9] },
+                {
+                  backgroundColor: colors.surfaceCard,
+                  borderBottomColor: colors.borderSubtle,
+                  padding: spacing[9],
+                },
               ]}
             >
               {!!currentLogoUri && (
@@ -414,18 +478,30 @@ export default function CompanyDetailScreen() {
               )}
               {profileFields.length > 0 && (
                 <View style={{ gap: spacing[3], marginBottom: spacing[4] }}>
-                  {profileFields.map(f => (
+                  {profileFields.map((f) => (
                     <Text
                       key={f.label}
-                      style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.textSecondary }}
+                      style={{
+                        fontFamily: fontFamily.body,
+                        fontSize: fontSize.sm,
+                        color: colors.textSecondary,
+                      }}
                     >
-                      <Text style={{ fontWeight: fontWeight.semibold, color: colors.textPrimary }}>{f.label}: </Text>
+                      <Text style={{ fontWeight: fontWeight.semibold, color: colors.textPrimary }}>
+                        {f.label}:{' '}
+                      </Text>
                       {f.value}
                     </Text>
                   ))}
                 </View>
               )}
-              <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.textTertiary }}>
+              <Text
+                style={{
+                  fontFamily: fontFamily.body,
+                  fontSize: fontSize.xs,
+                  color: colors.textTertiary,
+                }}
+              >
                 Cooldown leads: {company.leadCooldownMinutes} min
               </Text>
             </View>
@@ -476,7 +552,9 @@ export default function CompanyDetailScreen() {
               marginBottom: spacing[6],
             }}
           >
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}>
+            <Text
+              style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}
+            >
               {formError}
             </Text>
           </View>
@@ -506,7 +584,10 @@ export default function CompanyDetailScreen() {
           onPress={pickLogo}
         >
           {currentLogoUri ? (
-            <Image source={{ uri: currentLogoUri }} style={[styles.logoPreview, { borderRadius: radius.lg }]} />
+            <Image
+              source={{ uri: currentLogoUri }}
+              style={[styles.logoPreview, { borderRadius: radius.lg }]}
+            />
           ) : (
             <>
               <Icon name="image-square" size={20} color={colors.textTertiary} />
@@ -526,7 +607,13 @@ export default function CompanyDetailScreen() {
         </Pressable>
         {!!currentLogoUri && (
           <Pressable onPress={pickLogo} style={{ marginTop: spacing[4] }}>
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.accentPrimary }}>
+            <Text
+              style={{
+                fontFamily: fontFamily.body,
+                fontSize: fontSize.sm,
+                color: colors.accentPrimary,
+              }}
+            >
               Alterar logo
             </Text>
           </Pressable>
@@ -538,7 +625,7 @@ export default function CompanyDetailScreen() {
             label="Nome"
             required
             value={form.name}
-            onChangeText={text => setForm(f => ({ ...f, name: text }))}
+            onChangeText={(text) => setForm((f) => ({ ...f, name: text }))}
             autoFocus
           />
 
@@ -546,7 +633,7 @@ export default function CompanyDetailScreen() {
             testID="company-edit.description"
             label="Descrição"
             value={form.description}
-            onChangeText={text => setForm(f => ({ ...f, description: text }))}
+            onChangeText={(text) => setForm((f) => ({ ...f, description: text }))}
             multiline
             numberOfLines={3}
           />
@@ -556,7 +643,7 @@ export default function CompanyDetailScreen() {
             label="Email de destino de leads"
             required
             value={form.leadDestinationEmail}
-            onChangeText={text => setForm(f => ({ ...f, leadDestinationEmail: text }))}
+            onChangeText={(text) => setForm((f) => ({ ...f, leadDestinationEmail: text }))}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -565,7 +652,7 @@ export default function CompanyDetailScreen() {
             testID="company-edit.lead-cooldown"
             label="Cooldown de leads (minutos)"
             value={form.leadCooldownMinutes}
-            onChangeText={text => setForm(f => ({ ...f, leadCooldownMinutes: text }))}
+            onChangeText={(text) => setForm((f) => ({ ...f, leadCooldownMinutes: text }))}
             keyboardType="number-pad"
           />
         </View>
@@ -588,7 +675,9 @@ export default function CompanyDetailScreen() {
               marginBottom: spacing[6],
             }}
           >
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}>
+            <Text
+              style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}
+            >
               {productFormError}
             </Text>
           </View>
@@ -596,11 +685,18 @@ export default function CompanyDetailScreen() {
 
         <Text style={productLabelStyle}>Categoria *</Text>
         {productFieldErrors.categoryId && (
-          <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.error, marginBottom: 4 }}>
+          <Text
+            style={{
+              fontFamily: fontFamily.body,
+              fontSize: fontSize.xs,
+              color: colors.error,
+              marginBottom: 4,
+            }}
+          >
             {productFieldErrors.categoryId}
           </Text>
         )}
-        {flatCategories.map(cat => {
+        {flatCategories.map((cat) => {
           const selected = productForm.categoryId === cat.id;
           return (
             <Pressable
@@ -612,7 +708,7 @@ export default function CompanyDetailScreen() {
                   backgroundColor: selected ? colors.infoBg : colors.surfaceSunken,
                 },
               ]}
-              onPress={() => setProductForm(f => ({ ...f, categoryId: cat.id }))}
+              onPress={() => setProductForm((f) => ({ ...f, categoryId: cat.id }))}
             >
               <Text
                 style={{
@@ -631,11 +727,11 @@ export default function CompanyDetailScreen() {
 
         <Text style={productLabelStyle}>Tipo *</Text>
         <View style={styles.typeToggle}>
-          {(['Product', 'Service'] as const).map(t => (
+          {(['Product', 'Service'] as const).map((t) => (
             <Chip
               key={t}
               active={productForm.type === t}
-              onPress={() => setProductForm(f => ({ ...f, type: t }))}
+              onPress={() => setProductForm((f) => ({ ...f, type: t }))}
               style={styles.typeChip}
             >
               {t === 'Product' ? 'Produto' : 'Serviço'}
@@ -647,7 +743,7 @@ export default function CompanyDetailScreen() {
           label="Nome"
           required
           value={productForm.name}
-          onChangeText={text => setProductForm(f => ({ ...f, name: text }))}
+          onChangeText={(text) => setProductForm((f) => ({ ...f, name: text }))}
           placeholder="Nome do produto ou serviço"
           style={styles.fieldSpacing}
           error={productFieldErrors.name}
@@ -656,7 +752,7 @@ export default function CompanyDetailScreen() {
         <Input
           label="Descrição"
           value={productForm.description}
-          onChangeText={text => setProductForm(f => ({ ...f, description: text }))}
+          onChangeText={(text) => setProductForm((f) => ({ ...f, description: text }))}
           placeholder="Descrição"
           multiline
           numberOfLines={3}
@@ -677,7 +773,7 @@ export default function CompanyDetailScreen() {
           </Text>
           <Switch
             value={productForm.hasMemberBenefit}
-            onValueChange={v => setProductForm(f => ({ ...f, hasMemberBenefit: v }))}
+            onValueChange={(v) => setProductForm((f) => ({ ...f, hasMemberBenefit: v }))}
           />
         </View>
 
@@ -685,7 +781,9 @@ export default function CompanyDetailScreen() {
           <Input
             label="Descrição do benefício"
             value={productForm.memberBenefitDescription}
-            onChangeText={text => setProductForm(f => ({ ...f, memberBenefitDescription: text }))}
+            onChangeText={(text) =>
+              setProductForm((f) => ({ ...f, memberBenefitDescription: text }))
+            }
             placeholder="Descreva o benefício para membros"
             multiline
             numberOfLines={2}

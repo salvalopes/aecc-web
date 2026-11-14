@@ -25,7 +25,11 @@ export function Chip({ children, active = false, onPress, style, testID }: ChipP
           borderRadius: radius.pill,
           borderWidth: 1,
           borderColor: active ? colors.accentPrimary : colors.borderDefault,
-          backgroundColor: active ? colors.accentPrimary : pressed ? colors.surfaceSunken : colors.surfaceCard,
+          backgroundColor: active
+            ? colors.accentPrimary
+            : pressed
+              ? colors.surfaceSunken
+              : colors.surfaceCard,
         },
         style,
       ]}

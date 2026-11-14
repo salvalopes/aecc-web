@@ -45,7 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Load a previously-chosen override once on mount; falls back to the
   // system scheme until (and unless) the user has picked one explicitly.
   useEffect(() => {
-    AsyncStorage.getItem(THEME_MODE_KEY).then(value => {
+    AsyncStorage.getItem(THEME_MODE_KEY).then((value) => {
       if (value === 'light' || value === 'dark') setOverride(value);
     });
   }, []);
@@ -92,7 +92,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       fontWeight,
       shadow,
     }),
-    [colors, isDark, mode]
+    [colors, isDark, mode],
   );
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;

@@ -16,9 +16,7 @@ const storage = {
   get: (key: string) =>
     Platform.OS === 'web' ? AsyncStorage.getItem(key) : SecureStore.getItemAsync(key),
   set: (key: string, value: string) =>
-    Platform.OS === 'web'
-      ? AsyncStorage.setItem(key, value)
-      : SecureStore.setItemAsync(key, value),
+    Platform.OS === 'web' ? AsyncStorage.setItem(key, value) : SecureStore.setItemAsync(key, value),
   remove: (key: string) =>
     Platform.OS === 'web' ? AsyncStorage.removeItem(key) : SecureStore.deleteItemAsync(key),
 };
@@ -134,10 +132,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Step 1: validate credentials (sets Identity cookie), then redirect to PKCE authorize
-  const login = useCallback(async (credentials: LoginRequest) => {
-    await authApi.loginWithCookie(credentials);
-    await redirectToAuthorize();
-  }, [redirectToAuthorize]);
+  const login = useCallback(
+    async (credentials: LoginRequest) => {
+      await authApi.loginWithCookie(credentials);
+      await redirectToAuthorize();
+    },
+    [redirectToAuthorize],
+  );
 
   // Step 3: called by the /auth/callback route after the browser returns with ?code=...
   const completeOAuthLogin = useCallback(async (code: string, state: string) => {

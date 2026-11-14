@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import { authApi } from '@/api/auth.api';
 import { useFormValidation } from '@/hooks/useFormValidation';
@@ -18,7 +26,7 @@ export default function RegisterScreen() {
   async function handleRegister() {
     const isValid = validate(
       { email },
-      { email: combine(required('O email é obrigatório.'), emailFormat()) }
+      { email: combine(required('O email é obrigatório.'), emailFormat()) },
     );
     if (!isValid) return;
 
@@ -36,7 +44,11 @@ export default function RegisterScreen() {
   if (submitted) {
     return (
       <View style={styles.container}>
-        <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
+        <Image
+          source={require('../../assets/brand/aecc-logo.webp')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.message}>
           Verifica o teu email para confirmares a conta e definires a tua palavra-passe.
         </Text>
@@ -52,7 +64,11 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
+      <Image
+        source={require('../../assets/brand/aecc-logo.webp')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.subtitle}>Criar conta</Text>
 
       <TextInput

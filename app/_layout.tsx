@@ -2,7 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { DefaultTheme, DarkTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import {
+  DefaultTheme,
+  DarkTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from '@react-navigation/native';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 

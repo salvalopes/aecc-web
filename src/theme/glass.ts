@@ -15,7 +15,10 @@ export interface GlassVariant {
   blurIntensity: number;
   /** expo-blur <BlurView tint> — matches the underlying theme, not the variant. */
   blurTint: 'light' | 'dark';
-  shadow: Pick<ViewStyle, 'shadowColor' | 'shadowOffset' | 'shadowOpacity' | 'shadowRadius' | 'elevation'>;
+  shadow: Pick<
+    ViewStyle,
+    'shadowColor' | 'shadowOffset' | 'shadowOpacity' | 'shadowRadius' | 'elevation'
+  >;
 }
 
 export interface GlassTokens {

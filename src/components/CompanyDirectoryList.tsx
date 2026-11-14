@@ -8,7 +8,7 @@ import { Button, Card, IconButton, EmptyState, ErrorState, LoadingSpinner } from
 
 function buildAddressLine(item: CompanyDirectoryEntry): string | null {
   const parts = [item.address, item.postalCode, item.postalCodeLocality ?? item.locality].filter(
-    (part): part is string => !!part && part.trim().length > 0
+    (part): part is string => !!part && part.trim().length > 0,
   );
   return parts.length > 0 ? parts.join(', ') : null;
 }
@@ -78,12 +78,18 @@ function CompanyDirectoryRow({
           ]}
         >
           {fields.length > 0 ? (
-            fields.map(f => (
+            fields.map((f) => (
               <Text
                 key={f.label}
-                style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.textSecondary }}
+                style={{
+                  fontFamily: fontFamily.body,
+                  fontSize: fontSize.sm,
+                  color: colors.textSecondary,
+                }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.textPrimary }}>{f.label}: </Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.textPrimary }}>
+                  {f.label}:{' '}
+                </Text>
                 {f.value}
               </Text>
             ))
@@ -111,9 +117,16 @@ interface CompanyDirectoryListProps {
   emptyMessage?: string;
 }
 
-export function CompanyDirectoryList({ search, categoryId, emptyMessage = 'Nenhuma empresa encontrada.' }: CompanyDirectoryListProps) {
+export function CompanyDirectoryList({
+  search,
+  categoryId,
+  emptyMessage = 'Nenhuma empresa encontrada.',
+}: CompanyDirectoryListProps) {
   const { colors, fontFamily, fontSize, spacing } = useTheme();
-  const { entries, loading, loadingMore, error, loadMore, reload } = useCompanyDirectory({ search, categoryId });
+  const { entries, loading, loadingMore, error, loadMore, reload } = useCompanyDirectory({
+    search,
+    categoryId,
+  });
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -121,7 +134,7 @@ export function CompanyDirectoryList({ search, categoryId, emptyMessage = 'Nenhu
   }, [search, categoryId]);
 
   function toggleExpand(id: string) {
-    setExpandedIds(prev => {
+    setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -135,7 +148,7 @@ export function CompanyDirectoryList({ search, categoryId, emptyMessage = 'Nenhu
   return (
     <FlatList
       data={entries}
-      keyExtractor={item => item.id}
+      keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <CompanyDirectoryRow
           item={item}
@@ -152,7 +165,9 @@ export function CompanyDirectoryList({ search, categoryId, emptyMessage = 'Nenhu
           <LoadingSpinner size="small" />
         ) : error && entries.length > 0 ? (
           <View style={{ padding: spacing[6], alignItems: 'center', gap: spacing[4] }}>
-            <Text style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}>
+            <Text
+              style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}
+            >
               {error}
             </Text>
             <Button variant="secondary" size="sm" onPress={loadMore}>

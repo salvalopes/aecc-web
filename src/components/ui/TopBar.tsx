@@ -17,16 +17,47 @@ interface TopBarProps {
 // The masterpage header — glass bar carrying the AECC lockup at real scale
 // plus a light/dark toggle and either the Entrar/Criar conta actions or a
 // profile chip. Floats on glass so it can sit over the Yellow Pages hero.
-export function TopBar({ authenticated = false, userName = null, onLogin, onRegister, onProfile, compact = false }: TopBarProps) {
+export function TopBar({
+  authenticated = false,
+  userName = null,
+  onLogin,
+  onRegister,
+  onProfile,
+  compact = false,
+}: TopBarProps) {
   const theme = useTheme();
-  const { colors, glass, glassRadius, hitTargetMin, fontFamily, fontSize, fontWeight, isDark, toggleTheme } = theme;
+  const {
+    colors,
+    glass,
+    glassRadius,
+    hitTargetMin,
+    fontFamily,
+    fontSize,
+    fontWeight,
+    isDark,
+    toggleTheme,
+  } = theme;
   const v = glass.panel;
 
   return (
     <View style={[styles.wrap, v.shadow]}>
-      <BlurView intensity={v.blurIntensity} tint={v.blurTint} style={StyleSheet.absoluteFillObject} />
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: v.tint, borderBottomWidth: 1, borderBottomColor: v.border }]} />
-      <View style={[styles.row, { paddingVertical: compact ? 10 : 14, paddingHorizontal: compact ? 16 : 24 }]}>
+      <BlurView
+        intensity={v.blurIntensity}
+        tint={v.blurTint}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { backgroundColor: v.tint, borderBottomWidth: 1, borderBottomColor: v.border },
+        ]}
+      />
+      <View
+        style={[
+          styles.row,
+          { paddingVertical: compact ? 10 : 14, paddingHorizontal: compact ? 16 : 24 },
+        ]}
+      >
         <Image
           source={require('../../../assets/brand/aecc-logo.webp')}
           style={{ height: compact ? 36 : 48, width: compact ? 110 : 146, flexShrink: 0 }}
@@ -94,10 +125,20 @@ export function TopBar({ authenticated = false, userName = null, onLogin, onRegi
             </Pressable>
           ) : (
             <View style={styles.authActions}>
-              <Button variant="secondary" size="sm" onPress={onLogin} icon={<Icon name="sign-in" size={16} color={colors.accentPrimary} />}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onPress={onLogin}
+                icon={<Icon name="sign-in" size={16} color={colors.accentPrimary} />}
+              >
                 Entrar
               </Button>
-              <Button variant="gold" size="sm" onPress={onRegister} icon={<Icon name="user-plus" size={16} color={colors.textOnGold} />}>
+              <Button
+                variant="gold"
+                size="sm"
+                onPress={onRegister}
+                icon={<Icon name="user-plus" size={16} color={colors.textOnGold} />}
+              >
                 Criar conta
               </Button>
             </View>
@@ -110,12 +151,25 @@ export function TopBar({ authenticated = false, userName = null, onLogin, onRegi
 
 const styles = StyleSheet.create({
   wrap: {},
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, minWidth: 0 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    minWidth: 0,
+  },
   // flexShrink so the chip/buttons give way instead of overflowing the header
   // on narrow phones; minWidth: 0 lets that shrink go below content size on
   // web (see the Text comment above for why RNW needs it explicitly).
   actions: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0 },
   themeToggle: { alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  profileChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, flexShrink: 1, minWidth: 0 },
+  profileChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   authActions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0 },
 });

@@ -63,6 +63,5 @@ export const authApi = {
   confirmEmail: (data: ConfirmEmailRequest) => apiClient.post<void>('/auth/confirm-email', data),
   forgotPassword: (data: ForgotPasswordRequest) =>
     apiClient.post<void>('/auth/forgot-password', data),
-  resetPassword: (data: ResetPasswordRequest) =>
-    apiClient.post<void>('/auth/reset-password', data),
+  resetPassword: (data: ResetPasswordRequest) => apiClient.post<void>('/auth/reset-password', data),
 };
