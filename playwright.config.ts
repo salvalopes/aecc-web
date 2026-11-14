@@ -27,7 +27,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      `EXPO_PUBLIC_API_URL=${API_URL} npx expo export -p web --output-dir e2e/web/.dist ` +
+      `EXPO_PUBLIC_API_URL=${API_URL} npx expo export -p web --clear --output-dir e2e/web/.dist ` +
       '&& node e2e/web/serve-static.mjs e2e/web/.dist 8081',
     url: 'http://localhost:8081',
     reuseExistingServer: false,
