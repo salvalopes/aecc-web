@@ -7,7 +7,11 @@ import { ASSOCIADO_COMPANY_ID, ASSOCIADO_PRODUCT_ID, login, USERS } from '../hel
 // Só corre com `npm run baseline:web`. Nome: <rota>__<largura>__<tema>.png
 // Fora: /companies/category/:id — é só um <Redirect> para /companies, sem UI própria.
 
-const OUT = path.join(__dirname, '..', '..', '..', 'docs', 'redesign', 'baseline', 'web');
+// BASELINE_OUT (opcional, relativo à raiz do repo) desvia o output — ex. comparar após upgrades
+// sem sobrescrever o baseline versionado.
+const OUT = process.env.BASELINE_OUT
+  ? path.resolve(process.env.BASELINE_OUT)
+  : path.join(__dirname, '..', '..', '..', 'docs', 'redesign', 'baseline', 'web');
 const AUTH_DIR = path.join(__dirname, '..', '.auth'); // ignorada pelo git (contém tokens)
 
 type Role = 'public' | 'associado' | 'admin';
