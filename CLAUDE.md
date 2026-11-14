@@ -11,5 +11,6 @@
 - Plugin Expo: decide APIs Expo, Expo Router, EAS e versões (sempre `npx expo install`). Em animações, a skill de motion da plataforma decide o comportamento; Expo decide APIs e versões.
 - Skills do plugin Expo `expo-animation`, `expo-ui` e `expo-design-system`: só como referência de API. Não decidem o comportamento de motion (animate-expo / apple-design) nem a direção visual (design-taste-frontend-v1).
 - Validação: agent-browser para o build web; Maestro para iOS e Android.
+- agent-browser: usar só contra `localhost` e `aecc.salv4.com`. Nunca para apps Electron/desktop (Slack, Discord, Notion, etc.) e nunca guardar credenciais no vault do agent-browser.
 - Conflitos: design-taste-frontend-v1 prevalece no visual estático; animate-expo no motion nativo e nos componentes partilhados; apple-design no motion específico da web; Expo na implementação; este ficheiro prevalece sobre qualquer skill.
 - Superpowers: usar o fluxo (plano, TDD) em features e alterações de código. Em tarefas de só-leitura, inventário ou configuração, não iniciar brainstorming nem plano.
