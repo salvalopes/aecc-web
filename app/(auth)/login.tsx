@@ -45,11 +45,8 @@ export default function LoginScreen() {
       <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.subtitle}>Associação de Empresários de Cascais</Text>
 
-      {/* nativeID (→ id no DOM) só para o Maestro web: o inputText dele localiza o input
-          focado por um XPath baseado em `class`, e os dois inputs têm classes RNW iguais. */}
       <TextInput
         testID="login.email"
-        nativeID="login-email"
         style={[styles.input, fieldErrors.email && styles.inputError]}
         placeholder="Email"
         value={email}
@@ -62,7 +59,6 @@ export default function LoginScreen() {
 
       <TextInput
         testID="login.password"
-        nativeID="login-password"
         style={[styles.input, fieldErrors.password && styles.inputError]}
         placeholder="Palavra-passe"
         value={password}
@@ -91,6 +87,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        testID="login.register"
         onPress={() => router.push('/(auth)/register')}
         style={styles.registerLink}
       >
