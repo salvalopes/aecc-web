@@ -33,7 +33,7 @@ export default function ForgotPasswordScreen() {
       <View style={styles.container}>
         <Text style={styles.title}>AECC</Text>
         <Text style={styles.subtitle}>Esqueci-me da palavra-passe</Text>
-        <Text style={styles.message}>
+        <Text testID="forgot-password.success" style={styles.message}>
           Se o endereço de email estiver registado, vais receber um link para redefinir a
           palavra-passe nos próximos minutos.
         </Text>
@@ -57,6 +57,7 @@ export default function ForgotPasswordScreen() {
       </Text>
 
       <TextInput
+        testID="forgot-password.email"
         style={styles.input}
         placeholder="Email"
         value={email}
@@ -66,7 +67,12 @@ export default function ForgotPasswordScreen() {
         autoComplete="email"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
+      <TouchableOpacity
+        testID="forgot-password.submit"
+        style={styles.button}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (

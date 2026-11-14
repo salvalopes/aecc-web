@@ -36,7 +36,7 @@ export default function CompaniesScreen() {
   }, [loadCategories]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
+    <View testID="companies.screen" style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
       <View style={[styles.header, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle }]}>
         <View
           style={[
@@ -46,6 +46,7 @@ export default function CompaniesScreen() {
         >
           <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
           <TextInput
+            testID="companies.search"
             value={search}
             onChangeText={setSearch}
             placeholder="Pesquisar empresas..."
@@ -55,11 +56,11 @@ export default function CompaniesScreen() {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <Chip active={!categoryId} onPress={() => setCategoryId('')}>
+          <Chip testID="companies.category-chip-all" active={!categoryId} onPress={() => setCategoryId('')}>
             Todas
           </Chip>
           {categories.map(c => (
-            <Chip key={c.id} active={categoryId === c.id} onPress={() => setCategoryId(categoryId === c.id ? '' : c.id)}>
+            <Chip key={c.id} testID={`companies.category-chip-${c.slug}`} active={categoryId === c.id} onPress={() => setCategoryId(categoryId === c.id ? '' : c.id)}>
               {c.name}
             </Chip>
           ))}

@@ -17,6 +17,7 @@ interface ButtonProps {
   fullWidth?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 const SIZES: Record<ButtonSize, { padY: number; padX: number; minH: number }> = {
@@ -38,6 +39,7 @@ export function Button({
   fullWidth = false,
   onPress,
   style,
+  testID,
 }: ButtonProps) {
   const theme = useTheme();
   const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight } = theme;
@@ -70,6 +72,7 @@ export function Button({
       ]}
     >
       <Pressable
+        testID={testID}
         onPress={onPress}
         disabled={disabled || loading}
         style={({ pressed }) => [

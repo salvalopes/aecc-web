@@ -35,6 +35,7 @@ function CompanyDirectoryRow({
     <Card padding={0} style={styles.row}>
       <View style={styles.rowHeader}>
         <Pressable
+          testID="directory.row"
           onPress={() => router.push(`/(app)/companies/${item.id}`)}
           style={[styles.nameArea, { padding: spacing[6] }]}
         >
@@ -143,7 +144,7 @@ export function CompanyDirectoryList({ search, categoryId, emptyMessage = 'Nenhu
         />
       )}
       contentContainerStyle={[styles.list, { padding: spacing[6], gap: spacing[5] }]}
-      ListEmptyComponent={<EmptyState message={emptyMessage} />}
+      ListEmptyComponent={<EmptyState testID="directory.empty" message={emptyMessage} />}
       onEndReached={loadMore}
       onEndReachedThreshold={0.4}
       ListFooterComponent={

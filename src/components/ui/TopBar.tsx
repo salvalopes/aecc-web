@@ -57,6 +57,7 @@ export function TopBar({ authenticated = false, userName = null, onLogin, onRegi
 
           {authenticated ? (
             <Pressable
+              testID="topbar.profile"
               onPress={onProfile}
               style={({ pressed }) => [
                 styles.profileChip,

@@ -70,7 +70,7 @@ export default function HomeScreen() {
   const numColumns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.surfaceApp }} contentContainerStyle={styles.scrollContent}>
+    <ScrollView testID="home.screen" style={{ flex: 1, backgroundColor: colors.surfaceApp }} contentContainerStyle={styles.scrollContent}>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <View style={[styles.hero, { backgroundColor: colors.surfaceSunken, borderBottomColor: colors.borderSubtle }]}>
         <View style={[styles.heroPanel, glass.heroPanel.shadow, { borderRadius: glassRadius.panel, borderColor: glass.heroPanel.border }]}>
@@ -122,6 +122,7 @@ export default function HomeScreen() {
                 // Anchors the scoped :focus-visible ring in public/index.html — that
                 // rule targets only this one id, nothing else on the page.
                 nativeID="aecc-search-input"
+                testID="home.search"
                 value={search}
                 onChangeText={setSearch}
                 // Without this the browser defaults to autoComplete="on" (RNW's own
@@ -134,7 +135,7 @@ export default function HomeScreen() {
                 style={{ flex: 1, minWidth: 0, fontFamily: fontFamily.body, fontSize: fontSize.md, color: colors.textPrimary }}
               />
             </View>
-            <Button variant="gold" fullWidth onPress={() => goToCompanies({ search: search.trim() || undefined })}>
+            <Button testID="home.search-submit" variant="gold" fullWidth onPress={() => goToCompanies({ search: search.trim() || undefined })}>
               Ver empresas
             </Button>
           </View>

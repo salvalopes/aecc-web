@@ -25,7 +25,7 @@ export default function ProfileScreen() {
         {user?.role ?? '—'}
       </Text>
 
-      <Button variant="destructive" onPress={handleLogout}>
+      <Button testID="profile.logout" variant="destructive" onPress={handleLogout}>
         Terminar sessão
       </Button>
     </View>

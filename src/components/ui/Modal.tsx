@@ -10,6 +10,7 @@ interface ModalProps {
   onSave?: () => void;
   saving?: boolean;
   saveLabel?: string;
+  saveTestID?: string;
   children: React.ReactNode;
 }
 
@@ -46,7 +47,7 @@ function useBodyScrollLock(visible: boolean) {
   }, [visible]);
 }
 
-export function Modal({ visible, title, onClose, onSave, saving = false, saveLabel = 'Guardar', children }: ModalProps) {
+export function Modal({ visible, title, onClose, onSave, saving = false, saveLabel = 'Guardar', saveTestID, children }: ModalProps) {
   const { colors, fontFamily, fontSize, fontWeight } = useTheme();
   const insets = useSafeAreaInsets();
   useBodyScrollLock(visible);
@@ -72,7 +73,7 @@ export function Modal({ visible, title, onClose, onSave, saving = false, saveLab
             {title}
           </Text>
           {onSave ? (
-            <TouchableOpacity onPress={onSave} disabled={saving}>
+            <TouchableOpacity testID={saveTestID} onPress={onSave} disabled={saving}>
               <Text
                 style={{
                   fontFamily: fontFamily.body,

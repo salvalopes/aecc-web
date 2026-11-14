@@ -41,11 +41,15 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View testID="login.screen" style={styles.container}>
       <Image source={require('../../assets/brand/aecc-logo.webp')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.subtitle}>Associação de Empresários de Cascais</Text>
 
+      {/* nativeID (→ id no DOM) só para o Maestro web: o inputText dele localiza o input
+          focado por um XPath baseado em `class`, e os dois inputs têm classes RNW iguais. */}
       <TextInput
+        testID="login.email"
+        nativeID="login-email"
         style={[styles.input, fieldErrors.email && styles.inputError]}
         placeholder="Email"
         value={email}
@@ -54,9 +58,11 @@ export default function LoginScreen() {
         keyboardType="email-address"
         autoComplete="email"
       />
-      {fieldErrors.email && <Text style={styles.error}>{fieldErrors.email}</Text>}
+      {fieldErrors.email && <Text testID="login.email-error" style={styles.error}>{fieldErrors.email}</Text>}
 
       <TextInput
+        testID="login.password"
+        nativeID="login-password"
         style={[styles.input, fieldErrors.password && styles.inputError]}
         placeholder="Palavra-passe"
         value={password}
@@ -64,11 +70,11 @@ export default function LoginScreen() {
         secureTextEntry
         autoComplete="current-password"
       />
-      {fieldErrors.password && <Text style={styles.error}>{fieldErrors.password}</Text>}
+      {fieldErrors.password && <Text testID="login.password-error" style={styles.error}>{fieldErrors.password}</Text>}
 
-      {formError && <Text style={styles.error}>{formError}</Text>}
+      {formError && <Text testID="login.form-error" style={styles.error}>{formError}</Text>}
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+      <TouchableOpacity testID="login.submit" style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -77,6 +83,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        testID="login.forgot-password"
         onPress={() => router.push('/(auth)/forgot-password')}
         style={styles.forgotLink}
       >

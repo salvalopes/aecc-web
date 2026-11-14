@@ -6,13 +6,15 @@ interface ChipProps {
   active?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
-export function Chip({ children, active = false, onPress, style }: ChipProps) {
+export function Chip({ children, active = false, onPress, style, testID }: ChipProps) {
   const { colors, radius, fontFamily, fontSize, fontWeight } = useTheme();
 
   return (
     <Pressable
+      testID={testID}
       onPress={onPress}
       style={({ pressed }) => [
         {

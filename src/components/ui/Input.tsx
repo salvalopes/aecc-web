@@ -17,6 +17,7 @@ interface InputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoFocus?: boolean;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export function Input({
@@ -33,6 +34,7 @@ export function Input({
   autoCapitalize,
   autoFocus,
   style,
+  testID,
 }: InputProps) {
   const { colors, radius, fontFamily, fontSize, fontWeight } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -48,6 +50,7 @@ export function Input({
         </Text>
       )}
       <TextInput
+        testID={testID}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}

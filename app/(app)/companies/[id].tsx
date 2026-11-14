@@ -376,6 +376,7 @@ export default function CompanyDetailScreen() {
                 />
               )}
               <Text
+                testID="company-detail.title"
                 style={{
                   fontFamily: fontFamily.display,
                   fontSize: fontSize.xl,
@@ -463,6 +464,7 @@ export default function CompanyDetailScreen() {
         title="Editar Empresa"
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
+        saveTestID="company-edit.save"
         saving={saving}
       >
         {formError && (
@@ -492,6 +494,7 @@ export default function CompanyDetailScreen() {
           Logo
         </Text>
         <Pressable
+          testID="company-edit.logo-upload"
           style={[
             styles.logoPicker,
             {
@@ -531,6 +534,7 @@ export default function CompanyDetailScreen() {
 
         <View style={{ marginTop: spacing[8], gap: spacing[6] }}>
           <Input
+            testID="company-edit.name"
             label="Nome"
             required
             value={form.name}
@@ -539,6 +543,7 @@ export default function CompanyDetailScreen() {
           />
 
           <Input
+            testID="company-edit.description"
             label="Descrição"
             value={form.description}
             onChangeText={text => setForm(f => ({ ...f, description: text }))}
@@ -547,6 +552,7 @@ export default function CompanyDetailScreen() {
           />
 
           <Input
+            testID="company-edit.lead-email"
             label="Email de destino de leads"
             required
             value={form.leadDestinationEmail}
@@ -556,6 +562,7 @@ export default function CompanyDetailScreen() {
           />
 
           <Input
+            testID="company-edit.lead-cooldown"
             label="Cooldown de leads (minutos)"
             value={form.leadCooldownMinutes}
             onChangeText={text => setForm(f => ({ ...f, leadCooldownMinutes: text }))}
