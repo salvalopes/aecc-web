@@ -39,6 +39,14 @@ export default function CompaniesScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [view, setView] = useState<DirectoryView>('list');
 
+  // A tab fica montada: uma 2.ª pesquisa ou categoria vinda do Início chega só pelos params,
+  // e cada entrada substitui os dois filtros (uma categoria não herda a pesquisa anterior).
+  useEffect(() => {
+    if (params.search === undefined && params.categoryId === undefined) return;
+    setSearch(params.search ?? '');
+    setCategoryId(params.categoryId ?? '');
+  }, [params.search, params.categoryId]);
+
   const directory = useCompanyDirectory({ search, categoryId: categoryId || undefined });
   // Só o gesto de puxar mostra o indicador nativo (não cada pesquisa).
   const [pulling, setPulling] = useState(false);

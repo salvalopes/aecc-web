@@ -3,6 +3,7 @@ import { createStyles, useStyles } from '@/theme/createStyles';
 import type { UserRole } from '@/types/api';
 import { SegmentedControl, TextField } from '@/components/ds';
 import { FormField, FormSection, FormSwitch } from '@/components/templates/FormLayout';
+import { ROLE_HINT, ROLE_LABEL } from '@/utils/roles';
 
 // Campos do utilizador (T7, B12). "Novo utilizador" pede email e password inicial; "Editar"
 // não (o email é a identidade e a password é do próprio), mas tem o estado da conta.
@@ -39,17 +40,9 @@ export const userApiFields: Record<string, keyof UserFormState> = {
   PasswordRequiresUniqueChars: 'password',
 };
 
-const ROLE_OPTIONS: readonly { value: UserRole; label: string }[] = [
-  { value: 'Admin', label: 'Administrador' },
-  { value: 'Associado', label: 'Associado' },
-  { value: 'Cliente', label: 'Cliente' },
-];
-
-const ROLE_HINT: Record<UserRole, string> = {
-  Admin: 'Tem acesso à gestão de utilizadores.',
-  Associado: 'Pode criar e gerir as próprias empresas e produtos.',
-  Cliente: 'Consulta o diretório.',
-};
+const ROLE_OPTIONS: readonly { value: UserRole; label: string }[] = (
+  ['Admin', 'Associado', 'Cliente'] as const
+).map((value) => ({ value, label: ROLE_LABEL[value] }));
 
 const factory = createStyles(() => ({
   segmented: { alignSelf: 'flex-start' },
