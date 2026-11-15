@@ -5,7 +5,7 @@ import { createStyles, useStyles } from '@/theme/createStyles';
 import { geist, inputMin } from '@/theme/typography';
 import { Text } from './Text';
 
-const factory = createStyles(({ colors, radii, opacity }) => ({
+const factory = createStyles(({ colors, radii, opacity, spacing }) => ({
   wrap: { gap: 8 },
   input: {
     minHeight: 48,
@@ -18,6 +18,13 @@ const factory = createStyles(({ colors, radii, opacity }) => ({
     fontFamily: geist.regular,
     fontSize: inputMin,
   },
+  // Texto corrido (descrições): 4 linhas visíveis, a escrever a partir do topo.
+  multiline: {
+    minHeight: spacing['6xl'] * 2,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    textAlignVertical: 'top',
+  },
   disabled: { opacity: opacity.disabled },
 }));
 
@@ -25,6 +32,8 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   label: string;
   hint?: string;
   error?: string | null;
+  /** Marca o campo como opcional no rótulo (os obrigatórios não levam marca). */
+  optional?: boolean;
 }
 
 /**
@@ -36,6 +45,8 @@ export function TextField({
   hint,
   error,
   editable = true,
+  optional = false,
+  multiline,
   onFocus,
   onBlur,
   testID,
@@ -49,9 +60,15 @@ export function TextField({
     <View style={s.wrap}>
       <Text variant="meta" color="text">
         {label}
+        {optional ? (
+          <Text variant="meta" color="text3">
+            {' · opcional'}
+          </Text>
+        ) : null}
       </Text>
       <TextInput
         {...rest}
+        multiline={multiline}
         testID={testID}
         editable={editable}
         accessibilityLabel={label}
@@ -64,7 +81,12 @@ export function TextField({
           setFocused(false);
           onBlur?.(e);
         }}
-        style={[s.input, { borderColor }, editable ? null : s.disabled]}
+        style={[
+          s.input,
+          multiline ? s.multiline : null,
+          { borderColor },
+          editable ? null : s.disabled,
+        ]}
       />
       {error ? (
         <Text

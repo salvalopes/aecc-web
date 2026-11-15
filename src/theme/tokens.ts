@@ -168,6 +168,8 @@ export const layout = {
   rowAside: 184,
   /** Largura mínima da sidebar do diretório (`lg`). */
   sidebarMin: 240,
+  /** Largura máxima da página de um formulário em ecrã (T7, `md+`). */
+  formPageMax: 880,
 } as const;
 
 /** Só web (`boxShadow`). No nativo não há sombra: a profundidade vem do material. */
