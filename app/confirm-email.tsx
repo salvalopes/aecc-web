@@ -1,13 +1,7 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Button, InlineAlert, TextField } from '@/components/ds';
+import { AuthScaffold } from '@/components/templates/AuthScaffold';
 import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
@@ -18,6 +12,8 @@ interface FormState {
   password: string;
   confirmPassword: string;
 }
+
+const PASSWORD_HINT = 'Mínimo 8 caracteres, com maiúscula, minúscula e número.';
 
 export default function ConfirmEmailScreen() {
   const { userId, token } = useLocalSearchParams<{ userId?: string; token?: string }>();
@@ -30,17 +26,18 @@ export default function ConfirmEmailScreen() {
 
   if (!userId || !token) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>AECC</Text>
-        <Text style={styles.subtitle}>Confirmação de email</Text>
-        <Text style={styles.error}>Link inválido: parâmetros em falta.</Text>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonOutline]}
+      <AuthScaffold title="Link inválido" subtitle="Este link de confirmação está incompleto.">
+        <InlineAlert
+          tone="error"
+          message="Abre de novo o link a partir do email de confirmação, sem o editar."
+        />
+        <Button
+          label="Ir para o login"
+          variant="secondary"
           onPress={() => router.replace('/(auth)/login')}
-        >
-          <Text style={styles.buttonOutlineText}>Ir para login</Text>
-        </TouchableOpacity>
-      </View>
+          fullWidth
+        />
+      </AuthScaffold>
     );
   }
 
@@ -76,85 +73,45 @@ export default function ConfirmEmailScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>AECC</Text>
-      <Text style={styles.subtitle}>Confirma a tua conta</Text>
-      <Text style={styles.description}>
-        Define o teu nome e uma palavra-passe para ativares a conta.
-      </Text>
-
-      <TextInput
-        style={[styles.input, fieldErrors.fullName && styles.inputError]}
-        placeholder="Nome completo"
+    <AuthScaffold
+      title="Ativar conta"
+      subtitle="Define o teu nome e uma palavra-passe para ativares a conta."
+    >
+      <TextField
+        label="Nome completo"
         value={fullName}
         onChangeText={setFullName}
+        error={fieldErrors.fullName}
         autoComplete="name"
+        textContentType="name"
+        returnKeyType="next"
       />
-      {fieldErrors.fullName && <Text style={styles.error}>{fieldErrors.fullName}</Text>}
-
-      <TextInput
-        style={[styles.input, fieldErrors.password && styles.inputError]}
-        placeholder="Palavra-passe"
+      <TextField
+        label="Palavra-passe"
+        hint={PASSWORD_HINT}
         value={password}
         onChangeText={setPassword}
+        error={fieldErrors.password}
         secureTextEntry
         autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="next"
       />
-      {fieldErrors.password && <Text style={styles.error}>{fieldErrors.password}</Text>}
-
-      <TextInput
-        style={[styles.input, fieldErrors.confirmPassword && styles.inputError]}
-        placeholder="Confirmar palavra-passe"
+      <TextField
+        label="Confirmar palavra-passe"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
+        error={fieldErrors.confirmPassword}
         secureTextEntry
         autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="go"
+        onSubmitEditing={handleSubmit}
       />
-      {fieldErrors.confirmPassword && (
-        <Text style={styles.error}>{fieldErrors.confirmPassword}</Text>
-      )}
 
-      {formError && <Text style={styles.error}>{formError}</Text>}
+      {formError ? <InlineAlert tone="error" message={formError} /> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Confirmar e entrar</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+      <Button label="Ativar e entrar" loading={loading} onPress={handleSubmit} fullWidth />
+    </AuthScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 16 },
-  description: { fontSize: 14, textAlign: 'center', color: '#555', marginBottom: 24 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 4,
-    fontSize: 16,
-  },
-  inputError: { borderColor: '#d32f2f' },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#0a7ea4',
-    marginTop: 8,
-  },
-  buttonOutlineText: { color: '#0a7ea4', fontSize: 16, fontWeight: '600' },
-  error: { color: '#d32f2f', marginBottom: 8, textAlign: 'left', fontSize: 13 },
-});

@@ -158,6 +158,8 @@ export const layout = {
   maxWidth: 1240,
   horizonHeight: 200,
   searchOverlap: -26,
+  /** Coluna de formulário (T1) e de texto corrido ao lado dela. */
+  formMaxWidth: 400,
 } as const;
 
 /** Só web (`boxShadow`). No nativo não há sombra: a profundidade vem do material. */

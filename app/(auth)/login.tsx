@@ -1,14 +1,7 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { router } from 'expo-router';
-import { BrandLockup } from '@/components/ds';
+import { Button, InlineAlert, TextField, TextLink } from '@/components/ds';
+import { AuthPrompt, AuthScaffold } from '@/components/templates/AuthScaffold';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
@@ -49,104 +42,62 @@ export default function LoginScreen() {
   }
 
   return (
-    <View testID="login.screen" style={styles.container}>
-      {/* variant="light": o fundo deste ecrã é #fff fixo até à B8 */}
-      <BrandLockup width={160} variant="light" style={styles.logo} />
-      <Text style={styles.subtitle}>Associação Empresarial do Concelho de Cascais</Text>
-
-      <TextInput
+    <AuthScaffold
+      testID="login.screen"
+      title="Entrar"
+      subtitle="Usa o email e a palavra-passe da tua conta AECC."
+      footer={
+        <AuthPrompt
+          prompt="Ainda não tens conta?"
+          label="Regista-te"
+          testID="login.register"
+          onPress={() => router.push('/(auth)/register')}
+        />
+      }
+    >
+      <TextField
         testID="login.email"
-        style={[styles.input, fieldErrors.email && styles.inputError]}
-        placeholder="Email"
+        label="Email"
+        placeholder="nome@empresa.pt"
         value={email}
         onChangeText={setEmail}
+        error={fieldErrors.email}
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="next"
       />
-      {fieldErrors.email && (
-        <Text testID="login.email-error" style={styles.error}>
-          {fieldErrors.email}
-        </Text>
-      )}
-
-      <TextInput
+      <TextField
         testID="login.password"
-        style={[styles.input, fieldErrors.password && styles.inputError]}
-        placeholder="Palavra-passe"
+        label="Palavra-passe"
         value={password}
         onChangeText={setPassword}
+        error={fieldErrors.password}
         secureTextEntry
         autoComplete="current-password"
+        textContentType="password"
+        returnKeyType="go"
+        onSubmitEditing={handleLogin}
       />
-      {fieldErrors.password && (
-        <Text testID="login.password-error" style={styles.error}>
-          {fieldErrors.password}
-        </Text>
-      )}
-
-      {formError && (
-        <Text testID="login.form-error" style={styles.error}>
-          {formError}
-        </Text>
-      )}
-
-      <TouchableOpacity
-        testID="login.submit"
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Entrar</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
+      <TextLink
         testID="login.forgot-password"
+        variant="meta"
+        label="Esqueci-me da palavra-passe"
         onPress={() => router.push('/(auth)/forgot-password')}
-        style={styles.forgotLink}
-      >
-        <Text style={styles.forgotLinkText}>Esqueci-me da palavra-passe</Text>
-      </TouchableOpacity>
+      />
 
-      <TouchableOpacity
-        testID="login.register"
-        onPress={() => router.push('/(auth)/register')}
-        style={styles.registerLink}
-      >
-        <Text style={styles.registerLinkText}>Ainda não tens conta? Regista-te</Text>
-      </TouchableOpacity>
-    </View>
+      {formError ? (
+        <InlineAlert testID="login.form-error" tone="error" message={formError} />
+      ) : null}
+
+      <Button
+        label="Entrar"
+        testID="login.submit"
+        loading={loading}
+        onPress={handleLogin}
+        fullWidth
+      />
+    </AuthScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  logo: { alignSelf: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 40 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 4,
-    fontSize: 16,
-  },
-  inputError: { borderColor: '#d32f2f' },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#d32f2f', marginBottom: 8, textAlign: 'left', fontSize: 13 },
-  forgotLink: { marginTop: 16, alignItems: 'center' },
-  forgotLinkText: { color: '#0a7ea4', fontSize: 14 },
-  registerLink: { marginTop: 12, alignItems: 'center' },
-  registerLinkText: { color: '#0a7ea4', fontSize: 14 },
-});
