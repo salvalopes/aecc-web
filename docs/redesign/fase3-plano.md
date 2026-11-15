@@ -493,7 +493,7 @@ Esta tabela é atualizada no fim de cada passo e é a partir dela que se retoma 
 | B1    | `redesign/fase3-base`               | `db73210` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8) |
 | B2    | `redesign/fase3-base`               | `63aac35` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; Android: arranque sem ecrã branco por validar) |
 | B5    | `redesign/fase3-base`               | `889ff1f` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5) |
-| B5b   | `redesign/fase3-base`               | —         | —   | pendente                                         |
+| B5b   | `redesign/fase3-base`               | `9517048` | #19 | concluído (lint 0 erros, tsc ok, Playwright 8/8; PR base em draft, sem merge) |
 | B3    | `redesign/fase3-ui` (+ 1 por passo) | —         | —   | pendente                                         |
 | B4    | idem                                | —         | —   | pendente                                         |
 | B6    | idem                                | —         | —   | pendente                                         |
