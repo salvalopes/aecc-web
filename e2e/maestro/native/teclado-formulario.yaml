@@ -1,0 +1,30 @@
+# Teclado nos formulários T7: com o teclado aberto no último campo, o rodapé (Cancelar/Guardar)
+# tem de subir até ao teclado. Se não subir, o toque em Cancelar cai no teclado e o fluxo falha.
+appId: com.aecc.app
+name: teclado-formulario (nativo)
+---
+- runFlow: _login.yaml
+- tapOn: "Editar"
+- extendedWaitUntil:
+    visible:
+      id: "my-companies.edit"
+    timeout: 15000
+- tapOn:
+    id: "my-companies.edit"
+- extendedWaitUntil:
+    visible:
+      id: "company-edit.description"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "company-edit.lead-cooldown"
+- tapOn:
+    id: "company-edit.lead-cooldown"
+- waitForAnimationToEnd
+- takeScreenshot: teclado-formulario
+- tapOn:
+    id: "company-edit.cancel"
+- extendedWaitUntil:
+    visible:
+      id: "my-companies.screen"
+    timeout: 15000

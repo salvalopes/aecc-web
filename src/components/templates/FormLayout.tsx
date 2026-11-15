@@ -4,13 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import { Button, InlineAlert, ListGroup, ListRow, Skeleton, Switch, Text } from '@/components/ui';
 
 // T7 Formulário em ecrã (fase3-plano §4.1 e §4.2 #24), direção Maré. Substitui o `Modal`.
 // Ecrã empurrado no `Stack` de `(app)`, por cima das tabs: o header dá o título e o "voltar".
 // sm: secções em coluna (rótulo por cima dos campos). md+: cada secção numa linha, rótulo e
 // explicação à esquerda (1fr) e campos à direita (2fr), numa página de `layout.formPageMax`.
-// O rodapé com Cancelar/Guardar fica fixo por baixo do scroll e sobe com o teclado no iOS.
+// O rodapé com Cancelar/Guardar fica fixo por baixo do scroll e sobe com o teclado (iOS: KeyboardAvoidingView; Android: `useKeyboardInset`).
 const factory = createStyles(({ colors, spacing, layout, border }) => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   fill: { flex: 1 },
@@ -83,6 +84,7 @@ export function FormLayout({
   const { spacing } = useTheme();
   const { isWide } = useBreakpoint();
   const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardInset();
   // O header do `Stack` fica por cima: o `KeyboardAvoidingView` precisa de saber onde começa
   // na janela para o rodapé subir exatamente até ao teclado (sem `useHeaderHeight`).
   const frame = useRef<View>(null);
@@ -96,7 +98,7 @@ export function FormLayout({
       onLayout={() => frame.current?.measureInWindow((_x, y) => setTop(y))}
     >
       <KeyboardAvoidingView
-        style={s.fill}
+        style={[s.fill, { paddingBottom: keyboard }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={top}
       >
@@ -113,7 +115,12 @@ export function FormLayout({
             {loading ? <FormSkeleton testID={`${testIDPrefix}.loading`} /> : children}
           </View>
         </ScrollView>
-        <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <View
+          style={[
+            s.footer,
+            { paddingBottom: keyboard > 0 ? spacing.md : Math.max(insets.bottom, spacing.md) },
+          ]}
+        >
           <View style={[s.footerInner, isWide ? s.footerInnerWide : null]}>
             <Button
               testID={`${testIDPrefix}.cancel`}

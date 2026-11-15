@@ -60,7 +60,7 @@ if [ $# -gt 0 ]; then
   FLOWS=("$@")
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
-    sem-permissao deeplink-reset-password deeplink-confirm-email)
+    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario)
 fi
 
 rm -rf "$OUT"
