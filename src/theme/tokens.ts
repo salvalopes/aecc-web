@@ -3,7 +3,26 @@
 // tokens/typography.css), which in turn lifted them from this app's own
 // shipped StyleSheets. Never rounded to a generic 4/8 grid.
 
-export const spacing = {
+import { StyleSheet } from 'react-native';
+
+// Escala nova (Fase 3 / B1), chaves semânticas, ao lado da antiga (numérica,
+// @deprecated até à B14). As chaves não colidem, por isso partilham o objeto.
+const spacingNext = {
+  0: 0,
+  '2xs': 2,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 28,
+  '4xl': 32,
+  '5xl': 40,
+  '6xl': 48,
+} as const;
+
+const spacingLegacy = {
   1: 2,
   2: 4,
   3: 6,
@@ -18,6 +37,9 @@ export const spacing = {
   14: 32,
   16: 40,
 } as const;
+
+export const spacing = { ...spacingLegacy, ...spacingNext } as typeof spacingLegacy &
+  typeof spacingNext;
 
 export const radius = {
   xs: 4,
@@ -98,3 +120,47 @@ export const shadow = {
     elevation: 8,
   },
 } as const;
+
+// ── Fase 3 / B1: tokens novos. `radii` (e não `radius`) e `glassShadow` (e não
+// `shadow`) só porque os nomes finais colidem com os antigos; a B14 renomeia. ──
+
+/** Sempre com `borderCurve: 'continuous'`. */
+export const radii = {
+  xs: 6,
+  sm: 10,
+  plate: 12,
+  control: 14,
+  group: 20,
+  capsule: 999,
+} as const;
+
+export const size = {
+  icon: { sm: 16, md: 20, lg: 24, xl: 28 },
+  hitTarget: 44,
+  plate: { sm: 32, md: 48, lg: 96 },
+  row: { mobile: 72, web: 64, table: 48 },
+  search: 52,
+} as const;
+
+export const border = {
+  hairline: StyleSheet.hairlineWidth,
+  default: 1,
+  accentBar: 3,
+} as const;
+
+export const opacity = { disabled: 0.45 } as const;
+
+export const breakpoints = { md: 768, lg: 1280 } as const;
+
+export const layout = {
+  gutter: 20,
+  sectionGap: 28,
+  maxWidth: 1240,
+  horizonHeight: 200,
+  searchOverlap: -26,
+} as const;
+
+/** Só web (`boxShadow`). No nativo não há sombra: a profundidade vem do material. */
+export function glassShadow(highlight: string, shadowTint: string): string {
+  return `inset 0 1px 0 ${highlight}, 0 12px 32px ${shadowTint}`;
+}

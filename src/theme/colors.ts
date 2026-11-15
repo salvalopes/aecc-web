@@ -4,8 +4,58 @@
 // #2e8fc2. Light mode is a warm cream ladder tinted toward the gold; dark
 // mode is navy-black with gold as the lead accent ("detalhes amarelos").
 // See the AECC design system's tokens/colors.css for the full ramp.
+//
+// Fase 3 / B1: a interface ganhou os papéis novos da Maré (bg, surface, text…,
+// valores em palette.ts). As chaves antigas continuam com os valores atuais
+// (@deprecated, apagadas na B14), por isso não há mudança visual. Nomes que
+// existem nos dois conjuntos (success/error/info/warning/*Bg, focusRing)
+// mantêm o valor atual até à B6, que os passa para a Maré.
+
+import { mareDark, mareLight } from './palette';
+
+type MarePalette = typeof mareLight | typeof mareDark;
+
+function newRoles(p: MarePalette) {
+  return {
+    bg: p.bg,
+    horizon: p.horizon,
+    surface: p.surface,
+    raised: p.raised,
+    border: p.border,
+    text: p.text,
+    text2: p.text2,
+    text3: p.text3,
+    accent: p.accent,
+    accentPressed: p.accentPressed,
+    accentText: p.accentText,
+    onAccent: p.onAccent,
+    accentSoft: p.accentSoft,
+    accentSoftText: p.accentSoftText,
+    logoPlate: p.logoPlate,
+    scrim: p.scrim,
+  };
+}
 
 export interface ThemeColors {
+  // ── Papéis novos (Maré). Sem consumidores até à B5/B6. ──
+  bg: string;
+  horizon: string;
+  surface: string;
+  raised: string;
+  border: string;
+  text: string;
+  text2: string;
+  text3: string;
+  accent: string;
+  accentPressed: string;
+  accentText: string;
+  onAccent: string;
+  accentSoft: string;
+  accentSoftText: string;
+  logoPlate: string;
+  scrim: string;
+
+  // ── Aliases antigos: @deprecated, removidos na B14. ──
   surfaceApp: string;
   surfaceCard: string;
   surfaceSunken: string;
@@ -52,6 +102,7 @@ export interface ThemeColors {
 }
 
 export const lightColors: ThemeColors = {
+  ...newRoles(mareLight),
   surfaceApp: '#fdf9f0',
   surfaceCard: '#fffdf8',
   surfaceSunken: '#faf3e4',
@@ -96,6 +147,7 @@ export const lightColors: ThemeColors = {
 };
 
 export const darkColors: ThemeColors = {
+  ...newRoles(mareDark),
   surfaceApp: '#0b1a24',
   surfaceCard: '#12293a',
   surfaceSunken: '#081420',

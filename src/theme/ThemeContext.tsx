@@ -2,7 +2,14 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, type ThemeColors } from './colors';
-import { lightGlass, darkGlass, type GlassTokens } from './glass';
+import {
+  lightGlass,
+  darkGlass,
+  lightMaterial,
+  darkMaterial,
+  type GlassTokens,
+  type GlassMaterial,
+} from './glass';
 import {
   spacing,
   radius,
@@ -13,15 +20,32 @@ import {
   lineHeight,
   fontWeight,
   shadow,
+  radii,
+  size,
+  border,
+  opacity,
+  breakpoints,
+  layout,
 } from './tokens';
+import { textStyles } from './typography';
 
 const THEME_MODE_KEY = 'aecc_theme_mode';
 
 type ThemeMode = 'light' | 'dark';
 
-interface Theme {
+export interface Theme {
   colors: ThemeColors;
   glass: GlassTokens;
+  /** Material único da Maré; a B4 apaga as 5 variantes de `glass`. */
+  material: GlassMaterial;
+  scheme: 'light' | 'dark';
+  radii: typeof radii;
+  size: typeof size;
+  border: typeof border;
+  opacity: typeof opacity;
+  breakpoints: typeof breakpoints;
+  layout: typeof layout;
+  textStyles: typeof textStyles;
   isDark: boolean;
   mode: ThemeMode;
   toggleTheme: () => void;
@@ -79,6 +103,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => ({
       colors,
       glass: isDark ? darkGlass : lightGlass,
+      material: isDark ? darkMaterial : lightMaterial,
+      scheme: mode,
+      radii,
+      size,
+      border,
+      opacity,
+      breakpoints,
+      layout,
+      textStyles,
       isDark,
       mode,
       toggleTheme,
