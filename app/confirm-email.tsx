@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button, InlineAlert, TextField } from '@/components/ui';
 import { AuthScaffold } from '@/components/templates/AuthScaffold';
 import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
-import { required, passwordStrength, matches, combine } from '@/utils/validators';
+import { required, passwordStrength, matches, combine, emailFormat } from '@/utils/validators';
+import { nativeLoginErrorMessage } from '@/utils/loginErrors';
 
 interface FormState {
+  email: string;
   fullName: string;
   password: string;
   confirmPassword: string;
@@ -15,14 +18,25 @@ interface FormState {
 
 const PASSWORD_HINT = 'Mínimo 8 caracteres, com maiúscula, minúscula e número.';
 
+// Nativo: sem PKCE, a entrada a seguir à ativação é o grant password com as credenciais
+// acabadas de definir. O link do email só traz userId e token, por isso o email é pedido
+// aqui (pré-preenchido se um dia a API o puser no link como `email`).
+const IS_NATIVE = Platform.OS !== 'web';
+
 export default function ConfirmEmailScreen() {
-  const { userId, token } = useLocalSearchParams<{ userId?: string; token?: string }>();
-  const { redirectToAuthorize } = useAuth();
+  const {
+    userId,
+    token,
+    email: emailParam,
+  } = useLocalSearchParams<{ userId?: string; token?: string; email?: string }>();
+  const { login, redirectToAuthorize } = useAuth();
+  const [email, setEmail] = useState(emailParam ?? '');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { fieldErrors, formError, validate, applyApiError } = useFormValidation<FormState>();
+  const { fieldErrors, formError, setFormError, validate, applyApiError } =
+    useFormValidation<FormState>();
 
   if (!userId || !token) {
     return (
@@ -43,8 +57,9 @@ export default function ConfirmEmailScreen() {
 
   async function handleSubmit() {
     const isValid = validate(
-      { fullName, password, confirmPassword },
+      { email, fullName, password, confirmPassword },
       {
+        ...(IS_NATIVE ? { email: combine(required('O email é obrigatório.'), emailFormat()) } : {}),
         fullName: required('O nome é obrigatório.'),
         password: passwordStrength(),
         confirmPassword: combine(
@@ -56,11 +71,30 @@ export default function ConfirmEmailScreen() {
     if (!isValid) return;
 
     setLoading(true);
+    let confirmed = false;
     try {
       await authApi.confirmEmail({ userId: userId!, token: token!, fullName, password });
+      confirmed = true;
+      if (IS_NATIVE) {
+        // Grant password → /companies (AuthContext.native).
+        await login({ email, password });
+        return;
+      }
       // Sessão (cookie) já foi criada no backend — segue directamente para o PKCE.
       await redirectToAuthorize();
     } catch (e) {
+      if (IS_NATIVE && confirmed) {
+        // A conta já está ativa e o link não volta a servir: o login manual resolve
+        // (ex.: email escrito com um erro).
+        router.replace({ pathname: '/(auth)/login', params: { notice: 'account-activated' } });
+        return;
+      }
+      const nativeMessage = nativeLoginErrorMessage(e);
+      if (nativeMessage) {
+        setFormError(nativeMessage);
+        setLoading(false);
+        return;
+      }
       applyApiError(e, {
         FullName: 'fullName',
         Password: 'password',
@@ -77,7 +111,23 @@ export default function ConfirmEmailScreen() {
       title="Ativar conta"
       subtitle="Define o teu nome e uma palavra-passe para ativares a conta."
     >
+      {IS_NATIVE ? (
+        <TextField
+          testID="confirm-email.email"
+          label="Email"
+          placeholder="nome@empresa.pt"
+          value={email}
+          onChangeText={setEmail}
+          error={fieldErrors.email}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
+          textContentType="emailAddress"
+          returnKeyType="next"
+        />
+      ) : null}
       <TextField
+        testID="confirm-email.full-name"
         label="Nome completo"
         value={fullName}
         onChangeText={setFullName}
@@ -87,6 +137,7 @@ export default function ConfirmEmailScreen() {
         returnKeyType="next"
       />
       <TextField
+        testID="confirm-email.password"
         label="Palavra-passe"
         hint={PASSWORD_HINT}
         value={password}
@@ -98,6 +149,7 @@ export default function ConfirmEmailScreen() {
         returnKeyType="next"
       />
       <TextField
+        testID="confirm-email.confirm-password"
         label="Confirmar palavra-passe"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
@@ -109,9 +161,17 @@ export default function ConfirmEmailScreen() {
         onSubmitEditing={handleSubmit}
       />
 
-      {formError ? <InlineAlert tone="error" message={formError} /> : null}
+      {formError ? (
+        <InlineAlert testID="confirm-email.form-error" tone="error" message={formError} />
+      ) : null}
 
-      <Button label="Ativar e entrar" loading={loading} onPress={handleSubmit} fullWidth />
+      <Button
+        testID="confirm-email.submit"
+        label="Ativar e entrar"
+        loading={loading}
+        onPress={handleSubmit}
+        fullWidth
+      />
     </AuthScaffold>
   );
 }

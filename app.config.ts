@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'AECC',
   slug: 'aecc',
-  scheme: 'aecc', // deep links: Maestro (e2e nativo) e redirect do OAuth/PKCE nativo
+  scheme: 'aecc', // deep links: Maestro (e2e nativo) e links de confirm-email/reset-password no iOS
   version: '0.1.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -20,6 +20,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: '#0C3247', // fundo do icon-navy-deep
     },
     package: 'com.aecc.app',
+    // App Links: só os links dos emails da API (AuthController) abrem a app. A verificação
+    // usa public/.well-known/assetlinks.json em aecc.salv4.com (hoje só com o SHA-256 do
+    // certificado debug; o de release entra na fase das lojas).
+    // iOS: sem associatedDomains (exige conta Apple Developer paga); fica para as lojas.
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        data: [
+          { scheme: 'https', host: 'aecc.salv4.com', path: '/confirm-email' },
+          { scheme: 'https', host: 'aecc.salv4.com', path: '/reset-password' },
+        ],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
+    ],
   },
   web: {
     bundler: 'metro',

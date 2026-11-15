@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Button, InlineAlert, TextField, TextLink } from '@/components/ui';
 import { AuthPrompt, AuthScaffold } from '@/components/templates/AuthScaffold';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,8 +12,17 @@ interface FormState {
   password: string;
 }
 
+// Avisos de sucesso ao chegar ao login (só o nativo navega para aqui com `notice`:
+// fim do reset-password, ou conta ativada sem login automático).
+const NOTICES: Record<string, string> = {
+  'password-reset': 'Palavra-passe redefinida. Já pode entrar com a nova palavra-passe.',
+  'account-activated': 'Conta ativada. Entre com o seu email e a palavra-passe que definiu.',
+};
+
 export default function LoginScreen() {
   const { login } = useAuth();
+  const { notice } = useLocalSearchParams<{ notice?: string }>();
+  const noticeMessage = notice ? NOTICES[notice] : undefined;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,6 +101,10 @@ export default function LoginScreen() {
         label="Esqueci-me da palavra-passe"
         onPress={() => router.push('/(auth)/forgot-password')}
       />
+
+      {noticeMessage && !formError ? (
+        <InlineAlert testID="login.notice" tone="success" message={noticeMessage} />
+      ) : null}
 
       {formError ? (
         <InlineAlert testID="login.form-error" tone="error" message={formError} />

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button, InlineAlert, TextField, TextLink } from '@/components/ui';
 import { AuthScaffold } from '@/components/templates/AuthScaffold';
@@ -65,6 +66,11 @@ export default function ResetPasswordScreen() {
     setLoading(true);
     try {
       await authApi.resetPassword({ userId: userId!, token: token!, newPassword });
+      // Nativo (aberto por App Link / aecc://): segue logo para o login, com o aviso.
+      if (Platform.OS !== 'web') {
+        router.replace({ pathname: '/(auth)/login', params: { notice: 'password-reset' } });
+        return;
+      }
       setSuccess(true);
     } catch (e) {
       applyApiError(e, { NewPassword: 'newPassword', Password: 'newPassword' });
@@ -79,6 +85,7 @@ export default function ResetPasswordScreen() {
       subtitle="Escolhe a palavra-passe que vais passar a usar para entrar."
     >
       <TextField
+        testID="reset-password.new-password"
         label="Nova palavra-passe"
         hint={PASSWORD_HINT}
         value={newPassword}
@@ -90,6 +97,7 @@ export default function ResetPasswordScreen() {
         returnKeyType="next"
       />
       <TextField
+        testID="reset-password.confirm-password"
         label="Confirmar palavra-passe"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
@@ -103,7 +111,7 @@ export default function ResetPasswordScreen() {
 
       {formError ? (
         <>
-          <InlineAlert tone="error" message={formError} />
+          <InlineAlert testID="reset-password.form-error" tone="error" message={formError} />
           <TextLink
             variant="meta"
             label="Pedir novo link de redefinição"
@@ -112,7 +120,13 @@ export default function ResetPasswordScreen() {
         </>
       ) : null}
 
-      <Button label="Redefinir palavra-passe" loading={loading} onPress={handleSubmit} fullWidth />
+      <Button
+        testID="reset-password.submit"
+        label="Redefinir palavra-passe"
+        loading={loading}
+        onPress={handleSubmit}
+        fullWidth
+      />
     </AuthScaffold>
   );
 }
