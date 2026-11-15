@@ -51,6 +51,12 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     LibreFranklin: require('../assets/fonts/LibreFranklin-Variable.ttf'),
     SourceSans3: require('../assets/fonts/SourceSans3-Variable.ttf'),
+    // Geist (redesign Fase 3): nomes alinhados com `geist` em src/theme/typography.ts.
+    // Carregadas ao lado das atuais; sem consumidores até à B5/B6.
+    Geist_400Regular: require('../assets/fonts/geist/Geist-Regular.ttf'),
+    Geist_500Medium: require('../assets/fonts/geist/Geist-Medium.ttf'),
+    Geist_600SemiBold: require('../assets/fonts/geist/Geist-SemiBold.ttf'),
+    Geist_700Bold: require('../assets/fonts/geist/Geist-Bold.ttf'),
   });
 
   useEffect(() => {
