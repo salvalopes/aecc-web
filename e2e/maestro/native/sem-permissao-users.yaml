@@ -1,0 +1,19 @@
+# Sem permissão (T2) na rota da tab escondida: quem não é Admin abre aecc://users e vê o estado
+# "sem permissão" (a tab Utilizadores não existe na barra para esse papel).
+appId: com.aecc.app
+name: sem-permissao-users (nativo)
+---
+- runFlow: _login.yaml
+- openLink: "aecc://users"
+- extendedWaitUntil:
+    visible:
+      id: "state.forbidden"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: sem-permissao-users
+- tapOn:
+    id: "state.forbidden.action"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000

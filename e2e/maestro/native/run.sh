@@ -60,7 +60,7 @@ if [ $# -gt 0 ]; then
   FLOWS=("$@")
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
-    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario)
+    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin)
 fi
 
 rm -rf "$OUT"
@@ -78,6 +78,9 @@ for flow in "${FLOWS[@]}"; do
       curl -fsS -o /dev/null -X POST "$API/auth/register" \
         -H 'content-type: application/json' -d "{\"email\":\"$UNCONFIRMED_EMAIL\"}"
       EXTRA+=(-e "UNCONFIRMED_EMAIL=$UNCONFIRMED_EMAIL")
+      ;;
+    deeplink-users-admin)
+      EMAIL=admin@e2e.test
       ;;
     deeplink-reset-password)
       EMAIL=cliente@e2e.test

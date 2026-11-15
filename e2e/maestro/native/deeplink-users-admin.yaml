@@ -1,0 +1,11 @@
+# O Admin continua a chegar à tab Utilizadores por deep link (a guarda de `aecc://users`
+# redireciona-o). Contraponto do fluxo sem-permissao-users.
+appId: com.aecc.app
+name: deeplink-users-admin (nativo)
+---
+- runFlow: _login.yaml
+- openLink: "aecc://users"
+- extendedWaitUntil:
+    visible:
+      id: "users.screen"
+    timeout: 15000
