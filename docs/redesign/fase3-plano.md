@@ -492,7 +492,7 @@ Esta tabela é atualizada no fim de cada passo e é a partir dela que se retoma 
 | B0    | `redesign/fase3-base`               | `7570e3a` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8) |
 | B1    | `redesign/fase3-base`               | `db73210` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8) |
 | B2    | `redesign/fase3-base`               | `63aac35` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; Android: arranque sem ecrã branco por validar) |
-| B5    | `redesign/fase3-base`               | —         | —   | pendente                                         |
+| B5    | `redesign/fase3-base`               | `889ff1f` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5) |
 | B5b   | `redesign/fase3-base`               | —         | —   | pendente                                         |
 | B3    | `redesign/fase3-ui` (+ 1 por passo) | —         | —   | pendente                                         |
 | B4    | idem                                | —         | —   | pendente                                         |
@@ -505,3 +505,5 @@ Esta tabela é atualizada no fim de cada passo e é a partir dela que se retoma 
 | B12   | idem                                | —         | —   | pendente                                         |
 | B13   | idem                                | —         | —   | pendente                                         |
 | B14   | idem                                | —         | —   | pendente                                         |
+
+**Nota B5:** as primitivas vivem em `src/components/ds/` (e não em `ui/`, como a §4.2 previa) porque `Button`, `Chip`, `IconButton`, `EmptyState` e `ErrorState` já existem em `ui/` com consumidores; reescrevê-los no sítio mudaria o visual. A B14 apaga os antigos e move `ds/` para `ui/`. `glassStyle.ts` aproxima o vidro (web: tint + `backdrop-filter`; nativo: sólido + hairline) até ao `GlassSurface` real da B4. O `IconButton` de contacto só tem os ícones existentes (sem telefone/email): os paths Phosphor Bold entram com o `Icon` novo (§3.6). `formatAddressLine` está em `src/utils/address.ts` e ainda não substitui os 2 `buildAddressLine` (migração nos passos visuais).
