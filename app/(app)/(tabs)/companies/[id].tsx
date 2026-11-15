@@ -72,7 +72,7 @@ function ProductItem({ product }: { product: Product }) {
   return (
     <Card
       interactive
-      onPress={() => router.push(`/(app)/products/${product.id}`)}
+      onPress={() => router.push(`/products/${product.id}`)}
       style={styles.productCard}
     >
       <View style={[styles.productHeader, { gap: spacing[4] }]}>

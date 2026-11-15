@@ -16,10 +16,10 @@ SplashScreen.preventAutoHideAsync();
 // (see @react-navigation/elements' <Background>) using whatever theme is in
 // context. expo-router never wires one, so it defaults to RN's own
 // DefaultTheme/DarkTheme (rgb(242,242,242) / rgb(1,1,1)) — fixed values with
-// no relation to our own light/dark tokens. That mismatch is what shows
-// through the translucent TopBar as a hard seam against the app's own
-// surfaceApp background. Wiring our tokens into the nav theme here makes
-// that invisible layer always match the app's actual background.
+// no relation to our own light/dark tokens. That mismatch shows through
+// translucent headers/tab bars as a hard seam against the app's own bg.
+// Wiring our tokens into the nav theme here makes that invisible layer
+// always match the app's actual background.
 function RootLayoutNav() {
   const { isDark, colors } = useTheme();
 

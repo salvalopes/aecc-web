@@ -381,7 +381,7 @@ export default function ProductDetailScreen() {
           {company && (
             <Pressable
               style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}
-              onPress={() => router.push(`/(app)/companies/${company.id}`)}
+              onPress={() => router.push(`/companies/${company.id}`)}
             >
               <Text
                 style={{
