@@ -1,60 +1,101 @@
-# Fase 2 — Três direções visuais para o Diretório (`/companies`, T3 Lista)
+# Fase 2 — Direções visuais para o Diretório (`/companies`, T3 Lista)
 
 **Data:** 2026-11-15 · **Branch:** `design/fase2-direcoes` (worktree `.claude/worktrees/fase2-direcoes`, a partir de `origin/main` @ `13f7265`)
-**Estado:** Fase A concluída (só leitura + este documento). **A aguardar aprovação** das direções e das dependências da §6 antes da Fase B.
+**Estado:** Fase A **revista com a `design-taste-frontend-v1`** e aprovada para a Fase B (dependências na §7). **Parado antes da Fase B.**
 **Natureza:** protótipo. Nada disto vai para o `main`.
 
-> ⚠️ **A skill `design-taste-frontend-v1` não foi carregada.** Está configurada com `disable-model-invocation`, por isso o modelo não a consegue invocar: a ferramenta recusa e manda pedir ao utilizador que a corra. As direções, as paletas e a lista de clichés (§5) foram escritas com critério próprio, e o workflow da skill não foi replicado. **Antes de aprovar, correr `/design-taste-frontend-v1` sobre este ficheiro** para que seja a skill a decidir o visual estático, como pede o `CLAUDE.md`.
+**Parâmetros da skill:** `DESIGN_VARIANCE 8` · `VISUAL_DENSITY 4` · `MOTION_INTENSITY 6` (**sem efeito: o motion fica fora desta fase**). Ignoradas por indicação do utilizador e do `CLAUDE.md`: as regras de Tailwind, Next.js/RSC, CSS e Framer Motion. As regras visuais foram traduzidas para React Native / react-native-web.
 
 ---
 
-## 1. Ponto de partida (lido nesta fase)
+## 0. O que mudou em relação à versão anterior (`caa6d5f`)
 
-- **Inventário** (`docs/redesign/00-inventario.md`): o Diretório é `app/(app)/companies/index.tsx` + `CompanyDirectoryList` (pesquisa, chips de categoria, lista paginada, L/V/E). O card de empresa tem 3 variantes duplicadas (D4) e o vidro está copiado inline em 5 ficheiros (D8).
-- **Tokens atuais** (`src/theme/`): creme quente + navy (light) e navy-black com o dourado a liderar (dark). Vidro "seamless" = `BlurView` + tint + borda de 1px + sombra (`glass.ts`, 5 variantes × 6 props). Escala de espaçamento não linear (2…40), com raios de 4 a 28 e `glassRadius` de 14/20.
-- **Logo** (`assets/brand/aecc-logo.webp`, 239×100): lockup horizontal composto por uma fita/onda multicolor (dourado, vermelho, verde, azul) à esquerda e pelo nome por extenso em 4 linhas, em navy, à direita. **Lacunas:** não existe versão do símbolo isolado, não existe versão com wordmark claro para fundos escuros e não existe vetor. O wordmark navy sobre o dark tem contraste insuficiente, por isso as três direções tratam o logo em dark de forma explícita (ver cada direção).
-- **Fontes atuais:** `assets/fonts/LibreFranklin-Variable.ttf` e `SourceSans3-Variable.ttf`. Por causa da suspeita sobre o ecrã branco no Android, **as três direções usam apenas ficheiros estáticos (um TTF por peso)**.
+### Por decisão do utilizador
+
+| # | Alteração |
+|---|---|
+| U1 | **Direção C · Índice cortada.** Ficam só A · Vitrine e B · Maré. Da C aproveitam-se dois elementos, **só no web 1280**: a **vista em tabela** como alternativa à grelha/lista e o **realce do termo pesquisado**. Os dois aplicam-se às duas direções. |
+| U2 | **Só campos reais de `CompanyDirectoryEntry`** (`src/types/api.ts`): `name`, `tradeName`, `caeDescription`, `locality`, `logoUrl` (pode ser `null` → fallback com iniciais), `phone`, `website`. Passaram a **"exige API"**: o selo de benefício na empresa (o `hasMemberBenefit` é do produto, não da empresa), a secção "Em destaque" (não existe flag de destaque) e as contagens por categoria. A contagem **global** mantém-se, porque vem de `PagedResult.totalCount`. |
+| U3 | **Tabs: no máximo 5.** O `/favourites` fica escondido, por isso sobram Início, Empresas, Perfil, Editar (Associado/Admin) e Utilizadores (Admin). Desaparece o conflito com o limite de 5 do Material 3 no Android. |
+
+### Por regras da skill
+
+| # | Regra da skill | Antes | Depois |
+|---|---|---|---|
+| S1 | **Rule 1 / AI Tells:** serifas proibidas em UI de software. Usar só em contexto editorial | A usava *Young Serif* nos títulos | A passa a **Outfit** (display) + Figtree (texto), sem serifa |
+| S2 | **Rule 1:** display com carácter a partir da lista recomendada (Geist, Outfit, Cabinet Grotesk, Satoshi) | B usava *Bricolage Grotesque* + *Hanken Grotesk* | B passa a **Geist** (uma família estática, 4 pesos) |
+| S3 | **Rule 2:** no máximo **1 cor de acento** | A tinha dois acentos (navy nas ações e dourado nos marcadores) | **A: acento único navy** (o dourado sai da UI e fica só no logo). **B: acento único dourado** (o navy passa a base neutra) |
+| S4 | **Rule 2:** saturação do acento abaixo de 80% | dourado `#EDB12D` = 84% | dourado de UI **`#DCAA45` = 68%**. O `#EDB12D` continua no logo, que não se altera. Estados também desaturados: `#0E7D46` (80%) passa a `#1D7A4C` (62%) e `#F07A77`/`#FF7A73` passam a `#EC8582` (74%) |
+| S5 | **Rule 2:** não misturar cinzentos quentes e frios | A tinha papel quente com cinzentos frios (`#556270`, `#A9B2BB`) | **A: escada toda quente (stone). B: escada toda fria (slate-navy)** |
+| S6 | **AI Tells:** H1 que não grita, com a hierarquia feita por peso e cor | B: hero 40/800 · A: display 34 | B: **30/34 700** · A: **28/32 600** |
+| S7 | **Rule 4 + pre-flight:** cards só quando a elevação comunica hierarquia; preferir espaço e divisórias | listas de cards nas duas direções | **mobile: linhas separadas por hairline, sem caixa por empresa.** A usa tiles só na grelha web (o logo é o objeto exposto). B agrupa a lista numa única superfície |
+| S8 | **Rule 3 + `DESIGN_VARIANCE 8`:** nada centrado; layout assimétrico acima de 768 e **coluna única abaixo** | grelha simétrica de 2 colunas | A: cabeçalho dividido **7fr / 5fr**. B: **sidebar 1fr + conteúdo 3fr**. As duas colapsam para uma coluna abaixo de 768 |
+| S9 | **Rule 4:** sombra tingida com a cor do fundo | `rgba(0,0,0,…)` / `rgba(14,36,51,…)` | as sombras usam a matiz do `bg` de cada direção (ver tokens) |
+| S10 | **Rule 5:** estados completos; o vazio explica **como obter resultados**; erro inline; feedback tátil no press | vazio com frase "espirituosa" ("Sem marés…") | vazio com instruções concretas. O feedback de press fica **especificado como mudança de tom estática**; o `scale 0.98` / `translateY 1px` passa para a fase de motion |
+| S11 | **Content & Data:** sem nomes genéricos, números redondos ou palavras de enchimento | não estava definido | regras de dados fictícios na §5 |
+| S12 | **§4 Liquid Glass:** hairline interior + highlight `inset` | só no web | também especificado no fallback de iOS < 26 (hairline `rgba` + highlight) |
+| S13 | **Ícones:** um traço global, 1,5 ou 2,0 | A regular, B bold | mantido: **A = Phosphor Regular (≈1,5)**, **B = Phosphor Bold (≈2,0)**, cada um consistente dentro da direção. Paths SVG locais (sem `@phosphor-icons/*`, por regra do `CLAUDE.md`) |
+| S14 | **AI Tells:** sem preto puro | já cumprido | sem alteração (o off-black mais escuro é `#110F0D`) |
+
+---
+
+## 1. Ponto de partida
+
+- **Inventário** (`docs/redesign/00-inventario.md`): o Diretório é `app/(app)/companies/index.tsx` + `CompanyDirectoryList` (pesquisa, chips de categoria, lista paginada, L/V/E). O card de empresa tem 3 variantes (D4) e o vidro está copiado inline em 5 ficheiros (D8, a substituir).
+- **Dados disponíveis por linha** (`CompanyDirectoryEntry`): `name`, `tradeName | null`, `caeDescription | null`, `locality | null`, `logoUrl | null`, `phone | null`, `website | null`. Existem também `contactEmail`, `address`, `postalCode`, `postalCodeLocality` e `hasOwner`, mas ficam fora da lista por decisão do utilizador.
+- **Categorias** (`Category`): `id`, `name`, `slug`, `parentId`, `children`. São hierárquicas e **não têm contagem**.
+- **Paginação** (`PagedResult`): `totalCount` permite mostrar "312 empresas" para o filtro ativo.
+- **Logo** (`assets/brand/aecc-logo.webp`, 239×100): lockup horizontal composto por uma fita multicolor e pelo nome por extenso em navy. Não existe versão com wordmark claro, nem o símbolo isolado, nem vetor. Em dark, as duas direções põem o logo sobre um "plate" claro.
+- **Fontes:** todas estáticas (um TTF por peso), por causa da suspeita sobre o ecrã branco no Android.
 
 ---
 
 ## 2. Liquid Glass e navegação nativa no SDK 55 (verificação)
 
-Fontes: `node_modules/expo/bundledNativeModules.json` do SDK 55 instalado (`expo@55.0.32`, `expo-router@55.0.18`, no worktree `expo-sdk-55`); o pacote publicado `expo-glass-effect@55.0.11` (código-fonte TS e Swift inspecionados via `npm pack`, **sem instalar**); `expo-router/build/native-tabs/*`; e as skills do plugin Expo 1.13.9, `expo-native-ui/references/visual-effects.md` e `expo-router/references/tabs.md`.
+Fontes: `node_modules/expo/bundledNativeModules.json` do SDK 55 (`expo@55.0.32`, `expo-router@55.0.18`, no worktree `expo-sdk-55`); o pacote publicado `expo-glass-effect@55.0.11` (código-fonte TS e Swift inspecionados via `npm pack`, sem instalar); `expo-router/build/native-tabs/*`; e as skills do plugin Expo 1.13.9, `expo-native-ui/references/visual-effects.md` e `expo-router/references/tabs.md`.
 
-> Nota: o `node_modules` do checkout principal continua no SDK 52 (`expo@52.0.49`), apesar de o `package.json` já declarar `~55.0.32`. Antes da Fase B é preciso correr `npm ci` no worktree.
+> O `node_modules` do checkout principal continua no SDK 52. O worktree precisa de `npm ci` antes da Fase B.
 
-| Item | Pacote / import | Versão (bundledNativeModules SDK 55) | Estado da API | iOS 26+ | iOS < 26 | Android | Web |
+| Item | Pacote / import | Versão SDK 55 | Estado | iOS 26+ | iOS < 26 | Android | Web |
 |---|---|---|---|---|---|---|---|
-| **GlassView**, **GlassContainer**, `isLiquidGlassAvailable()`, `isGlassEffectAPIAvailable()` | `expo-glass-effect` | `~55.0.11` | **Estável** (sem prefixo `unstable`). Props: `glassEffectStyle: 'regular' \| 'clear' \| 'none'`, `tintColor`, `isInteractive`, `colorScheme` | `UIGlassEffect` nativo. Requer compilação com Xcode 26 (`#if compiler(>=6.2)`) e `UIDesignRequiresCompatibility` ausente ou `false` no Info.plist (hoje não está definido em `ios/`) | Pod com mínimo iOS 15.1. O `GlassView` monta uma view nativa **sem efeito** (fica transparente) e `isLiquidGlassAvailable()` devolve `false`. **Não há fallback automático**: o fallback tem de ser nosso | `expo-module.config.json` declara `platforms: ["apple"]`, sem módulo Android. `GlassView.tsx` = `<View {...props} />` simples | O mesmo `<View>` simples, sem blur |
-| **NativeTabs** | `expo-router/unstable-native-tabs` | vem com `expo-router ~55.0.18` | **Unstable** (o próprio caminho de import diz isso) | Tab bar Liquid Glass automática, `minimizeBehavior="onScrollDown"`, `NativeTabs.BottomAccessory`, `role="search"` | `UITabBar` clássico (via `react-native-screens ~4.23.0`) | Material 3 bottom navigation, **máximo 5 tabs** (a app tem 6 com visibilidade por papel: conflito a resolver na Fase 3). Ícones Android via prop `md` | `NativeTabsView.web.js` usa `@radix-ui/react-tabs` (básico). A skill recomenda um `_layout.web.tsx` com tabs headless (`expo-router/ui`) |
-| Vidro em sheets | `Stack.Screen presentation="formSheet"` + `contentStyle: { backgroundColor: 'transparent' }` | `expo-router` | estável | Fundo Liquid Glass | sheet normal | sheet Material | modal web |
-| Barra de pesquisa nativa | `Stack.SearchBar` / `headerSearchBarOptions` | `expo-router` | estável | `UISearchController` com vidro | idem, sem vidro | campo de pesquisa na toolbar | sem equivalente nativo |
-| Ícones nativos | `expo-symbols` (`SymbolView`) | `~55.0.9` | estável | SF Symbols | SF Symbols | **só Apple**: precisa de fonte Material | não |
-| Controlos nativos | `@expo/ui` | `~55.0.17` | a skill indica Expo Go só a partir do SDK 56. No 55 obriga a dev build | SwiftUI | SwiftUI | Compose | parcial |
-| Blur (atual, D8) | `expo-blur` | `~55.0.18` | estável | `UIVisualEffectView` | idem | experimental | `backdrop-filter` |
+| `GlassView`, `GlassContainer`, `isLiquidGlassAvailable()`, `isGlassEffectAPIAvailable()` | `expo-glass-effect` | `~55.0.11` | **estável**. Props: `glassEffectStyle 'regular'\|'clear'\|'none'`, `tintColor`, `isInteractive`, `colorScheme` | `UIGlassEffect` nativo. Requer Xcode 26 (`#if compiler(>=6.2)`) e `UIDesignRequiresCompatibility` ausente ou `false` | pod mínimo iOS 15.1. A view nativa monta **sem efeito** (transparente) e `isLiquidGlassAvailable()` devolve `false`. **O fallback é nosso** | `platforms: ["apple"]`, `GlassView` = `<View>` simples | `<View>` simples |
+| NativeTabs | `expo-router/unstable-native-tabs` | com `expo-router ~55.0.18` | **unstable** | tab bar Liquid Glass, `minimizeBehavior`, `BottomAccessory`, `role="search"` | `UITabBar` clássico | Material 3, **máximo 5 tabs** → **compatível** com os 5 tabs (U3) | `@radix-ui/react-tabs` básico. A skill recomenda `_layout.web.tsx` |
+| Vidro em sheets | `presentation: 'formSheet'` + `contentStyle` transparente | `expo-router` | estável | Liquid Glass | sheet normal | Material | modal |
+| Pesquisa nativa | `Stack.SearchBar` / `headerSearchBarOptions` | `expo-router` | estável | com vidro | sem vidro | toolbar | não |
+| SF Symbols | `expo-symbols` | `~55.0.9` | estável | sim | sim | só Apple | não |
+| `@expo/ui` | `@expo/ui` | `~55.0.17` | dev build no 55 | SwiftUI | SwiftUI | Compose | parcial |
+| Blur (D8 atual) | `expo-blur` | `~55.0.18` | estável | sim | sim | experimental | `backdrop-filter` |
 
-**Regras de uso** (skill `expo-native-ui`, visual-effects):
-- Só usar `GlassView` se `isLiquidGlassAvailable() && isGlassEffectAPIAvailable()` (algumas betas do iOS 26 não têm a API e crasham sem a segunda verificação).
-- Com **Reduce Transparency** (`AccessibilityInfo.isReduceTransparencyEnabled()`), não usar nem vidro nem blur: superfície sólida.
-- Nunca pôr `overflow: 'hidden'` num `GlassView` nem nos seus antecessores (corta o rim e o "bulge"). Usar `borderRadius` + `borderCurve: 'continuous'`.
-- `isInteractive` só em controlos. Nunca animar a opacidade de um `GlassView` (o motion fica fora desta fase de qualquer forma).
-- Sombras com `boxShadow` (CSS-like) e nunca `shadow*` nem `elevation`.
+**Regras de uso:**
+- `GlassView` só com `isLiquidGlassAvailable() && isGlassEffectAPIAvailable()`.
+- Com Reduce Transparency, superfície sólida.
+- Nunca `overflow: 'hidden'` no vidro nem nos antecessores; usar `borderCurve: 'continuous'`.
+- `isInteractive` só em controlos.
+- Nunca animar a opacidade de um `GlassView`.
+- Sombras com `boxShadow`.
 
-**Consequência para o protótipo:** cada direção define um `Surface` de protótipo com três ramos: **iOS 26 → `GlassView`**, **iOS < 26 / Reduce Transparency → superfície sólida da paleta**, **web → aproximação CSS-like** (tint semi-opaco + `backdropFilter: 'blur(…) saturate(…)'` + `boxShadow` com highlight `inset`, a validar no RNW na Fase B; se o RNW não passar `backdropFilter`, fica sólido). O `BlurView` não é usado em nenhuma direção.
-**NativeTabs fica fora do protótipo:** a rota de protótipo vive fora de `(app)` e a troca de navegação é uma decisão de layout para a Fase 3. As direções descrevem como o tab bar se comporta, mas não o implementam.
+**Surface de protótipo, com três ramos:**
+- **iOS 26:** `GlassView`.
+- **iOS < 26 / Reduce Transparency:** superfície sólida da paleta + hairline interior + highlight `inset`.
+- **Web:** tint semi-opaco + `backdropFilter` + hairline + `boxShadow` com `inset`. Se o RNW não passar `backdropFilter`, fica sólido.
+
+O `BlurView` não é usado. **NativeTabs fica fora do protótipo** (é uma decisão de layout da Fase 3).
 
 ---
 
-## 3. As três direções em resumo
+## 3. As duas direções em resumo
 
-| | **A · Vitrine** | **B · Maré** | **C · Índice** |
-|---|---|---|---|
-| Conceito | Montra luminosa: as empresas são o produto e o logo de cada uma é o herói | Noite atlântica: imersiva, dark-first, com o vidro como material protagonista | Caderno de referência: denso, tipográfico, só com hairlines, ao estilo de uma ferramenta |
-| Referência de espírito | Headspace / Claude (calor, serifa, generosidade) | Spotify (energia, escuro, escala de tipo grande) | Notion (estrutura, texto, contenção) |
-| Modo âncora | light | **dark** | light |
-| Densidade | média-baixa | média | **alta** |
-| Vidro | só no cromado (pesquisa fixa, tab bar) | cromado **e** conteúdo de destaque | só o nativo (tab bar e header) |
-| Tipografia | serifa display + sans humanista | grotesca expressiva + grotesca neutra | sans + mono |
+| | **A · Vitrine** | **B · Maré** |
+|---|---|---|
+| Conceito | Montra luminosa em pedra quente: o logo de cada empresa é o objeto exposto | Noite atlântica: dark-first e imersiva, com o vidro como material e o dourado como única luz |
+| Modo âncora | light | **dark** |
+| Acento único | **navy** `#134D6F` (o dourado só no logo) | **dourado** `#DCAA45` (o navy é a base neutra) |
+| Neutros | escada **quente** (stone) | escada **fria** (slate-navy) |
+| Tipografia | Outfit + Figtree | Geist |
+| Vidro | só no cromado (pesquisa fixa e, na Fase 3, o tab bar) | cromado (pesquisa, chips, sidebar web) |
+| Lista mobile | linhas com hairline, plate do logo 56 | lista agrupada numa superfície, plate 48 |
+| Web 1280 | cabeçalho dividido 7fr/5fr, **Grelha de tiles \| Tabela** | **sidebar 1fr + conteúdo 3fr**, **Lista \| Tabela** |
+| Ícones | Phosphor Regular | Phosphor Bold |
 
 ---
 
@@ -62,225 +103,206 @@ Fontes: `node_modules/expo/bundledNativeModules.json` do SDK 55 instalado (`expo
 
 ### A · Vitrine
 
-**Conceito:** uma montra luminosa em papel quente onde cada empresa associada aparece como um produto na prateleira: o logo dela em destaque, a AECC em segundo plano.
+**Conceito:** uma montra luminosa em pedra quente onde cada empresa associada é exposta pelo seu próprio logo, com a AECC a ficar em segundo plano.
 
-#### Paleta
+#### Paleta (neutros quentes; acento único navy)
 
-| Papel | Light | Dark | Notas |
+| Papel | Light | Dark | Contraste / notas |
 |---|---|---|---|
-| `bg` (fundo da app) | `#FBF8F2` | `#0F1418` | light = papel quente; dark = grafite quente, **não navy** (o navy fica para as ações) |
-| `surface` (cards) | `#FFFFFF` | `#182027` | |
-| `sunken` (campo, skeleton) | `#F2EDE3` | `#0B0F12` | |
-| `border` (hairline) | `#E6DFD2` | `#263039` | |
-| `text` | `#0E2433` | `#F3EFE7` | 15,0:1 / 16,2:1 |
-| `text2` | `#556270` | `#A9B2BB` | 6,2:1 / 7,7:1 |
-| `text3` | `#646F7B` | `#7D8790` | 4,8:1 / 5,1:1 |
-| `primary` (ações, links, foco) | `#134D6F` | `#7FB6D6` | navy da marca. Em dark passa a navy clareado (8,4:1) |
-| `primaryPressed` | `#0E3B56` | `#A3CBE2` | |
-| `gold` (marcador: chip ativo, selo "benefício") | `#EDB12D` | `#F0BC45` | só como **preenchimento**, nunca como texto sobre claro |
-| `onGold` | `#0E2433` | `#1A1404` | 8,3:1 / 10,5:1 |
-| `goldText` (texto dourado sobre claro) | `#8A5F0A` | `#F0BC45` | 5,6:1 |
-| `logoPlate` (fundo dos logos das empresas) | `#FFFFFF` | `#F3EFE7` | os logos de terceiros precisam sempre de fundo claro |
-| `error` / `errorBg` | `#C4302E` / `#FBE9E8` | `#F07A77` / `#2A1615` | **só estados** |
-| `success` / `successBg` | `#0E7D46` / `#E5F4EC` | `#3FBF7F` / `#10261B` | só estados |
-| `info` / `infoBg` | `#2479A8` / `#E6F1F8` | `#6BB5DE` / `#0F2433` | só estados |
+| `bg` | `#FAF8F4` | `#161412` | pedra quente / carvão quente |
+| `surface` (tiles web, popovers) | `#FFFFFF` | `#201D1A` | |
+| `sunken` (campo, skeleton, header da tabela) | `#F1EEE8` | `#110F0D` | |
+| `border` (hairline) | `#E4DFD6` | `#312D29` | |
+| `text` | `#1C1A17` | `#F2EEE8` | 16,4:1 / 15,9:1 |
+| `text2` | `#5E5850` | `#B3ACA2` | 7,0:1 / 7,5:1 |
+| `text3` | `#6E685F` | `#8F887E` | 5,2:1 / 5,2:1 |
+| `accent` (ação primária, chip ativo, links, foco) | `#134D6F` | `#8FC0DD` | 8,5:1 / 9,4:1 · S 71% / 53% |
+| `accentPressed` | `#0E3B56` | `#B0D3E7` | estado de press estático |
+| `onAccent` | `#FFFFFF` | `#10222E` | 9,1:1 / 8,3:1 |
+| `accentSoft` (fundo do chip ativo, realce do termo, iniciais) | `#E3EDF3` + texto `#134D6F` | `#1B2A33` + texto `#8FC0DD` | 7,6:1 / 7,5:1 |
+| `logoPlate` | `#FFFFFF` | `#F2EEE8` | os logos de terceiros precisam sempre de fundo claro |
+| `shadowTint` | `rgba(60,48,32,0.08)` | `rgba(0,0,0,0.0)` → sem sombra | tingida com a matiz do `bg` (S9) |
+| `error` / `errorBg` | `#C4302E` / `#FBEAE8` | `#EC8582` / `#2A1816` | só estados · 5,2:1 / 6,6:1 |
+| `success` / `successBg` | `#1D7A4C` / `#E7F3EC` | `#46B983` / `#14261C` | só estados |
+| `info` / `infoBg` | `#2479A8` / `#E6F1F8` | `#6BB5DE` / `#13232D` | só estados |
+
+O **dourado não aparece na UI** da A (S3): fica no logo da AECC. Isso dá à A uma leitura "papel e tinta" bem distinta da B.
 
 #### Tipografia (estática)
 
-- **Display:** *Young Serif* Regular 400 (um único ficheiro estático). Serifa de contraste baixo, quente e com carácter. Só para títulos de ecrã e nomes de destaque.
-- **Texto e UI:** *Figtree* estática 400 / 500 / 600 / 700 (4 TTF).
-- **Escala:** `display 34/38` · `title 26/30` · `heading 20/26` · `body-lg 17/24` · `body 15/22` · `label 13/18 (600)` · `caption 12/16`. Os números usam `tabular-nums`.
-- Tracking: display −0,5; labels +0,2.
+- **Display:** *Outfit* 500 / 600: geométrica e arredondada, comercial sem ser corporativa.
+- **Texto e UI:** *Figtree* 400 / 500 / 600.
+- **Escala:** `title 28/32 (Outfit 600, −0,4)` · `heading 20/26 (Outfit 500)` · `name 17/22 (Figtree 600)` · `body 15/22` · `meta 13/18 (Figtree 500, text2)` · `label 12/16 (600, +0,2)`. `tabular-nums` em telefones e contagens.
 
 #### Superfícies e material
 
-- **iOS 26:** `GlassView regular` só no **campo de pesquisa fixo** (que flutua sobre a lista ao fazer scroll) e, na Fase 3, no tab bar nativo. Os cards são sólidos (`surface`) e **não** levam vidro: o vidro serve para orientar e não para decorar.
-- **iOS < 26:** pesquisa sólida `surface` + hairline `border`.
-- **Web:** pesquisa com `backgroundColor: rgba(255,255,255,0.72)` / `rgba(24,32,39,0.72)`, `backdropFilter: blur(20px) saturate(160%)`, hairline e `boxShadow: inset 0 1px 0 rgba(255,255,255,0.6)`. Hover (só web): o card sobe 1px de hairline para `text3` e não usa sombra.
-- **Android (nota):** pesquisa sólida `surface` com elevação tonal Material (`surfaceContainerHigh`) e ripple.
+- **iOS 26:** `GlassView regular` só no campo de pesquisa fixo (flutua sobre a lista ao fazer scroll). O resto é sólido.
+- **iOS < 26:** pesquisa `surface` + hairline `border` + highlight `inset 0 1px 0 rgba(255,255,255,0.7)`.
+- **Web:** `rgba(250,248,244,0.78)` / `rgba(32,29,26,0.78)` + `backdropFilter: blur(20px) saturate(150%)` + hairline. Hover (só web): o tile ganha hairline `text3`; a linha da tabela fica `sunken`.
+- **Android (nota):** pesquisa `surfaceContainerHigh` tonal + ripple. Sem vidro.
 
 #### Forma
 
-- **Densidade:** média-baixa. Card de empresa com 96px de altura no mobile e margens laterais de 20.
-- **Raios:** card 18, pesquisa 14, chip 10 (**não** pill), logo-plate 12, sempre com `borderCurve: 'continuous'`.
-- **Sombras:** nenhuma nos cards em light (hairline `border`). O campo flutuante leva `boxShadow: 0 8px 24px rgba(14,36,51,0.08)`.
-- **Iconografia:** Phosphor *regular* (traço 1,5, 20px). Os paths ficam no protótipo e são diferentes dos *fill* do `Icon.tsx` atual.
-- **Logo AECC:** lockup completo pequeno (altura 28) no topo do ecrã em light. Em dark vai sobre um "plate" `logoPlate` com raio 8 (o wordmark navy não lê sobre grafite). **Pedido de asset:** versão com wordmark claro.
+- **Densidade 4:** linha de 80px no mobile, margens laterais de 20 e espaço entre secções de 28.
+- **Raios:** tile 16, pesquisa 14, chip 10 (não pill), plate 12 (tile) / 10 (linha). Sempre `continuous`.
+- **Sombras:** só no campo flutuante (`0 8px 24px shadowTint`). Tiles e linhas usam hairline.
+- **Press (estático):** fundo `sunken` na linha e `accentPressed` nos botões. O movimento fica para a fase de motion.
+- **Ícones:** Phosphor Regular a 20px (lupa, X, chevron, telefone, globo, aviso).
+- **Logo AECC:** lockup de 28px de altura no topo. Em dark vai sobre `logoPlate` com raio 8.
+- **Fallback sem `logoUrl`:** iniciais do `tradeName ?? name` (até 2 letras, Outfit 600) em `accentSoft`, no mesmo plate.
 
 #### Diretório
 
-1. **Cabeçalho:** logo AECC pequeno à esquerda e, por baixo, o título em serifa "Diretório" (display) com a contagem "248 empresas associadas" (`text2`).
-2. **Pesquisa:** campo de 52px com ícone de lupa e placeholder "Procurar empresa, serviço ou localidade". Fixa no topo ao fazer scroll (vidro no iOS 26).
-3. **Chips de categoria:** linha horizontal com scroll. Inativo = `surface` + hairline; ativo = preenchimento `gold` + `onGold`. O primeiro chip é "Todas".
-4. **Faixa "Em destaque":** carrossel horizontal com 3 cards largos (280×200): logo grande no plate, nome em Figtree 600 e selo dourado "−10% para associados". Só aparece quando não há pesquisa ativa.
-5. **Lista:** card por empresa com logo 64×64 no plate, nome (`body-lg 600`), "Categoria · Localidade" (`text2`), selo de benefício opcional e chevron. **Web 1280:** grelha de 2 colunas, máx. 1120px, com os destaques em linha.
-6. **Loading:** skeleton com a mesma geometria do card (plate e duas barras) em `sunken`, estático (motion fora da fase).
-7. **Vazio:** frase em serifa "Nada com «xyz» por aqui." + subtexto + botão secundário "Limpar filtros".
-8. **Erro:** card `errorBg` com ícone, "Não foi possível carregar o diretório." e botão "Tentar novamente" (`primary`).
+**Mobile (390), coluna única:**
+1. **Cabeçalho:** logo AECC e, por baixo, "Diretório" (title) com "312 empresas associadas" (`meta`, vem de `totalCount`), alinhados à esquerda.
+2. **Pesquisa:** campo de 52px com lupa e placeholder "Nome, atividade ou localidade". Fica fixa no topo ao fazer scroll (vidro no iOS 26).
+3. **Chips de categoria:** linha horizontal com scroll, **sem contagens** (U2). Inativo = hairline; ativo = `accentSoft` + texto `accent` 600. O primeiro é "Todas". As subcategorias (`children`) aparecem numa segunda linha quando o pai está ativo.
+4. **Lista** sem caixas, com hairline entre linhas e estas linhas por empresa:
+   - plate 56 (logo ou iniciais);
+   - `tradeName ?? name` (`name`);
+   - se o `tradeName` existe, `name` por baixo em `meta`;
+   - `caeDescription · locality` (`meta`, com os nulos omitidos);
+   - à direita, ícones-ação de telefone e globo, só quando `phone` / `website` existem;
+   - chevron para o detalhe.
+5. **Loading:** 6 linhas skeleton com a geometria exata (plate + 2 barras de larguras variadas) em `sunken`, estáticas.
+6. **Vazio:** título "Nenhuma empresa para «termo»", subtexto **com instruções** ("Experimente outra grafia, pesquise pela localidade, ou retire o filtro Restauração.") e botão secundário "Limpar filtros".
+7. **Erro:** bloco inline `errorBg` com ícone, "Não foi possível carregar o diretório." e botão `accent` "Tentar novamente". A lista anterior, se existir, mantém-se por baixo.
+
+**Web 1280 (máx. 1200, assimétrico):**
+- **Cabeçalho dividido 7fr / 5fr:** à esquerda o título e o total, à direita a pesquisa (vidro). Os chips ficam por baixo, em largura total.
+- **Alternador "Grelha | Tabela"** (segmentado, à direita da linha de chips).
+- **Grelha:** tiles em 2 colunas `surface` + hairline, raio 16. Plate grande de 96 em cima à esquerda, nome, `caeDescription`, `locality` e uma linha de contacto (telefone · site) no fundo. **Não usar 3 colunas iguais.**
+- **Tabela** (da C): colunas Empresa (plate 32 + nome + `tradeName`) | Atividade (`caeDescription`) | Localidade | Contacto (telefone, site). Cabeçalho `sunken` fixo, linhas de 52px com hairline.
+- **Realce do termo** (da C), nas duas vistas: o termo pesquisado aparece em `accentSoft` + texto `accent` 600 no nome, no `tradeName` e na atividade.
 
 ---
 
 ### B · Maré
 
-**Conceito:** o diretório como uma noite à beira-mar em Cascais: um navy profundo e imersivo onde o vidro flutua sobre "horizontes" de cor e o dourado é a luz que marca o que importa.
+**Conceito:** o diretório como uma noite à beira-mar em Cascais: um navy profundo e imersivo onde o vidro flutua sobre um horizonte de cor e o dourado é a única luz, sempre a marcar a ação.
 
-#### Paleta
+#### Paleta (neutros frios slate-navy; acento único dourado)
 
-| Papel | Dark (âncora) | Light | Notas |
+| Papel | Dark (âncora) | Light | Contraste / notas |
 |---|---|---|---|
-| `bg` | `#071A26` | `#EAF1F5` | dark = navy-noite derivado de #134d6f; light = névoa fria |
-| `horizon` (faixa de cor no topo, por trás do vidro) | `#0D3550` | `#CFE0EA` | dá ao vidro algo para refratar, sem gradiente |
-| `surface` | `#0E2A3B` | `#FFFFFF` | |
-| `raised` | `#133548` | `#F5F9FB` | |
-| `border` | `#22404F` | `#D3E0E8` | |
-| `text` | `#EEF4F7` | `#082231` | 16,0:1 / 14,3:1 |
-| `text2` | `#9DB6C4` | `#46606F` | 7,0:1 / 6,6:1 |
-| `text3` | `#6E8B9B` | `#566E7E` | 4,9:1 / 4,7:1 |
-| `accent` (CTA, chip ativo, foco) | `#EDB12D` | `#134D6F` | dark lidera com dourado; light lidera com navy |
-| `onAccent` | `#0A1B26` | `#FFFFFF` | 9,1:1 / 9,1:1 |
-| `gold` (selos, em light) | `#EDB12D` | `#EDB12D` + texto `#082231` | |
-| `link` | `#5FA8D3` | `#134D6F` | 6,8:1 |
-| `logoPlate` | `#F5F9FB` | `#FFFFFF` | |
-| `error` / `errorBg` | `#FF7A73` / `#3A1715` | `#C4302E` / `#FBE9E8` | só estados |
-| `success` / `successBg` | `#34C27E` / `#0D2E20` | `#0E7D46` / `#E5F4EC` | só estados |
-| `info` / `infoBg` | `#66B8E6` / `#0D2C40` | `#2479A8` / `#E6F1F8` | só estados |
+| `bg` | `#08161F` | `#EEF2F5` | navy-noite / névoa fria |
+| `horizon` (faixa de topo por trás do vidro) | `#0E2D42` | `#D6E2EA` | sólida, sem gradiente |
+| `surface` (grupo da lista) | `#0F2433` | `#FFFFFF` | |
+| `raised` (skeleton, hover, header da tabela) | `#15303F` | `#F6F8FA` | |
+| `border` | `#23404F` | `#D5DEE5` | |
+| `text` | `#EEF3F6` | `#0B1E2A` | 16,4:1 / 15,1:1 |
+| `text2` | `#9FB4C1` | `#4A5D69` | 7,4:1 / 6,9:1 |
+| `text3` | `#7590A0` | `#5A6D7A` | 5,5:1 / 4,8:1 |
+| `accent` (ação primária, chip ativo, foco) | `#DCAA45` | `#DCAA45` (preenchimento) | S 68% · `onAccent` 8,3:1 / 8,0:1 |
+| `accentText` (texto em dourado) | `#DCAA45` | `#85600F` | 8,6:1 / 5,7:1. Mesma matiz, só escurecida para texto em light |
+| `onAccent` | `#0B1A23` | `#0B1E2A` | |
+| `accentSoft` (realce do termo, iniciais) | `#33290F` + `#DCAA45` | `#F7EBCB` + `#85600F` | 6,7:1 / 4,8:1 |
+| `logoPlate` | `#F6F8FA` | `#FFFFFF` | |
+| `shadowTint` | `rgba(2,10,16,0.45)` | `rgba(11,30,42,0.10)` | tingida de navy (S9), só no web |
+| `error` / `errorBg` | `#EC8582` / `#3A1A19` | `#C4302E` / `#FBEAE8` | só estados · 6,2:1 |
+| `success` / `successBg` | `#46B983` / `#0F2E22` | `#1D7A4C` / `#E7F3EC` | só estados · 6,5:1 |
+| `info` / `infoBg` | `#6BB5DE` / `#0D2C40` | `#2479A8` / `#E6F1F8` | só estados · 7,0:1 |
+
+**Links:** não há uma cor de link separada (acento único). São `text` com sublinhado, e no hover web passam a `accentText`.
 
 #### Tipografia (estática)
 
-- **Display:** *Bricolage Grotesque* estática 700 / 800 (instâncias estáticas da família do Google Fonts). Grotesca com personalidade e terminais vivos, usada em tamanho grande e apertado.
-- **Texto e UI:** *Hanken Grotesk* estática 400 / 500 / 600.
-- **Escala:** `hero 40/42 (800, tracking −1)` · `title 30/34 (700)` · `heading 22/28` · `body-lg 17/24` · `body 15/22` · `label 13/18 (600, +0,3)` · `caption 12/16`.
+- **Família única:** *Geist* 400 / 500 / 600 / 700 (TTF estáticos da distribuição oficial, OFL).
+- **Escala:** `hero 30/34 (700, −0,6)` · `heading 20/26 (600)` · `name 16/22 (600)` · `body 15/22 (400)` · `meta 13/18 (500, text2)` · `label 12/16 (600, +0,4)`. `tabular-nums` nos telefones.
 
 #### Superfícies e material
 
-- **iOS 26:** vidro em todo o cromado (pesquisa em cápsula, chips em `GlassContainer` com `spacing` para fundirem, tab bar nativo) **e** nos cards "Em destaque", que flutuam sobre o `horizon`. Na lista principal os cards são sólidos (`surface`) para manter a legibilidade. Chip ativo = `GlassView` com `tintColor` dourado e `isInteractive`.
-- **iOS < 26:** cápsulas e chips sólidos `raised`; cards de destaque `surface` com hairline.
-- **Web:** `rgba(14,42,59,0.55)` (dark) / `rgba(255,255,255,0.6)` (light) + `backdropFilter: blur(24px) saturate(180%)`, hairline `rgba(255,255,255,0.12)` e `boxShadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 12px 32px rgba(0,0,0,0.35)`. Hover: tint +6% de opacidade.
-- **Android (nota):** superfícies tonais Material 3 sobre `bg`, com o chip ativo `secondaryContainer` dourado. Sem vidro.
+- **iOS 26:** a pesquisa é uma cápsula `GlassView regular`. Os chips ficam num `GlassContainer` (com `spacing`) para se fundirem; o chip ativo é `GlassView` com `tintColor #DCAA45` e `isInteractive`. O vidro fica **sobre o `horizon`**, para ter algo para refratar. **A lista é sólida.**
+- **iOS < 26:** cápsulas `raised` + hairline `rgba(255,255,255,0.08)` + highlight `inset 0 1px 0 rgba(255,255,255,0.06)`.
+- **Web:** `rgba(15,36,51,0.55)` / `rgba(255,255,255,0.62)` + `backdropFilter: blur(24px) saturate(170%)`, hairline `rgba(255,255,255,0.10)` e `boxShadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 32px shadowTint`. Hover: o tint ganha +6% de opacidade.
+- **Android (nota):** superfícies tonais M3 sobre `bg`, com o chip ativo `secondaryContainer` dourado. Sem vidro.
 
 #### Forma
 
-- **Densidade:** média, com espaçamentos generosos entre secções (32–40) e compactos dentro delas.
-- **Raios:** painéis 24, cards 20, **chips e pesquisa em cápsula** (coerente com a geometria Liquid Glass), logo-plate 14, sempre com `continuous`.
-- **Sombras:** só no web (para simular a profundidade do vidro); no iOS a profundidade vem do material.
-- **Iconografia:** Phosphor *bold* (traço 2, 20–22px), mais peso para acompanhar o display grosso.
-- **Logo AECC:** em dark, dentro de um plate de vidro claro (`logoPlate` a 92%) com raio 12, no canto superior. Em light fica direto sobre o `horizon`. O hero tipográfico substitui a função do logo no topo ("a montra é das empresas").
+- **Densidade 4:** linha de 72px e uma única superfície agrupada com raio 20.
+- **Raios:** grupo 20, plate 12, **pesquisa e chips em cápsula** (a geometria do Liquid Glass), botões 14. Sempre `continuous`.
+- **Sombras:** nenhuma no iOS (a profundidade vem do material). No web, só no vidro.
+- **Press (estático):** linha `raised`; botão `accent` mais escuro (`#C6973A`).
+- **Ícones:** Phosphor Bold a 20px.
+- **Logo AECC:** canto superior esquerdo do `horizon`, sobre `logoPlate` a 92% com raio 10, em dark e em light.
+- **Fallback sem `logoUrl`:** iniciais (Geist 700) em `accentSoft`.
 
 #### Diretório
 
-1. **Horizonte:** faixa `horizon` com 240px de altura no topo, com o hero "Quem faz Cascais" (display 40) e a contagem "248 associadas · 14 categorias".
-2. **Pesquisa em cápsula** de vidro, a sobrepor a borda inferior do horizonte (metade dentro, metade fora).
-3. **Chips em cápsula de vidro** fundidos num `GlassContainer`; o ativo é dourado.
-4. **"Em destaque":** 2 cards de vidro grandes, lado a lado no web e em carrossel no mobile, com o logo no plate, o nome em display 22 e o benefício em dourado.
-5. **Lista:** linhas-card sólidas (`surface`, raio 20) com plate 56, nome, "Categoria · Localidade" e, à direita, uma pílula de benefício. **Web 1280:** layout em 2 colunas: **as categorias passam a uma coluna lateral vertical** (240px, com contagens) em vez da linha de chips, e a lista ocupa 2 colunas de cards à direita.
-6. **Loading:** cards `raised` com barras `border`, estáticos.
-7. **Vazio:** ícone grande em traço sobre o horizonte, "Sem marés para «xyz»." e botão de vidro "Limpar filtros".
-8. **Erro:** painel `errorBg` com raio 20, mensagem e botão `accent` "Tentar novamente".
+**Mobile (390), coluna única:**
+1. **Horizonte** (`horizon`, 200px): logo no plate e, alinhados à esquerda, o hero "Quem faz Cascais" (30/34) com "312 empresas associadas" (`meta`).
+2. **Pesquisa em cápsula de vidro**, a sobrepor a borda inferior do horizonte (offset −26).
+3. **Chips em cápsula** (vidro, num `GlassContainer`), **sem contagens**. O ativo é dourado. As subcategorias aparecem numa segunda linha.
+4. **Lista agrupada:** uma superfície `surface` com raio 20 e divisórias hairline indentadas depois do plate. Cada linha tem:
+   - plate 48;
+   - `tradeName ?? name` (`name`);
+   - `caeDescription` (`meta`) e `locality` (`text3`);
+   - à direita, ícones de telefone e globo (só quando existem);
+   - chevron.
+5. **Loading:** a mesma superfície com 6 linhas skeleton `raised` de larguras variadas.
+6. **Vazio:** dentro da superfície, ícone de lupa em traço, "Nenhuma empresa para «termo»" e instruções concretas, com o botão de vidro "Limpar filtros".
+7. **Erro:** painel inline `errorBg` com raio 20, mensagem e botão `accent` "Tentar novamente".
+
+**Web 1280 (máx. 1240, assimétrico 1fr / 3fr):**
+- **Horizonte em largura total**, com o hero à esquerda e a pesquisa em cápsula à direita (assimétrico, nada centrado).
+- **Sidebar fixa (1fr):** árvore de categorias (pai com filhos indentados) num painel de vidro, **sem contagens**. A ativa leva uma barra `accent` de 3px.
+- **Conteúdo (3fr):** alternador "Lista | Tabela".
+  - **Lista:** a superfície agrupada em largura total, com linhas de 64px e o contacto visível em texto (telefone, domínio do site).
+  - **Tabela** (da C): Empresa | Atividade | Localidade | Telefone | Site. Cabeçalho `raised` fixo, linhas de 48px.
+- **Realce do termo** (da C): `accentSoft` + `accentText` 600.
 
 ---
 
-### C · Índice
+## 5. Dados fictícios para o protótipo (regras da skill)
 
-**Conceito:** o diretório como um índice de referência bem composto: tipografia e hairlines fazem todo o trabalho, a informação é densa e escaneável, e o dourado aparece só como marcador de página.
+- **Nomes inventados e verosímeis** de negócios do concelho, sem "Acme" nem "Empresa 1". Misturar sociedades com e sem `tradeName`: "Maré Alta — Peixaria e Garrafeira, Lda.", "Oficina Rui Barradas & Filhos", "Clínica Dentária Quinta da Marinha", "Atelier Vidraça do Estoril", "Padaria Formosa de Tires", "Contas Certas Contabilidade, Unipessoal Lda.".
+- **`caeDescription`** reais da CAE Rev.3 (por exemplo "Restaurantes do tipo tradicional", "Atividades de contabilidade e auditoria", "Comércio a retalho de peixe, crustáceos e moluscos").
+- **`locality`** do concelho: Cascais, Estoril, Parede, Carcavelos, São Domingos de Rana, Alcabideche, Tires, Birre, Murches, Abóboda.
+- **Telefones orgânicos:** `+351 214 862 317`, `+351 912 408 663`. Nada de sequências.
+- **Casos limite obrigatórios:** `logoUrl: null` (iniciais), `tradeName: null`, `caeDescription: null`, `locality: null`, sem telefone nem site, e um nome de 60+ caracteres (truncar a 2 linhas).
+- **Total fictício orgânico:** 312.
+- **Copy concreta**, sem "eleve", "descubra" nem "seamless". Sem emojis.
 
-#### Paleta
+---
 
-| Papel | Light (âncora) | Dark | Notas |
+## 6. Clichés a evitar e como cada direção os evita (skill)
+
+| # | Regra / AI tell da skill | A · Vitrine | B · Maré |
 |---|---|---|---|
-| `bg` | `#FFFFFF` | `#121416` | neutro, quase sem matiz |
-| `sunken` (campo, linhas hover, cabeçalho de tabela) | `#F6F6F3` | `#0C0D0F` | |
-| `surface` (popovers) | `#FFFFFF` | `#1A1D20` | |
-| `border` (hairline) | `#E8E6E1` | `#2A2E33` | |
-| `borderStrong` | `#CFCBC2` | `#3A3F45` | separadores de letra |
-| `text` | `#16191C` | `#ECECE9` | 17,7:1 / 15,6:1. Quase preto, **não** navy |
-| `text2` | `#5D6268` | `#A3A8AE` | 6,2:1 / 7,1:1 |
-| `text3` (metadados mono) | `#6F7479` | `#80858B` | 4,7:1 / 5,0:1 |
-| `primary` (links, seleção, foco) | `#134D6F` | `#8CC0DE` | 9,1:1 / 9,4:1 |
-| `marker` (barra de 3px, letra do índice, tab ativa) | `#EDB12D` | `#EDB12D` | só como forma, nunca como texto sobre claro |
-| `highlight` (match da pesquisa, selo benefício) | `#FCEFC7` + texto `#8A5F0A` | `#3A2E10` + texto `#F2C85A` | 4,9:1 / 8,4:1 |
-| `error` | `#C4302E` | `#F07A77` | só estados, como barra lateral e texto |
-| `success` | `#0E7D46` | `#3FBF7F` | só estados |
-| `info` | `#2479A8` | `#6BB5DE` | só estados |
-
-#### Tipografia (estática)
-
-- **Texto e UI:** *IBM Plex Sans* estática 400 / 500 / 600.
-- **Metadados:** *IBM Plex Mono* estática 400 (contagens, localidade, letra do índice, estados).
-- **Escala** (compacta): `title 28/32 (600, −0,4)` · `heading 18/24` · `body 15/22` · `row 15/20 (500)` · `meta 12/16 mono` · `label 12/16 (600, maiúsculas +0,6)`.
-
-#### Superfícies e material
-
-- **iOS 26:** **só o vidro do sistema**, ou seja, o tab bar nativo e o header de navegação transparente sobre o scroll (na Fase 3, `Stack` com `headerTransparent` e eventualmente `Stack.SearchBar`). No protótipo, o cabeçalho fixo (título + pesquisa) é um `GlassView regular` de largura total. O conteúdo não leva vidro.
-- **iOS < 26:** cabeçalho `bg` sólido com hairline inferior.
-- **Web:** cabeçalho fixo `rgba(255,255,255,0.8)` / `rgba(18,20,22,0.8)` + `backdropFilter: blur(16px)` + hairline. Hover na linha: `sunken`. Foco visível de 2px `primary`.
-- **Android (nota):** top app bar Material "small" com `surface` e a lista com dividers Material. É a direção que mais naturalmente se aproxima de M3.
-
-#### Forma
-
-- **Densidade:** alta. Linha de 60px no mobile e 44px na tabela web.
-- **Raios:** 6 em controlos, 0 nas linhas, 4 no logo (quadrado discreto, 32px).
-- **Sombras:** nenhuma. Toda a hierarquia vem de peso, cor de texto e hairlines.
-- **Iconografia:** Phosphor *regular* a 16–18px, só onde é funcional (lupa, chevron, aviso). As categorias **não** levam ícone.
-- **Logo AECC:** fora do ecrã de lista (vive no ecrã Início e no ecrã de login). No Diretório, a identidade vem do marcador dourado e da tipografia. Em web 1280 aparece pequeno (altura 24) no canto do cabeçalho, sobre `bg` claro. Em dark é substituído pelo texto "AECC" em Plex Sans 600 até existir a versão clara.
-
-#### Diretório
-
-1. **Cabeçalho fixo:** "Diretório" (title) + "248 empresas" em mono `text3`. Por baixo, a pesquisa plana `sunken` com raio 6 e o atalho "/" visível só no web.
-2. **Categorias como tabs de texto** com contagem mono ("Restauração 42"). A ativa leva sublinhado `marker` de 3px. Scroll horizontal no mobile.
-3. **Lista indexada A–Z:** separadores de letra em mono, com a letra num quadrado `marker` de 20px. Linhas com logo 32, nome (`row`) e, numa segunda linha, "Categoria · Localidade" em mono `text3`. O selo de benefício é `highlight` inline. **Web 1280:** **tabela verdadeira** com colunas Empresa / Categoria / Localidade / Benefício, cabeçalho de colunas fixo e índice A–Z vertical clicável à direita.
-4. **Pesquisa ativa:** o termo é destacado nos nomes com `highlight`.
-5. **Loading:** 8 linhas com hairlines e barras `sunken` de larguras variadas (não idênticas).
-6. **Vazio:** texto simples "Nenhuma empresa corresponde a «xyz» em Restauração." + links "Limpar pesquisa" · "Ver todas as categorias".
-7. **Erro:** linha-banner com barra lateral `error` de 3px, mensagem e link "Tentar novamente". Sem ilustração.
+| 1 | THE LILA BAN: azul/roxo IA, glows neon, gradientes | navy da marca, sem gradientes nem glows | `horizon` sólido; dourado sem glow |
+| 2 | Máx. 1 acento, saturação abaixo de 80% | navy (71%) | dourado `#DCAA45` (68%) |
+| 3 | Consistência de neutros | só quentes | só frios |
+| 4 | Sem Inter; display com carácter | Outfit + Figtree | Geist |
+| 5 | Sem serifa em UI de app | sem serifa | sem serifa |
+| 6 | H1 que não grita | 28/600 | 30/700 |
+| 7 | Sem hero centrado (variance 8) | título à esquerda; header 7fr/5fr | hero à esquerda; 1fr/3fr |
+| 8 | Sem 3 cards iguais | tiles em 2 colunas ou tabela | lista agrupada ou tabela |
+| 9 | Cards só com hierarquia | linhas sem caixa; tiles só no web | uma superfície de grupo |
+| 10 | Sombras tingidas, sem sombra genérica | `shadowTint` quente, só no flutuante | sem sombra no nativo; tinta navy no web |
+| 11 | Liquid Glass com hairline interior e `inset` | pesquisa | pesquisa, chips, sidebar |
+| 12 | Sem preto puro | `#110F0D` no mínimo | `#08161F` |
+| 13 | Skeleton à medida do layout, sem spinner | geometria da linha/tile | geometria do grupo |
+| 14 | Vazio que ensina a obter resultados | instruções + "Limpar filtros" | idem |
+| 15 | Erro inline | bloco inline, a lista mantém-se | painel inline |
+| 16 | Sem emojis; um traço de ícone | Phosphor Regular | Phosphor Bold |
+| 17 | Dados genéricos / "Jane Doe" | §5 | §5 |
+| 18 | Mobile colapsa para coluna única abaixo de 768 | sim | sim (a sidebar passa a chips) |
 
 ---
 
-## 5. Clichés a evitar e como cada direção os evita
+## 7. Dependências — **aprovadas para a Fase B**
 
-> Lista escrita com critério próprio, **sem** a skill `design-taste-frontend-v1` (ver aviso no topo). Deve ser revista pela skill.
+| # | Dependência | Instalação | Âmbito |
+|---|---|---|---|
+| 1 | **`expo-glass-effect ~55.0.11`** | `npx expo install expo-glass-effect` | `GlassView` / `GlassContainer` no iOS 26. Obriga a rebuild do dev client iOS. Se o prebuild mexer nos `scripts` do `package.json`, reverter |
+| 2 | **Fontes estáticas locais** em `assets/fonts/prototypes/` + `OFL.txt` por família, carregadas com o `expo-font` já instalado | sem npm | **Só A e B, 9 TTF:** Outfit 500/600 · Figtree 400/500/600 · Geist 400/500/600/700 |
+| 3 | **Ícones Phosphor em SVG** | sem npm | paths Regular (A) e Bold (B) em `src/prototypes/icons.ts`, desenhados com o `react-native-svg` já instalado |
 
-| # | Cliché | A · Vitrine | B · Maré | C · Índice |
-|---|---|---|---|---|
-| 1 | Glassmorphism em todo o lado (blur em cada card) | vidro só na pesquisa fixa | vidro em cromado e destaques; **a lista é sólida** | vidro só no header do sistema |
-| 2 | Gradiente azul→roxo / mesh no hero | sem gradientes | faixa `horizon` sólida, sem gradiente | sem gradientes |
-| 3 | Inter/Roboto/system por omissão | Young Serif + Figtree | Bricolage + Hanken | Plex Sans + Plex Mono (o par sans/mono é a identidade) |
-| 4 | Tudo pill com `rounded-2xl` uniforme | raios diferenciados (18/14/10); chips **não** pill | cápsula **só** onde é geometria Liquid Glass | raios 6/0, quase quadrado |
-| 5 | Grelha de 3 cards iguais | carrossel + grelha de 2 colunas assimétrica | sidebar + 2 colunas no web | tabela, sem cards |
-| 6 | Ícone dentro de um círculo colorido por categoria | categorias só em texto nos chips | categorias com contagem na sidebar | categorias sem ícone |
-| 7 | Sombras genéricas difusas em tudo | hairlines; sombra só no elemento flutuante | sem sombra no nativo | zero sombras |
-| 8 | Cor de estado usada como decoração | vermelho, verde e azul só em estados | idem | idem |
-| 9 | Dourado como texto sobre claro (contraste 1,9:1) | dourado só como preenchimento; texto em `#8A5F0A` | idem | dourado só como forma (marcador) |
-| 10 | Dark mode = light invertido com navy azulado | dark grafite quente, navy só nas ações | dark é o modo âncora e foi desenhado primeiro | dark neutro quase sem matiz |
-| 11 | Skeletons cinzentos idênticos com shimmer | skeleton com a geometria do card | idem, em `raised` | barras com larguras variadas, sem shimmer (motion fora da fase) |
-| 12 | Estado vazio com ilustração genérica e "Oops!" | frase em serifa com o termo pesquisado | ícone em traço + frase com o termo | texto simples + ações |
-| 13 | Hero centrado com título genérico ("Descubra…") | sem hero, só título funcional | hero com voz local ("Quem faz Cascais") | sem hero |
-| 14 | Imitar diretamente a referência (verde Spotify, serifa Claude) | serifa diferente (Young Serif, não Tiempos/Copernicus) | energia Spotify, mas paleta da marca | estrutura Notion, mas com marcador dourado próprio |
-| 15 | Emojis como ícones | Phosphor regular | Phosphor bold | Phosphor regular, mínimo |
-| 16 | Chrome iOS falso no Android/web (back-chevrons, large titles feitos à mão) | header do sistema na Fase 3 | idem | idem; é a direção mais próxima do M3 |
-
----
-
-## 6. Dependências para prototipar (a aprovar)
-
-| # | Dependência | Versão (SDK 55) | Porquê | Custo / risco |
-|---|---|---|---|---|
-| 1 | **`expo-glass-effect`** | `~55.0.11` (`npx expo install expo-glass-effect`) | Único caminho suportado para Liquid Glass nativo (`GlassView`, `GlassContainer`, verificações de disponibilidade). Usado pelas 3 direções no iOS 26 | Módulo nativo: obriga a **rebuild do dev client iOS** (`npx expo run:ios` / prebuild). Sem efeito em Android e web (renderiza `View`). Se o prebuild mexer nos `scripts` do `package.json`, reverter |
-| 2 | **Fontes estáticas** como ficheiros em `assets/fonts/prototypes/` (licença OFL, com `OFL.txt` incluído), carregadas com o `expo-font` já instalado | n/a (**sem pacote npm**) | Testar fontes estáticas (hipótese do ecrã branco no Android) sem acrescentar dependências. Ficheiros: Young Serif 400; Figtree 400/500/600/700; Bricolage Grotesque 700/800; Hanken Grotesk 400/500/600; IBM Plex Sans 400/500/600; IBM Plex Mono 400 (**16 TTF**) | Download do Google Fonts / repositórios oficiais na Fase B. Alternativa: pacotes `@expo-google-fonts/<família>` (4 pacotes npm), que **não** recomendo |
-| 3 | Ícones Phosphor regular/bold | n/a (**sem pacote**) | Paths SVG copiados para `src/prototypes/icons.ts`, desenhados com o `react-native-svg` já instalado (o padrão atual do `Icon.tsx`, sem o alterar) | nenhum |
-
-**Não necessárias nesta fase** (e não instalar): `expo-blur` (já instalado, mas o objetivo é substituí-lo); `expo-linear-gradient` (nenhuma direção usa gradiente); `react-native-reanimated` / `gesture-handler` / `expo-haptics` (motion fora da fase); `expo-symbols` (SF Symbols dariam um iOS mais nativo, mas quebram a paridade web/iOS da comparação e precisam de fonte Material no Android; reavaliar na Fase 3); `@expo/ui` (sem controlos nativos na lista); NativeTabs (já vem com o `expo-router`, mas é uma mudança de layout fora do protótipo).
+Não instalar: `expo-blur` (fica, mas não é usado), `expo-linear-gradient`, `react-native-reanimated`, `react-native-gesture-handler`, `expo-haptics`, `expo-symbols`, `@expo/ui`, `@phosphor-icons/*`.
 
 ### Notas operacionais para a Fase B
 
-- O worktree precisa de `npm ci` (o checkout principal tem `node_modules` do SDK 52).
-- `app.config.ts` não define `scheme`. Para o Maestro abrir `prototypes/<direcao>?state=…` por deep link é preciso um `scheme` (alteração só no branch de protótipo), ou então navegar por toque a partir de um índice de protótipos. O light/dark no simulador muda-se com `xcrun simctl ui booted appearance dark|light`. No web, a rota aceita `?scheme=dark&state=loading|empty|error`.
-- O simulador iPhone 17 Pro (iOS 26.3) precisa de um build compilado com Xcode 26, senão `isLiquidGlassAvailable()` devolve `false` e as capturas mostram o fallback.
-
----
-
-## 7. Para aprovar
-
-1. Correr `/design-taste-frontend-v1` sobre este documento e aplicar as correções que a skill indicar.
-2. Aprovar (ou cortar) as 3 direções.
-3. Aprovar as dependências da §6: **`expo-glass-effect ~55.0.11`** + fontes estáticas locais (sem npm).
-4. `/clear` e retomar a Fase B a partir deste ficheiro.
+- O worktree precisa de `npm ci`.
+- `app.config.ts` não tem `scheme`. Para o Maestro abrir `prototypes/<direcao>?state=…` é preciso acrescentá-lo só neste branch (ou então navegar por toque a partir de um índice de protótipos). Light/dark no simulador: `xcrun simctl ui booted appearance dark|light`. Web: `?scheme=dark&state=loading|empty|error`.
+- O iPhone 17 Pro (iOS 26.3) precisa de um build compilado com Xcode 26, senão as capturas mostram o fallback.
+- Pastas: `src/prototypes/vitrine/`, `src/prototypes/mare/`. Capturas em `docs/redesign/fase2/vitrine/` e `docs/redesign/fase2/mare/`.
