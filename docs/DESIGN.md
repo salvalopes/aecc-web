@@ -116,24 +116,24 @@ Regras: sem `overflow: 'hidden'` no `GlassView`; legibilidade garantida pelo fal
 
 Vivem em `ds/` até à B14 (`ui/` ainda tem os antigos, com consumidores); depois movem-se para `ui/`.
 
-| Componente                  | Papel                                                                   | Resolve |
-| --------------------------- | ----------------------------------------------------------------------- | ------- |
-| `Text`                      | `variant`, `color` (papel), `tabular`                                   |         |
-| `Button`                    | `primary` · `secondary` · `glass` · `destructive`; `sm`/`md`; `loading` | D1, D6  |
-| `IconButton`                | `plain` ou `contact`; `label` obrigatório (acessibilidade)              |         |
+| Componente                  | Papel                                                                                     | Resolve |
+| --------------------------- | ----------------------------------------------------------------------------------------- | ------- |
+| `Text`                      | `variant`, `color` (papel), `tabular`                                                     |         |
+| `Button`                    | `primary` · `secondary` · `glass` · `destructive`; `sm`/`md`; `loading`                   | D1, D6  |
+| `IconButton`                | `plain` ou `contact`; `label` obrigatório (acessibilidade)                                |         |
 | `TextField`                 | label por cima, hint/erro por baixo, foco, mínimo 16px; erro com `testID` `<campo>-error` | D2      |
-| `TextLink`                  | link = `text` sublinhado; `accentText` só no hover (web) / press; alvo 44 |         |
-| `SearchField`               | cápsula de vidro de 52px com limpar                                     | D3      |
-| `Chip`                      | cápsula; ativo = acento                                                 |         |
-| `Surface`                   | sólida (`surface`/`raised`), raio `group`; substitui `Card`             |         |
-| `ListGroup` / `ListRow`     | grupo com hairline indentada, chevron, press                            | D4      |
-| `CompanyRow`                | `Plate` + nome + meta com realce, sobre `ListRow`                       | D4      |
-| `Plate`                     | logo sobre `logoPlate` ou iniciais; `sm`/`md`/`lg`                      |         |
-| `Highlight`                 | realce do termo, sem acentos nem maiúsculas                             |         |
-| `Skeleton` / `SkeletonRow`  | geometria da linha; **sem `testID` `directory.row`**                    |         |
-| `EmptyState` / `ErrorState` | instruções concretas / painel inline com retry                          | D5      |
-| `InlineAlert`               | erro ou sucesso de uma ação (no lugar de `Alert.alert`)                 |         |
-| `StateScreen`               | T2: carregar sessão, não encontrado, sem permissão                      |         |
+| `TextLink`                  | link = `text` sublinhado; `accentText` só no hover (web) / press; alvo 44                 |         |
+| `SearchField`               | cápsula de vidro de 52px com limpar                                                       | D3      |
+| `Chip`                      | cápsula; ativo = acento                                                                   |         |
+| `Surface`                   | sólida (`surface`/`raised`), raio `group`; substitui `Card`                               |         |
+| `ListGroup` / `ListRow`     | grupo com hairline indentada, chevron, press                                              | D4      |
+| `CompanyRow`                | `Plate` + nome + meta com realce, sobre `ListRow`                                         | D4      |
+| `Plate`                     | logo sobre `logoPlate` ou iniciais; `sm`/`md`/`lg`                                        |         |
+| `Highlight`                 | realce do termo, sem acentos nem maiúsculas                                               |         |
+| `Skeleton` / `SkeletonRow`  | geometria da linha; **sem `testID` `directory.row`**                                      |         |
+| `EmptyState` / `ErrorState` | instruções concretas / painel inline com retry                                            | D5      |
+| `InlineAlert`               | erro ou sucesso de uma ação (no lugar de `Alert.alert`)                                   |         |
+| `StateScreen`               | T2: carregar sessão, não encontrado, sem permissão                                        |         |
 
 Templates (`src/components/templates/`): `AuthScaffold` + `AuthPrompt` (T1, B8): `sm` com faixa `horizon` e formulário numa `Surface` a sobrepor a borda (−26); `md+` split 5fr/7fr com o painel da marca à esquerda e o formulário numa coluna de `layout.formMaxWidth` (400) alinhada à esquerda.
 
