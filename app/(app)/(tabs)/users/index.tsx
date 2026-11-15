@@ -1,4 +1,4 @@
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useEffect, useState, startTransition } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usersApi } from '@/api/users.api';
@@ -7,19 +7,20 @@ import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, passwordStrength, combine } from '@/utils/validators';
 import type { ManagedUser, UserRole } from '@/types/api';
 import { useTheme } from '@/theme/ThemeContext';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { Input, Switch, Chip, Modal } from '@/components/ui';
 import {
-  Icon,
   Button,
-  Input,
-  Switch,
-  Chip,
-  Badge,
-  Card,
-  Modal,
   EmptyState,
   ErrorState,
-  LoadingSpinner,
-} from '@/components/ui';
+  IconButton,
+  ListGroup,
+  ListRow,
+  Plate,
+  SkeletonRow,
+  Text,
+} from '@/components/ds';
+import { ListScaffold } from '@/components/templates/ListScaffold';
 import { useRequireRole } from '@/hooks/useRequireRole';
 import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';
 
@@ -41,120 +42,82 @@ const DEFAULT_FORM: FormState = {
   isActive: true,
 };
 
-function roleBadgeTone(role: UserRole): 'error' | 'info' | 'neutral' {
-  if (role === 'Admin') return 'error';
-  if (role === 'Associado') return 'info';
-  return 'neutral';
+const ROLE_SECTION: Record<UserRole, string> = {
+  Admin: 'ADMINISTRADORES',
+  Associado: 'ASSOCIADOS',
+  Cliente: 'CLIENTES',
+};
+
+const factory = createStyles(({ spacing }) => ({
+  sections: { gap: spacing['2xl'] },
+  section: { gap: spacing.sm },
+  sectionLabel: { paddingHorizontal: spacing.xs },
+  text: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  nameLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  actions: { flexDirection: 'row', alignItems: 'center' },
+}));
+
+function statusLine(u: ManagedUser): { text: string; color: 'error' | 'text3' } | null {
+  if (!u.isActive) return { text: 'Conta inativa', color: 'error' };
+  if (!u.emailConfirmed) return { text: 'Email por confirmar', color: 'text3' };
+  return null;
 }
 
 function UserRow({
   item,
   isSelf,
+  last,
   onEdit,
   onDelete,
 }: {
   item: ManagedUser;
   isSelf: boolean;
+  last: boolean;
   onEdit: (u: ManagedUser) => void;
   onDelete: (u: ManagedUser) => void;
 }) {
-  const theme = useTheme();
-
+  const s = useStyles(factory);
+  const status = statusLine(item);
   return (
-    <Card>
-      <View style={styles.cardHeader}>
-        <Text
-          style={{
-            fontFamily: theme.fontFamily.display,
-            fontSize: theme.fontSize.md,
-            fontWeight: theme.fontWeight.bold,
-            color: theme.colors.textPrimary,
-            flex: 1,
-          }}
-        >
-          {item.fullName}
-        </Text>
-        <Badge tone={roleBadgeTone(item.role)}>{item.role}</Badge>
-      </View>
-      <Text
-        style={{
-          fontFamily: theme.fontFamily.body,
-          fontSize: theme.fontSize.sm,
-          color: theme.colors.textSecondary,
-          marginBottom: 6,
-        }}
-      >
-        {item.email}
-      </Text>
-      <View style={styles.statusRow}>
-        <Text
-          style={{
-            fontFamily: theme.fontFamily.body,
-            fontSize: theme.fontSize.xs,
-            fontWeight: theme.fontWeight.semibold,
-            color: item.isActive ? theme.colors.success : theme.colors.error,
-          }}
-        >
-          {item.isActive ? 'Ativo' : 'Inativo'}
-        </Text>
-        <Text style={{ color: theme.colors.borderStrong }}>·</Text>
-        <Text
-          style={{
-            fontFamily: theme.fontFamily.body,
-            fontSize: theme.fontSize.xs,
-            fontWeight: theme.fontWeight.semibold,
-            color: item.emailConfirmed ? theme.colors.success : theme.colors.warning,
-          }}
-        >
-          {item.emailConfirmed ? 'Email confirmado' : 'Email por confirmar'}
-        </Text>
-        {isSelf && (
-          <>
-            <Text style={{ color: theme.colors.borderStrong }}>·</Text>
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.body,
-                fontSize: theme.fontSize.xs,
-                fontWeight: theme.fontWeight.semibold,
-                color: theme.colors.accentText,
-              }}
-            >
-              A tua conta
-            </Text>
-          </>
-        )}
-      </View>
-      <View style={styles.cardActions}>
-        <Pressable onPress={() => onEdit(item)} style={styles.actionBtn}>
-          <Icon name="pencil-simple" size={14} color={theme.colors.accentText} />
-          <Text
-            style={{
-              fontFamily: theme.fontFamily.body,
-              fontSize: theme.fontSize.sm,
-              fontWeight: theme.fontWeight.semibold,
-              color: theme.colors.accentText,
-            }}
-          >
-            Editar
+    <ListRow testID="users.row" last={last}>
+      <Plate company={{ name: item.fullName, tradeName: null, logoUrl: null }} />
+      <View style={s.text}>
+        <View style={s.nameLine}>
+          <Text variant="name" numberOfLines={1}>
+            {item.fullName}
           </Text>
-        </Pressable>
-        {!isSelf && (
-          <Pressable onPress={() => onDelete(item)} style={styles.actionBtn}>
-            <Icon name="trash" size={14} color={theme.colors.error} />
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.body,
-                fontSize: theme.fontSize.sm,
-                fontWeight: theme.fontWeight.semibold,
-                color: theme.colors.error,
-              }}
-            >
-              Desativar
+          {isSelf ? (
+            <Text variant="label" color="accentText">
+              A TUA CONTA
             </Text>
-          </Pressable>
-        )}
+          ) : null}
+        </View>
+        <Text variant="meta" numberOfLines={1}>
+          {item.email}
+        </Text>
+        {status ? (
+          <Text variant="meta" color={status.color} numberOfLines={1}>
+            {status.text}
+          </Text>
+        ) : null}
       </View>
-    </Card>
+      <View style={s.actions}>
+        <IconButton
+          testID="users.edit"
+          icon="pencil-simple"
+          label={`Editar ${item.fullName}`}
+          onPress={() => onEdit(item)}
+        />
+        {!isSelf && item.isActive ? (
+          <IconButton
+            testID="users.deactivate"
+            icon="trash"
+            label={`Desativar ${item.fullName}`}
+            onPress={() => onDelete(item)}
+          />
+        ) : null}
+      </View>
+    </ListRow>
   );
 }
 
@@ -168,10 +131,11 @@ export default function UsersScreen() {
 
 function UsersContent() {
   const theme = useTheme();
+  const s = useStyles(factory);
   const { user } = useAuth();
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -295,33 +259,71 @@ function UsersContent() {
 
   const editingSelf = editTarget ? isSelf(editTarget) : false;
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surfaceApp }]}>
-      {loading && users.length === 0 ? (
-        <View style={styles.center}>
-          <LoadingSpinner />
-        </View>
-      ) : error ? (
-        <View style={styles.center}>
-          <ErrorState message={error} onRetry={() => load()} />
-        </View>
-      ) : (
-        <FlatList
-          data={users}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <UserRow item={item} isSelf={isSelf(item)} onEdit={openEdit} onDelete={handleDelete} />
-          )}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={<EmptyState message="Sem utilizadores." />}
-          refreshing={loading}
-          onRefresh={() => load()}
-        />
-      )}
+  const inactive = users.filter((u) => !u.isActive).length;
+  const sections = ROLES.map((role) => ({
+    role,
+    items: users.filter((u) => u.role === role),
+  })).filter((sec) => sec.items.length > 0);
 
-      <Button style={styles.fab} onPress={openCreate}>
-        + Novo Utilizador
-      </Button>
+  return (
+    <>
+      <ListScaffold
+        testID="users.screen"
+        horizon={{
+          eyebrow: 'ADMINISTRAÇÃO',
+          title: 'Utilizadores',
+          meta:
+            loading && users.length === 0
+              ? 'A carregar…'
+              : `${users.length === 1 ? '1 conta' : `${users.length} contas`}${
+                  inactive ? ` · ${inactive === 1 ? '1 inativa' : `${inactive} inativas`}` : ''
+                }`,
+          aside: <Button testID="users.create" label="Novo utilizador" onPress={openCreate} />,
+        }}
+        refreshing={loading && users.length > 0}
+        onRefresh={() => load()}
+      >
+        {error && !loading ? (
+          <ErrorState message={error} onRetry={() => load()} />
+        ) : loading && users.length === 0 ? (
+          <ListGroup>
+            {[0, 1, 2, 3].map((i) => (
+              <SkeletonRow key={i} index={i} last={i === 3} />
+            ))}
+          </ListGroup>
+        ) : users.length === 0 ? (
+          <ListGroup>
+            <EmptyState
+              align="start"
+              icon="users-three"
+              title="Ainda não há utilizadores"
+              description="Crie a primeira conta com «Novo utilizador». A pessoa recebe um email para confirmar o endereço."
+            />
+          </ListGroup>
+        ) : (
+          <View style={s.sections}>
+            {sections.map((sec) => (
+              <View key={sec.role} style={s.section}>
+                <Text variant="label" style={s.sectionLabel}>
+                  {`${ROLE_SECTION[sec.role]} · ${sec.items.length}`}
+                </Text>
+                <ListGroup>
+                  {sec.items.map((u, i) => (
+                    <UserRow
+                      key={u.id}
+                      item={u}
+                      isSelf={isSelf(u)}
+                      last={i === sec.items.length - 1}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </ListGroup>
+              </View>
+            ))}
+          </View>
+        )}
+      </ListScaffold>
 
       <Modal
         visible={modalVisible}
@@ -464,25 +466,11 @@ function UsersContent() {
           </>
         )}
       </Modal>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  list: { padding: 12, gap: 10, paddingBottom: 80 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-    flexWrap: 'wrap',
-  },
-  cardActions: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
-  fab: { position: 'absolute', bottom: 24, right: 20 },
   roleRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   estadoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

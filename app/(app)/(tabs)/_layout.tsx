@@ -25,7 +25,12 @@ export default function TabsLayout() {
     >
       {TABS.map((tab) => (
         // O papel já está resolvido quando este layout monta (ver (app)/_layout.tsx).
-        <NativeTabs.Trigger key={tab.name} name={tab.name} hidden={!isTabVisible(tab, user?.role)}>
+        <NativeTabs.Trigger
+          key={tab.name}
+          name={tab.name}
+          hidden={!isTabVisible(tab, user?.role)}
+          disableAutomaticContentInsets={tab.managesInsets}
+        >
           <NativeTabs.Trigger.Icon sf={tab.sf} md={tab.md} />
           <NativeTabs.Trigger.Label>{tab.label}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>

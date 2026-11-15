@@ -14,7 +14,14 @@ export { Highlight } from './Highlight';
 export { Skeleton, SkeletonRow } from './Skeleton';
 export { Surface } from './Surface';
 export { ListGroup, ListRow, type ListRowProps } from './ListGroup';
-export { CompanyRow, type CompanyRowProps } from './CompanyRow';
+export { CompanyRow, CompanyRowAside, type CompanyRowProps } from './CompanyRow';
+export { Horizon, type HorizonProps } from './Horizon';
+export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedOption,
+} from './SegmentedControl';
+export { DataTable, type DataTableColumn, type DataTableProps } from './DataTable';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { InlineAlert } from './InlineAlert';
