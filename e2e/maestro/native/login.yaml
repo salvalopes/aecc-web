@@ -1,0 +1,61 @@
+# Login (T1) nativo: credenciais inválidas mostram o erro do formulário; credenciais
+# válidas entram no diretório com as tabs do papel.
+# Correr com e2e/maestro/native/run.sh <ios|android> login
+appId: com.aecc.app
+name: login (nativo)
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 120000
+
+# Email inexistente: nunca incrementa o contador de lockout de nenhuma conta.
+- tapOn:
+    id: "login.email"
+- inputText: "nao-existe@e2e.test"
+- tapOn:
+    id: "login.password"
+- inputText:
+    text: ${PASSWORD}
+    label: "Escrever a palavra-passe"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      id: "login.form-error"
+    timeout: 15000
+- assertVisible: "Credenciais inválidas."
+- takeScreenshot: login-erro
+
+# Conta registada e por confirmar (UNCONFIRMED_EMAIL, criada pelo run.sh): a API recusa
+# antes de ver a password, por isso não mexe no lockout.
+# Formulário limpo (o eraseText no Android pode deixar caracteres para trás).
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 60000
+- tapOn:
+    id: "login.email"
+- inputText: ${UNCONFIRMED_EMAIL}
+- tapOn:
+    id: "login.password"
+- inputText:
+    text: ${PASSWORD}
+    label: "Escrever a palavra-passe"
+# Submeter pelo teclado (returnKeyType "go" → onSubmitEditing). No Android, um
+# hideKeyboard sem teclado aberto é um "voltar" e sai da app.
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Confirme o seu email antes de entrar.*"
+    timeout: 15000
+- takeScreenshot: login-email-por-confirmar
+
+- runFlow: _login.yaml
+- assertVisible: "Empresas"
+- assertVisible: "Perfil"
+- assertVisible: "Editar"
+- waitForAnimationToEnd
+- takeScreenshot: login-diretorio

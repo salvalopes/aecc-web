@@ -1,0 +1,44 @@
+# Editar empresa (T7) com imagem: Editar → formulário → escolher logótipo no seletor do
+# sistema (fotos do simulador/emulador, postas pelo run.sh) → recortar → guardar → volta
+# a "As minhas empresas" (closeForm). O seletor e o recorte são UI do sistema: subfluxos por plataforma.
+appId: com.aecc.app
+name: editar-empresa-imagem (nativo)
+---
+- runFlow: _login.yaml
+- tapOn: "Editar"
+- extendedWaitUntil:
+    visible:
+      id: "my-companies.edit"
+    timeout: 15000
+- tapOn:
+    id: "my-companies.edit"
+- extendedWaitUntil:
+    visible:
+      id: "company-edit.description"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: editar-empresa
+- tapOn:
+    id: "company-edit.logo-upload"
+- runFlow:
+    when:
+      platform: iOS
+    file: _picker-ios.yaml
+- runFlow:
+    when:
+      platform: Android
+    file: _picker-android.yaml
+- extendedWaitUntil:
+    visible:
+      id: "company-edit.save"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: editar-empresa-logo
+- tapOn:
+    id: "company-edit.save"
+- extendedWaitUntil:
+    visible:
+      id: "my-companies.screen"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: editar-empresa-guardado

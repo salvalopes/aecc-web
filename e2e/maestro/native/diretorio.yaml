@@ -1,0 +1,15 @@
+# Diretório (T3): pesquisa sem acentos encontra a empresa do seed.
+appId: com.aecc.app
+name: diretorio (nativo)
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: "companies.search"
+- inputText: "conceicao"
+- extendedWaitUntil:
+    visible:
+      id: "directory.row"
+    timeout: 15000
+- assertVisible: ".*Conceição.*"
+- waitForAnimationToEnd
+- takeScreenshot: diretorio

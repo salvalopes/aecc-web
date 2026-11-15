@@ -1,0 +1,27 @@
+# Subfluxo: login nativo (grant password do cliente aecc-native) a partir de um estado limpo.
+# Credenciais só por variável (-e EMAIL=… -e PASSWORD=…), passadas pelo run.sh a partir do
+# .env.e2e do aecc-api. Os passos com segredos têm `label`, para o Maestro não os imprimir.
+appId: com.aecc.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 120000
+- tapOn:
+    id: "login.email"
+- inputText:
+    text: ${EMAIL}
+    label: "Escrever o email"
+- tapOn:
+    id: "login.password"
+- inputText:
+    text: ${PASSWORD}
+    label: "Escrever a palavra-passe"
+- pressKey: Enter
+- runFlow: _dismiss-save-password.yaml
+- extendedWaitUntil:
+    visible:
+      id: "companies.screen"
+    timeout: 30000

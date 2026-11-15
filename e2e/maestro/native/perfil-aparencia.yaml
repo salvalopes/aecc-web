@@ -1,0 +1,24 @@
+# Perfil (T6) → Aparência: escuro, claro e de volta a sistema. Capturas em cada um
+# (tab bar, vidro e status bar têm de seguir o tema).
+appId: com.aecc.app
+name: perfil-aparencia (nativo)
+---
+- runFlow: _login.yaml
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible:
+      id: "profile.theme"
+    timeout: 15000
+- tapOn:
+    id: "profile.theme-dark"
+- waitForAnimationToEnd
+- takeScreenshot: perfil-escuro
+- tapOn:
+    id: "profile.theme-light"
+- waitForAnimationToEnd
+- takeScreenshot: perfil-claro
+- tapOn:
+    id: "profile.theme-system"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "profile.screen"

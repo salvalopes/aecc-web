@@ -241,3 +241,54 @@ Versões lidas do tag `sdk-55` no npm; instalar sempre com `npx expo install`. *
 3. **Autorizar** trabalho no `aecc-api` (branch + PR + deploy via CI) e a correção do plugin `expo-image-picker` no `app.config.ts`.
 4. **Runtime iOS < 26:** instalar localmente (7–8 GB, espaço apertado) ou usar `eas simulator`.
 5. **Confirm-email no nativo:** ir para o login com aviso (mais simples) ou a API devolver o email para auto-login.
+
+---
+
+## 8. Fase B — parte app (branch `native/app`)
+
+Data: 2026-11-15. API: aecc-api#6 (cliente `aecc-native`, grant `password`) já no `main`.
+
+### 8.1 O que ficou feito
+
+| Ponto | Onde | Nota |
+|---|---|---|
+| Auth por plataforma | `src/context/AuthContext.web.tsx` (o ficheiro antigo, renomeado **sem alterações**), `AuthContext.native.tsx`, `AuthContext.d.ts` (contrato para o tsc) | O `pkce.ts`, o `window.location` e o `sessionStorage` só existem no bundle web |
+| Login nativo | `src/api/nativeAuth.api.ts` | `POST /connect/token` `grant_type=password`, `client_id=aecc-native`, scope `openid profile email offline_access roles aecc_api` |
+| Tokens | `AuthContext.native.tsx` | Access token só em memória; refresh token no SecureStore (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`) com limpeza na 1.ª execução após instalar (o Keychain sobrevive à desinstalação) |
+| Renovação | idem + `src/api/client.ts` (ramo só nativo) | Single-flight; antes de expirar (margem 60 s), ao voltar ao 1.º plano e em 401; guarda sempre o refresh novo. Recusa → fim de sessão; falha de rede → mantém a sessão e o refresh guardado (nova tentativa em 30 s) |
+| Arranque (H3) | idem | Refresh guardado → renovar → `/auth/me`, com o `StateScreen` da sessão a carregar; timeout de 30 s por pedido só no nativo |
+| Logout | idem | Limpa memória e SecureStore. **O OpenIddict não tem endpoint de revogação ativo** (só `SetTokenEndpointUris`): não foi criado; o refresh apagado expira no servidor (30 dias) |
+| Erros no T1 | `src/utils/loginErrors.ts` | Pelo `error_description` da API: credenciais inválidas, email por confirmar, conta desativada, lockout; 429 → "Demasiadas tentativas. Tente daqui a pouco."; rede → `InlineAlert` |
+| confirm-email (nativo) | `app/confirm-email.tsx` | O link só traz `userId` e `token` e a API responde 200 vazio: **o ecrã nativo pede também o email** e entra logo com o grant password. Se o login falhar com a conta já ativa → login com aviso |
+| reset-password (nativo) | `app/reset-password.tsx` | No fim → login com aviso `login.notice` |
+| Image picker | `app.config.ts` | Plugin com `photosPermission` em PT-PT; câmara e microfone desligados |
+| Status bar | `app/_layout.tsx` | `expo-status-bar` pelo tema em vigor |
+
+Tamanho do refresh token medido (stack E2E, scopes completos): **2962 bytes**. `expo-secure-store` 55.0.18: **sem limite por valor** (Android: AES-256-GCM com chave do Keystore e o texto cifrado em SharedPreferences, sem verificação de tamanho; iOS: o aviso dos 2048 bytes foi removido, CHANGELOG #40187). Não foram precisos reference tokens.
+
+### 8.2 Deep links
+
+- **Android App Links:** `intentFilters` com `autoVerify` para `https://aecc.salv4.com`, só `/confirm-email` e `/reset-password`. `public/.well-known/assetlinks.json` com `com.aecc.app` e o SHA-256 do certificado **debug** (`FA:C6:17:…:3B:9C`, o `debug.keystore` do template). **Falta o SHA-256 do certificado de release** (fase das lojas; com Play App Signing, o da chave de assinatura do Google). O JSON não admite comentários, por isso esta nota vive aqui e no `app.config.ts`.
+- **Depende de infraestrutura fora deste repo (não alterado):** hoje `https://aecc.salv4.com/.well-known/assetlinks.json` devolve **200 `text/html`** (o fallback SPA do Caddy), por isso o Android dá `1024` (falha) na verificação. O `expo export` já copia `.well-known/` para o `dist` e o `rsync` do deploy envia-o. Falta confirmar no Caddyfile do servidor (bloco de `aecc.salv4.com`, raiz `/home/deploy/aecc/web`) que:
+  1. o ficheiro existente é servido antes do fallback (`try_files {path} /index.html` faz isso);
+  2. sai com `Content-Type: application/json` (o `file_server` deduz pela extensão);
+  3. não há redirect (o Android não segue redirects neste pedido).
+  Se for preciso forçar: `handle /.well-known/* { header Content-Type application/json; file_server }` antes do `handle` da SPA. Depois do deploy: `adb shell pm verify-app-links --re-verify com.aecc.app` e `pm get-app-links` deve dar `verified`.
+- **iOS:** sem `associatedDomains` nem `apple-app-site-association` (sem conta Apple Developer paga). Na fase das lojas: `ios.associatedDomains: ['applinks:aecc.salv4.com']` e `/.well-known/apple-app-site-association` (JSON sem extensão, `application/json`, `appID` `<TEAMID>.com.aecc.app`, `paths` `/confirm-email` e `/reset-password`). Até lá, no iOS os links dos emails abrem a web; o esquema `aecc://confirm-email?…` / `aecc://reset-password?…` serve ao Maestro.
+
+### 8.3 Fluxos Maestro (`e2e/maestro/native/`)
+
+`run.sh <ios|android> [fluxo…]`: credenciais só do `.env.e2e` do aecc-api por `-e`; os passos com segredos têm `label`; o debug do Maestro (que grava os `-e` resolvidos) é apagado e o runner falha se a password aparecer no output. Links de reset/confirm lidos do log do `ConsoleEmailSender` da API E2E. Capturas em `docs/native/fase-b/<plataforma>/`.
+
+Fluxos: `login` (erro de credenciais, email por confirmar, sucesso), `logout`, `sessao-restaurada` (kill + reabrir, duas vezes: rotação), `diretorio`, `detalhe`, `editar-empresa-imagem` (seletor do sistema + recorte), `perfil-aparencia`, `sem-permissao`, `deeplink-reset-password` (Android App Link, iOS `aecc://`; repõe a mesma password do seed), `deeplink-confirm-email`.
+
+### 8.4 Achados para a Fase C
+
+- **Teclado no Android 36 (edge-to-edge):** nos ecrãs de auth (`AuthScaffold`) o formulário não sobe com o teclado; o campo seguinte fica tapado (o fluxo rola até ele). O `automaticallyAdjustKeyboardInsets` só atua no iOS. Item ✱ teclado da matriz §5.2.
+- **Tab escondida no nativo:** para quem não é Admin, `aecc://users` não chega a navegar (a `NativeTabs.Trigger` está `hidden`; o React Navigation avisa "state or screen couldn't be found") e fica onde estava, sem o `ForbiddenState`. O acesso continua negado; só o T2 não aparece. O fluxo `sem-permissao` usa `aecc://users/new` (rota do Stack, `useRequireRole`). Decidir na Fase C se a tab escondida deve mostrar o T2.
+- **Imagens do storage E2E no Android:** a API E2E devolve URLs `http://localhost:5080/e2e-files/…`; no emulador `localhost` é o próprio dispositivo, por isso os logótipos não aparecem (só na stack E2E; produção usa o domínio público). O `run.sh` confirma o upload pela API (o `logoUrl` muda).
+- Lockout e conta desativada: mensagens mapeadas pelo texto da API, não automatizadas (o lockout bloquearia a conta do seed 15 min).
+- **iOS (para quem correr os fluxos):** (1) com "Connect Hardware Keyboard" ligado no simulador, o XCTest não escreve em campos `secureTextEntry`; desligá-lo (`DevicePreferences.<UDID>.ConnectHardwareKeyboard = false`); (2) o teclado seguro e o conteúdo dos campos seguros não aparecem nas capturas nem na hierarquia do Maestro, por isso os fluxos submetem com Enter (`returnKeyType="go"`) em vez de `hideKeyboard`; (3) depois de cada login o iOS mostra "Guardar palavra-passe?" (Passwords), que o subfluxo `_dismiss-save-password.yaml` recusa. Na app real, essa folha é o comportamento esperado do autofill.
+- **Android:** `hideKeyboard` sem teclado aberto é um "voltar" (sai do ecrã); os fluxos não o usam.
+- **Driver do Maestro:** num run completo o driver iOS caiu a meio de um toque (logout) e noutro o Android ficou pendurado; o `run.sh` tem agora um limite de 10 min por fluxo (`FLOW_TIMEOUT_S`).
+- Validação completa da matriz §5.2 e iOS < 26: Fase C.

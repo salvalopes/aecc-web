@@ -1,0 +1,16 @@
+# Subfluxo Android: seletor de fotos do sistema (imagem posta em /sdcard/Pictures pelo
+# run.sh) + recorte do expo-image-picker.
+appId: com.aecc.app
+---
+- extendedWaitUntil:
+    visible: "Photos|Fotos|Albums|Álbuns"
+    timeout: 20000
+# A miniatura só tem a descrição de acessibilidade ("Photo taken on …"); "Photos" é o
+# separador do seletor.
+- tapOn:
+    text: "Photo taken on.*|Fotografia tirada.*"
+    index: 0
+- extendedWaitUntil:
+    visible: "Crop|Recortar|CROP"
+    timeout: 20000
+- tapOn: "Crop|Recortar|CROP"

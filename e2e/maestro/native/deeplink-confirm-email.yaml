@@ -1,0 +1,55 @@
+# Deep link de confirm-email (conta nova registada pelo run.sh, email único em NEW_EMAIL):
+# ativar a conta no nativo entra logo com o grant password e as mesmas credenciais.
+# Android por App Link, iOS por aecc://. CONFIRM_LINK vem do log da API E2E.
+appId: com.aecc.app
+name: deeplink-confirm-email (nativo)
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 120000
+- openLink:
+    link: ${CONFIRM_LINK}
+    label: "Abrir o link de confirm-email"
+- extendedWaitUntil:
+    visible:
+      id: "confirm-email.email"
+    timeout: 20000
+- tapOn:
+    id: "confirm-email.email"
+- inputText: ${NEW_EMAIL}
+- tapOn:
+    id: "confirm-email.full-name"
+- inputText: "Cliente Nativo E2E"
+- tapOn:
+    id: "confirm-email.password"
+- inputText:
+    text: ${PASSWORD}
+    label: "Escrever a palavra-passe"
+# O teclado tapa o campo seguinte (no iOS o teclado seguro nem aparece na hierarquia do
+# Maestro, que o julga visível; no Android 36 edge-to-edge o formulário não sobe: item de
+# teclado da Fase C). Fechar o teclado tocando no título, rolar até ao campo e só depois
+# tocar. Submeter pelo teclado no último campo.
+- tapOn: "Ativar conta"
+- scrollUntilVisible:
+    element:
+      id: "confirm-email.confirm-password"
+    direction: DOWN
+- tapOn:
+    id: "confirm-email.confirm-password"
+- inputText:
+    text: ${PASSWORD}
+    label: "Confirmar a palavra-passe"
+- waitForAnimationToEnd
+- takeScreenshot: confirm-email
+- pressKey: Enter
+- runFlow: _dismiss-save-password.yaml
+- extendedWaitUntil:
+    visible:
+      id: "companies.screen"
+    timeout: 30000
+- assertNotVisible: "Editar"
+- waitForAnimationToEnd
+- takeScreenshot: confirm-email-entrou
