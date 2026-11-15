@@ -495,7 +495,7 @@ Esta tabela é atualizada no fim de cada passo e é a partir dela que se retoma 
 | B5    | `redesign/fase3-base`                                        | `889ff1f`     | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5)           |
 | B5b   | `redesign/fase3-base`                                        | `9517048`     | #19 | concluído (lint 0 erros, tsc ok, Playwright 8/8; PR base em draft, sem merge)                               |
 | B3    | `redesign/fase3-b3-marca` → `redesign/fase3-ui`              | `d846cd9`     | #20 | **aprovado** a 15/11/2026 (lint 0 erros, tsc ok, Playwright 8/8; PR #20 ainda por fazer merge; ver nota B3) |
-| B4    | `redesign/fase3-b4-glass` (sobre o B3) → `redesign/fase3-ui` | `098b599` | —   | **à espera de revisão** (lint 0 erros, tsc ok, Playwright 8/8; `grep BlurView app src` = 0; ver nota B4)    |
+| B4    | `redesign/fase3-b4-glass` (sobre o B3) → `redesign/fase3-ui` | `6dcab91` | —   | **à espera de revisão** (lint 0 erros, tsc ok, Playwright 8/8; `grep BlurView app src` = 0; ver nota B4)    |
 | B6    | idem                                                         | —             | —   | pendente                                                                                                    |
 | B7    | idem                                                         | —             | —   | pendente                                                                                                    |
 | B8    | idem                                                         | —             | —   | pendente                                                                                                    |
