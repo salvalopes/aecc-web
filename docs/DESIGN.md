@@ -135,7 +135,7 @@ Vivem em `ds/` até à B14 (`ui/` ainda tem os antigos, com consumidores); depoi
 | `InlineAlert`               | erro ou sucesso de uma ação (no lugar de `Alert.alert`)                                   |         |
 | `StateScreen`               | T2: carregar sessão, não encontrado, sem permissão                                        |         |
 
-Templates (`src/components/templates/`): `AuthScaffold` + `AuthPrompt` (T1, B8): `sm` com faixa `horizon` e formulário numa `Surface` a sobrepor a borda (−26); `md+` split 5fr/7fr com o painel da marca à esquerda e o formulário numa coluna de `layout.formMaxWidth` (400) alinhada à esquerda.
+Templates (`src/components/templates/`): `AuthScaffold` + `AuthPrompt` (T1, B8): `sm` com faixa `horizon` e formulário numa `Surface` a sobrepor a borda (−26); `md+` split 5fr/7fr com o painel da marca à esquerda e o formulário numa coluna de `layout.formMaxWidth` (400) alinhada à esquerda. `StateTemplates` (T2, B9): `SessionLoadingState`, `ForbiddenState` (rota sem papel, no sítio e sem redirect) e `NotFoundState`, sobre `StateScreen`; o `useRequireRole` não redireciona.
 
 Utilitários: `formatAddressLine` (`src/utils/address.ts`, D9), `splitByTerm` / `initials` (`src/utils/text.ts`), `useBreakpoint`.
 

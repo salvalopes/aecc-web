@@ -20,7 +20,8 @@ import {
   ErrorState,
   LoadingSpinner,
 } from '@/components/ui';
-import { RoleGuard } from '@/components/RoleGuard';
+import { useRequireRole } from '@/hooks/useRequireRole';
+import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';
 
 const ROLES: UserRole[] = ['Admin', 'Associado', 'Cliente'];
 
@@ -158,11 +159,11 @@ function UserRow({
 }
 
 export default function UsersScreen() {
-  return (
-    <RoleGuard allow={['Admin']}>
-      <UsersContent />
-    </RoleGuard>
-  );
+  // O papel decide antes de montar o conteúdo (e os seus efeitos de dados).
+  const { allowed, checking } = useRequireRole(['Admin']);
+  if (checking) return <SessionLoadingState />;
+  if (!allowed) return <ForbiddenState />;
+  return <UsersContent />;
 }
 
 function UsersContent() {
