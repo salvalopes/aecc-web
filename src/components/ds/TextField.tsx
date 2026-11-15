@@ -27,7 +27,10 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   error?: string | null;
 }
 
-/** Label por cima, erro por baixo (D2). Mínimo de 16px para evitar o zoom do Safari iOS. */
+/**
+ * Label por cima, erro por baixo (D2). Mínimo de 16px para evitar o zoom do Safari iOS.
+ * O erro herda o `testID` do campo com o sufixo `-error` (ex.: `login.email-error`).
+ */
 export function TextField({
   label,
   hint,
@@ -35,6 +38,7 @@ export function TextField({
   editable = true,
   onFocus,
   onBlur,
+  testID,
   ...rest
 }: TextFieldProps) {
   const s = useStyles(factory);
@@ -48,6 +52,7 @@ export function TextField({
       </Text>
       <TextInput
         {...rest}
+        testID={testID}
         editable={editable}
         accessibilityLabel={label}
         placeholderTextColor={colors.text3}
@@ -62,7 +67,12 @@ export function TextField({
         style={[s.input, { borderColor }, editable ? null : s.disabled]}
       />
       {error ? (
-        <Text variant="meta" color="error" accessibilityRole="alert">
+        <Text
+          testID={testID ? `${testID}-error` : undefined}
+          variant="meta"
+          color="error"
+          accessibilityRole="alert"
+        >
           {error}
         </Text>
       ) : hint ? (

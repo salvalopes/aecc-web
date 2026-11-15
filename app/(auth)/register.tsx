@@ -1,14 +1,7 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { router } from 'expo-router';
-import { BrandLockup } from '@/components/ds';
+import { Button, InlineAlert, TextField } from '@/components/ds';
+import { AuthPrompt, AuthScaffold } from '@/components/templates/AuthScaffold';
 import { authApi } from '@/api/auth.api';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
@@ -41,87 +34,54 @@ export default function RegisterScreen() {
     }
   }
 
+  const goToLogin = () => router.replace('/(auth)/login');
+
   if (submitted) {
     return (
-      <View style={styles.container}>
-        <BrandLockup width={160} variant="light" style={styles.logo} />
-        <Text style={styles.message}>
-          Verifica o teu email para confirmares a conta e definires a tua palavra-passe.
-        </Text>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonOutline]}
-          onPress={() => router.replace('/(auth)/login')}
-        >
-          <Text style={styles.buttonOutlineText}>Ir para login</Text>
-        </TouchableOpacity>
-      </View>
+      <AuthScaffold
+        title="Verifica o teu email"
+        subtitle={`Enviámos um link para ${email.trim()}.`}
+      >
+        <InlineAlert
+          testID="register.success"
+          tone="success"
+          message="Abre o link do email para confirmares a conta e definires a palavra-passe."
+        />
+        <Button label="Ir para o login" variant="secondary" onPress={goToLogin} fullWidth />
+      </AuthScaffold>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* variant="light": o fundo deste ecrã é #fff fixo até à B8 */}
-      <BrandLockup width={160} variant="light" style={styles.logo} />
-      <Text style={styles.subtitle}>Criar conta</Text>
-
-      <TextInput
-        style={[styles.input, fieldErrors.email && styles.inputError]}
-        placeholder="Email"
+    <AuthScaffold
+      title="Criar conta"
+      subtitle="Indica o teu email. Enviamos um link para confirmares a conta e definires a palavra-passe."
+      footer={<AuthPrompt prompt="Já tens conta?" label="Entrar" onPress={goToLogin} />}
+    >
+      <TextField
+        testID="register.email"
+        label="Email"
+        placeholder="nome@empresa.pt"
         value={email}
         onChangeText={setEmail}
+        error={fieldErrors.email}
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="send"
+        onSubmitEditing={handleRegister}
       />
-      {fieldErrors.email && <Text style={styles.error}>{fieldErrors.email}</Text>}
 
-      {formError && <Text style={styles.error}>{formError}</Text>}
+      {formError ? <InlineAlert tone="error" message={formError} /> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Criar conta</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.replace('/(auth)/login')} style={styles.loginLink}>
-        <Text style={styles.loginLinkText}>Já tens conta? Entrar</Text>
-      </TouchableOpacity>
-    </View>
+      <Button
+        label="Criar conta"
+        testID="register.submit"
+        loading={loading}
+        onPress={handleRegister}
+        fullWidth
+      />
+    </AuthScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  logo: { alignSelf: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 40 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 4,
-    fontSize: 16,
-  },
-  inputError: { borderColor: '#d32f2f' },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#0a7ea4',
-    marginTop: 24,
-  },
-  buttonOutlineText: { color: '#0a7ea4', fontSize: 16, fontWeight: '600' },
-  error: { color: '#d32f2f', marginBottom: 8, textAlign: 'left', fontSize: 13 },
-  message: { fontSize: 16, textAlign: 'center', color: '#333', marginBottom: 8 },
-  loginLink: { marginTop: 16, alignItems: 'center' },
-  loginLinkText: { color: '#0a7ea4', fontSize: 14 },
-});

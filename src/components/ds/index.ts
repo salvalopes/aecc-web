@@ -6,6 +6,7 @@ export { Text, type TextProps } from './Text';
 export { Button, type ButtonProps } from './Button';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { TextField, type TextFieldProps } from './TextField';
+export { TextLink, type TextLinkProps } from './TextLink';
 export { SearchField, type SearchFieldProps } from './SearchField';
 export { Chip, type ChipProps } from './Chip';
 export { Plate, type PlateProps } from './Plate';
