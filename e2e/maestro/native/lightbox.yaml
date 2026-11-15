@@ -1,0 +1,41 @@
+# Lightbox da galeria do produto (B11): abre, navega entre imagens e fecha pelo botão (que não
+# pode ficar por baixo da barra de estado). Precisa de um produto com 2+ imagens (PRODUCT).
+appId: com.aecc.app
+name: lightbox (nativo)
+---
+- runFlow: _login.yaml
+- tapOn: "Empresas"
+- tapOn:
+    id: "companies.search"
+- inputText: "conceicao"
+- extendedWaitUntil:
+    visible:
+      id: "directory.row"
+    timeout: 15000
+- tapOn:
+    id: "directory.row"
+- scrollUntilVisible:
+    element:
+      text: "${PRODUCT}.*"
+- tapOn: "${PRODUCT}.*"
+- extendedWaitUntil:
+    visible:
+      id: "product-detail.gallery-main"
+    timeout: 15000
+- tapOn:
+    id: "product-detail.gallery-main"
+- extendedWaitUntil:
+    visible:
+      id: "lightbox"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: lightbox
+- tapOn:
+    id: "lightbox.next"
+- waitForAnimationToEnd
+- tapOn:
+    id: "lightbox.close"
+- extendedWaitUntil:
+    visible:
+      id: "product-detail.title"
+    timeout: 10000

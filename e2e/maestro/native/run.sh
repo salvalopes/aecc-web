@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fluxos Maestro autenticados (Fase B). Uso:
 #   e2e/maestro/native/run.sh <ios|android> [fluxo ...]
-# Sem fluxos, corre todos. Pré-requisitos:
+# Sem fluxos, corre todos (mais validacao-<cliente|associado|admin>-<light|dark>, só por pedido). Pré-requisitos:
 #   - stack E2E do aecc-api em 127.0.0.1:5080 (docker compose -f docker-compose.e2e.yml up -d --build);
 #   - build de desenvolvimento instalado e Metro a correr com a API da plataforma:
 #       iOS:     EXPO_PUBLIC_API_URL=http://127.0.0.1:5080/api npx expo start --dev-client
@@ -99,7 +99,7 @@ if [ $# -gt 0 ]; then
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
     sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin
-    login-bloqueio login-desativada)
+    login-bloqueio login-desativada lightbox)
 fi
 
 rm -rf "$OUT"
@@ -109,7 +109,11 @@ SUMMARY="$OUT/summary.txt"
 STATUS=0
 
 for flow in "${FLOWS[@]}"; do
-  EXTRA=()
+  # Produto do seed com imagens carregadas pela API (plano §8.5). No Android, o 2.º, carregado
+  # com o URL público do storage a apontar para 10.0.2.2.
+  PRODUCT="Pastel de Nata"
+  [ "$PLATFORM" = android ] && PRODUCT="Bolo de Aniversário"
+  EXTRA=(-e "PRODUCT=$PRODUCT")
   EMAIL=associado@e2e.test
   case "$flow" in
     login)
@@ -160,6 +164,17 @@ for flow in "${FLOWS[@]}"; do
       ;;
   esac
 
+  # validacao-<papel>-<tema> (ex.: validacao-admin-dark) corre validacao.yaml com esse papel e tema.
+  FLOW_FILE=$flow
+  case "$flow" in
+    validacao-*)
+      IFS=- read -r _ ROLE THEME <<< "$flow"
+      FLOW_FILE=validacao
+      EMAIL=$ROLE@e2e.test
+      EXTRA+=(-e "ROLE=$ROLE" -e "THEME=$THEME")
+      ;;
+  esac
+
   [ "$flow" = editar-empresa-imagem ] && LOGO_BEFORE=$(company_logo)
 
   set +e
@@ -167,7 +182,7 @@ for flow in "${FLOWS[@]}"; do
   perl -e 'alarm shift; exec @ARGV' "${FLOW_TIMEOUT_S:-600}" \
     maestro --device "$DEVICE" test --test-output-dir "$OUT/$flow" --debug-output "$OUT/$flow/debug" \
     -e "EMAIL=$EMAIL" -e "PASSWORD=$E2E_SEED_PASSWORD" ${EXTRA[@]+"${EXTRA[@]}"} \
-    "$FLOW_DIR/$flow.yaml" > "$OUT/$flow.log" 2>&1
+    "$FLOW_DIR/$FLOW_FILE.yaml" > "$OUT/$flow.log" 2>&1
   code=$?
   set -e
   # O debug do Maestro (commands*.json, maestro.log) grava os valores de -e resolvidos:
