@@ -1,6 +1,6 @@
 ## Regra de precedência — stack de design (redesign Nov 2026)
 
-- Stack obrigatória: Expo (SDK 52) + React Native + react-native-web + StyleSheet/estilos inline + tokens de `src/theme/` via `useTheme()`. Este projeto NÃO usa Tailwind nem NativeWind; não os introduzir. A arquitetura de estilos (createStyles(theme) / Unistyles / NativeWind) é decisão pendente da Fase 3 do redesign — até lá, manter o padrão atual.
+- Stack obrigatória: Expo (SDK 55) + React Native + react-native-web + StyleSheet/estilos inline + tokens de `src/theme/` via `useTheme()`. Este projeto NÃO usa Tailwind nem NativeWind; não os introduzir. A arquitetura de estilos (createStyles(theme) / Unistyles / NativeWind) é decisão pendente da Fase 3 do redesign — até lá, manter o padrão atual.
 - Não instalar dependências novas (incl. react-native-reanimated, react-native-gesture-handler, react-native-worklets, expo-haptics, expo-linear-gradient, bibliotecas de ícones) sem aprovação explícita.
 - design-taste-frontend-v1: é opt-in (não carrega sozinha) — invocar explicitamente pelo nome em qualquer tarefa de design visual (direção visual, tokens, mockups, implementação de ecrãs). Decide apenas layout, cor, tipografia e hierarquia, em todas as plataformas. Ignorar Tailwind, Next.js, Motion/Framer, CSS e "above the fold". Estados de hover só se aplicam ao build web.
 - Motion — divisão por plataforma:
