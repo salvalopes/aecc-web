@@ -1,4 +1,4 @@
-import { Pressable, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
 import { useTheme } from '@/theme/ThemeContext';
@@ -7,15 +7,16 @@ import { ApiError } from '@/api/client';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
 import type { Company, CreateCompanyRequest } from '@/types/api';
+import { Input, Modal } from '@/components/ui';
 import {
   Button,
-  Input,
-  Card,
-  Modal,
+  CompanyRow,
   EmptyState,
   ErrorState,
-  LoadingSpinner,
-} from '@/components/ui';
+  ListGroup,
+  SkeletonRow,
+} from '@/components/ds';
+import { ListScaffold } from '@/components/templates/ListScaffold';
 import { useRequireRole } from '@/hooks/useRequireRole';
 import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';
 
@@ -33,60 +34,23 @@ const DEFAULT_FORM: FormState = {
   leadDestinationEmail: '',
 };
 
-function MyCompanyCard({ company }: { company: Company }) {
-  const { colors, fontFamily, fontSize, fontWeight, spacing } = useTheme();
-
+function MyCompanyRow({ company, last }: { company: Company; last: boolean }) {
   return (
-    <Card padding={0} style={styles.row}>
-      <View style={styles.rowHeader}>
-        <Pressable
-          testID="my-companies.card"
-          onPress={() => router.push(`/companies/${company.id}`)}
-          style={[styles.nameArea, { padding: spacing[6] }]}
-        >
-          <Text
-            style={{
-              fontFamily: fontFamily.display,
-              fontSize: fontSize.md,
-              fontWeight: fontWeight.bold,
-              color: colors.textPrimary,
-            }}
-          >
-            {company.name}
-          </Text>
-          {!!company.description && (
-            <Text
-              style={{
-                fontFamily: fontFamily.body,
-                fontSize: fontSize.sm,
-                color: colors.textSecondary,
-                marginTop: spacing[1],
-              }}
-              numberOfLines={2}
-            >
-              {company.description}
-            </Text>
-          )}
-        </Pressable>
-        <Pressable
+    <CompanyRow
+      testID="my-companies.card"
+      company={company}
+      last={last}
+      onPress={() => router.push(`/companies/${company.id}`)}
+      actions={
+        <Button
           testID="my-companies.edit"
+          label="Editar"
+          variant="secondary"
+          size="sm"
           onPress={() => router.push(`/companies/${company.id}?edit=1`)}
-          style={[styles.editBtn, { paddingHorizontal: spacing[6] }]}
-          hitSlop={8}
-        >
-          <Text
-            style={{
-              fontFamily: fontFamily.body,
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: colors.accentText,
-            }}
-          >
-            Editar
-          </Text>
-        </Pressable>
-      </View>
-    </Card>
+        />
+      }
+    />
   );
 }
 
@@ -102,7 +66,7 @@ function MyCompaniesContent() {
   const { colors, fontFamily, fontSize, spacing, radius } = useTheme();
 
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -172,30 +136,48 @@ function MyCompaniesContent() {
     }
   }
 
+  const count = companies.length;
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
-      {loading && companies.length === 0 ? (
-        <LoadingSpinner />
-      ) : error && companies.length === 0 ? (
-        <ErrorState message={error} onRetry={load} />
-      ) : (
-        <FlatList
-          data={companies}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MyCompanyCard company={item} />}
-          contentContainerStyle={[
-            styles.list,
-            { padding: spacing[6], paddingBottom: 80, gap: spacing[5] },
-          ]}
-          ListEmptyComponent={<EmptyState message="Ainda não tem empresas." />}
-          refreshing={loading}
-          onRefresh={load}
-        />
-      )}
-
-      <Button onPress={openCreate} style={styles.fab}>
-        + Nova Empresa
-      </Button>
+    <>
+      <ListScaffold
+        testID="my-companies.screen"
+        horizon={{
+          eyebrow: 'ÁREA DO ASSOCIADO',
+          title: 'As minhas empresas',
+          meta:
+            loading && count === 0
+              ? 'A carregar…'
+              : count === 0
+                ? 'Nenhuma empresa no diretório'
+                : count === 1
+                  ? '1 empresa no diretório'
+                  : `${count} empresas no diretório`,
+          aside: <Button testID="my-companies.create" label="Nova empresa" onPress={openCreate} />,
+        }}
+        refreshing={loading && count > 0}
+        onRefresh={load}
+      >
+        {error && count === 0 && !loading ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : (
+          <ListGroup>
+            {loading && count === 0
+              ? [0, 1, 2].map((i) => <SkeletonRow key={i} index={i} last={i === 2} />)
+              : null}
+            {!loading && count === 0 ? (
+              <EmptyState
+                align="start"
+                icon="storefront"
+                title="Ainda não tem empresas"
+                description="Crie a ficha da sua empresa para aparecer no diretório da AECC e receber pedidos de contacto dos associados."
+              />
+            ) : null}
+            {companies.map((c, i) => (
+              <MyCompanyRow key={c.id} company={c} last={i === count - 1} />
+            ))}
+          </ListGroup>
+        )}
+      </ListScaffold>
 
       <Modal
         visible={modalVisible}
@@ -261,16 +243,6 @@ function MyCompaniesContent() {
           error={fieldErrors.leadCooldownMinutes}
         />
       </Modal>
-    </View>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  list: {},
-  row: { overflow: 'hidden' },
-  rowHeader: { flexDirection: 'row', alignItems: 'center' },
-  nameArea: { flex: 1 },
-  editBtn: { alignItems: 'center', justifyContent: 'center' },
-  fab: { position: 'absolute', bottom: 24, right: 20 },
-});

@@ -1,11 +1,12 @@
-import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, TextInput, View, type TextInputProps } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { geist, inputMin } from '@/theme/typography';
 import { Icon } from '@/components/ui/Icon';
 import { glassStyle } from '../ui/GlassSurface';
 
-const factory = createStyles(({ colors, radii, size }) => ({
+const factory = createStyles(({ colors, radii, size, border }) => ({
   wrap: {
     height: size.search,
     flexDirection: 'row',
@@ -22,6 +23,20 @@ const factory = createStyles(({ colors, radii, size }) => ({
     fontFamily: geist.regular,
     fontSize: inputMin,
   },
+  // Anel de foco à volta da cápsula (não do <input>): 2px `focusRing`, por fora do hairline.
+  ring: {
+    position: 'absolute',
+    top: -border.default,
+    right: -border.default,
+    bottom: -border.default,
+    left: -border.default,
+    borderRadius: radii.capsule,
+    borderCurve: 'continuous',
+    borderWidth: 2,
+    borderColor: colors.focusRing,
+  },
+  // web: o anel é o da cápsula; sem o outline por omissão do browser no <input>.
+  noOutline: Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {},
   clear: {
     width: size.hitTarget,
     height: size.hitTarget,
@@ -36,9 +51,10 @@ export interface SearchFieldProps extends Omit<TextInputProps, 'style' | 'value'
 }
 
 /** Cápsula de vidro de 52px com botão de limpar (D3). */
-export function SearchField({ value, onChangeText, ...rest }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, onFocus, onBlur, ...rest }: SearchFieldProps) {
   const s = useStyles(factory);
   const { colors, material, size } = useTheme();
+  const [focused, setFocused] = useState(false);
   return (
     <View style={[s.wrap, glassStyle(material)]}>
       <Icon name="magnifying-glass" size={size.icon.md} color={colors.text2} />
@@ -49,7 +65,16 @@ export function SearchField({ value, onChangeText, ...rest }: SearchFieldProps) 
         accessibilityLabel={rest.placeholder ?? 'Pesquisar'}
         placeholderTextColor={colors.text3}
         returnKeyType="search"
-        style={s.input}
+        selectionColor={colors.accent}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
+        style={[s.input, s.noOutline]}
       />
       {value.length > 0 ? (
         <Pressable
@@ -61,6 +86,7 @@ export function SearchField({ value, onChangeText, ...rest }: SearchFieldProps) 
           <Icon name="x" size={size.icon.sm} color={colors.text2} />
         </Pressable>
       ) : null}
+      {focused ? <View pointerEvents="none" style={s.ring} /> : null}
     </View>
   );
 }

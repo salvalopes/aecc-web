@@ -154,12 +154,18 @@ export const breakpoints = { md: 768, lg: 1280 } as const;
 
 export const layout = {
   gutter: 20,
+  /** Margem lateral em `md+`. */
+  gutterWide: 32,
   sectionGap: 28,
   maxWidth: 1240,
   horizonHeight: 200,
   searchOverlap: -26,
   /** Coluna de formulário (T1) e de texto corrido ao lado dela. */
   formMaxWidth: 400,
+  /** Coluna de contacto em texto à direita de uma linha de lista (web `md+`). */
+  rowAside: 184,
+  /** Largura mínima da sidebar do diretório (`lg`). */
+  sidebarMin: 240,
 } as const;
 
 /** Só web (`boxShadow`). No nativo não há sombra: a profundidade vem do material. */

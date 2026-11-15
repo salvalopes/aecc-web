@@ -44,3 +44,23 @@ export function initials(c: { name: string; tradeName: string | null }): string 
     .join('')
     .toUpperCase();
 }
+
+/** Domínio legível de um URL (sem esquema, `www.` nem barra final): `https://mare.pt/` → `mare.pt`. */
+export function displayDomain(url: string): string {
+  return url
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/\/$/, '');
+}
+
+/** URL abrível: acrescenta `https://` quando o site foi guardado sem esquema. */
+export function absoluteUrl(url: string): string {
+  const u = url.trim();
+  return /^https?:\/\//i.test(u) ? u : `https://${u}`;
+}
+
+/** `tel:` sem espaços (os telefones vêm formatados, ex. `+351 214 862 317`). */
+export function telUrl(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}

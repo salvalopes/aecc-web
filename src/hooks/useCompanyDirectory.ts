@@ -15,6 +15,7 @@ export function useCompanyDirectory({ search, categoryId }: UseCompanyDirectoryP
   const [entries, setEntries] = useState<CompanyDirectoryEntry[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export function useCompanyDirectory({ search, categoryId }: UseCompanyDirectoryP
         setEntries((prev) => (replace ? result.items : [...prev, ...result.items]));
         setPage(result.page);
         setTotalPages(result.totalPages);
+        setTotalCount(result.totalCount);
       });
     } catch (e) {
       if (requestId !== requestIdRef.current) return;
@@ -82,5 +84,16 @@ export function useCompanyDirectory({ search, categoryId }: UseCompanyDirectoryP
     loadPage(1, search.trim(), true);
   }
 
-  return { entries, loading, loadingMore, error, page, totalPages, loadMore, reload };
+  return {
+    entries,
+    totalCount,
+    loading,
+    loadingMore,
+    error,
+    page,
+    totalPages,
+    hasMore: page < totalPages,
+    loadMore,
+    reload,
+  };
 }
