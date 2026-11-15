@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon } from './Icon';
+import { GlassSurface } from './GlassSurface';
 import { categoryIcon } from '@/utils/categoryIcons';
 
 interface CategoryTileProps {
@@ -24,37 +24,28 @@ export function CategoryTile({
   active = false,
   onPress,
 }: CategoryTileProps) {
-  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight } = useTheme();
-  const v = active ? glass.primary : glass.neutral;
+  const { colors, glassRadius, fontFamily, fontSize, fontWeight } = useTheme();
 
   return (
-    <View style={v.shadow}>
+    <View>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
         style={({ pressed }) => [
           styles.tile,
-          {
-            borderRadius: glassRadius.control,
-            borderWidth: 1,
-            borderColor: v.border,
-            overflow: 'hidden',
-          },
+          { borderRadius: glassRadius.control, overflow: 'hidden' },
         ]}
       >
         {({ pressed }) => (
           <>
-            <BlurView
-              intensity={v.blurIntensity}
-              tint={v.blurTint}
+            <GlassSurface
+              pointerEvents="none"
+              radius={glassRadius.control}
+              tintColor={active ? colors.accentPrimary : undefined}
+              pressed={pressed}
+              interactive
               style={StyleSheet.absoluteFillObject}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFillObject,
-                { backgroundColor: pressed ? v.tintActive : v.tint },
-              ]}
             />
             <View style={styles.content}>
               <View

@@ -13,7 +13,7 @@ export function Badge({ children, tone = 'neutral' }: BadgeProps) {
 
   const tones: Record<BadgeTone, { bg: string; fg: string }> = {
     neutral: { bg: colors.surfaceSunken, fg: colors.textSecondary },
-    info: { bg: colors.infoBg, fg: colors.accentPrimary },
+    info: { bg: colors.infoBg, fg: colors.info },
     success: { bg: colors.successBg, fg: colors.success },
     warning: { bg: colors.warningBg, fg: colors.warning },
     error: { bg: colors.errorBg, fg: colors.error },

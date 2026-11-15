@@ -12,3 +12,4 @@ export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { LoadingSpinner } from './LoadingSpinner';
 export { TopBar } from './TopBar';
+export { GlassSurface, GlassGroup, useGlassCapability } from './GlassSurface';

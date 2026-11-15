@@ -108,7 +108,7 @@ export function Modal({
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.bold,
-                  color: colors.accentPrimary,
+                  color: colors.accentText,
                   opacity: saving ? 0.4 : 1,
                 }}
               >

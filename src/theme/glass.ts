@@ -1,9 +1,5 @@
-// "Seamless glass" surface tokens — Aug-2026 renovation. Buttons, the
-// TopBar, the TabBar, category tiles and the hero panel are translucent:
-// a tint (backgroundColor), a blur of what's behind (expo-blur's
-// <BlurView intensity tint>), a 1px lit border, and a soft ambient shadow.
-// Values are the RN-equivalent of the AECC design system's tokens/glass.css.
-// See src/theme/glass.ts consumers for the BlurView usage pattern.
+// @deprecated (Fase 3 / B4): as 5 variantes abaixo já não têm consumidores — o vidro
+// passa a ser o material único (`GlassMaterial`, `GlassSurface`). Apagado na B14.
 
 import type { ViewStyle } from 'react-native';
 
@@ -11,9 +7,9 @@ export interface GlassVariant {
   tint: string;
   tintActive: string;
   border: string;
-  /** expo-blur <BlurView intensity> (0-100). */
+  /** Intensidade do blur antigo (0-100). */
   blurIntensity: number;
-  /** expo-blur <BlurView tint> — matches the underlying theme, not the variant. */
+  /** Tint do blur antigo. */
   blurTint: 'light' | 'dark';
   shadow: Pick<
     ViewStyle,
@@ -137,8 +133,7 @@ export const darkGlass: GlassTokens = {
   },
 };
 
-// ── Fase 3 / B1: material único da Maré (§3.4). Sem consumidores até à B4,
-// que promove o GlassSurface e apaga as 5 variantes acima. ──
+// ── Fase 3 / B1: material único da Maré (§3.4), consumido pelo GlassSurface (B4). ──
 export interface GlassMaterial {
   /** web: tint do vidro. */
   tint: string;

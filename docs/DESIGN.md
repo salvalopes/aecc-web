@@ -108,7 +108,7 @@ Geist (400/500/600/700), carregada no `_layout.tsx` raiz com os nomes `Geist_400
 
 Regras: sem `overflow: 'hidden'` no `GlassView`; legibilidade garantida pelo fallback sólido; nunca texto fino sobre vidro sem contraste verificado.
 
-**Hoje (B5):** `src/components/ds/glassStyle.ts` só aproxima o material (web: tint + filter; nativo: sólido). O `GlassSurface` / `GlassGroup` reais (com `useGlassCapability`) entram na B4 e substituem-no; o `BlurView` e o `expo-blur` desaparecem na B14.
+**Hoje (B4):** `src/components/ui/GlassSurface.tsx` exporta `GlassSurface`, `GlassGroup`, `useGlassCapability` e `glassStyle` (o fallback). iOS 26 com Liquid Glass disponível e sem "Reduzir transparência" usa `GlassView`/`GlassContainer`; iOS < 26, Android e web usam o fallback (web: tint + `backdrop-filter`; nativo: sólido + hairline). A ênfase vem de `tintColor` e o `opaque` dá sólido onde é preciso contraste AA (hero). Nenhum ficheiro importa `BlurView`; o pacote `expo-blur` só sai na B14.
 
 ---
 

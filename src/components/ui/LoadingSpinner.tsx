@@ -9,7 +9,7 @@ export function LoadingSpinner({ size = 'large' }: LoadingSpinnerProps) {
   const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <ActivityIndicator size={size} color={colors.accentPrimary} />
+      <ActivityIndicator size={size} color={colors.accentText} />
     </View>
   );
 }

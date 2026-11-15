@@ -5,7 +5,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
 import type { Category } from '@/types/api';
-import { Chip, Icon } from '@/components/ui';
+import { Chip, GlassSurface, Icon } from '@/components/ui';
 import { CompanyDirectoryList } from '@/components/CompanyDirectoryList';
 
 // Diretório único e pesquisável, com chips de categoria e expansão inline por
@@ -14,7 +14,7 @@ import { CompanyDirectoryList } from '@/components/CompanyDirectoryList';
 // um link antigo para /companies/category/[categoryId].
 export default function CompaniesScreen() {
   const params = useLocalSearchParams<{ categoryId?: string; name?: string; search?: string }>();
-  const { colors, glass, glassRadius, fontFamily, fontSize } = useTheme();
+  const { colors, glassRadius, fontFamily, fontSize } = useTheme();
 
   const [search, setSearch] = useState(params.search ?? '');
   const [categoryId, setCategoryId] = useState(params.categoryId ?? '');
@@ -46,16 +46,7 @@ export default function CompaniesScreen() {
           { backgroundColor: colors.surfaceCard, borderBottomColor: colors.borderSubtle },
         ]}
       >
-        <View
-          style={[
-            styles.searchBar,
-            {
-              borderRadius: glassRadius.control,
-              borderColor: glass.neutral.border,
-              backgroundColor: glass.neutral.tint,
-            },
-          ]}
-        >
+        <GlassSurface radius={glassRadius.control} style={styles.searchBar}>
           <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
           <TextInput
             testID="companies.search"
@@ -71,7 +62,7 @@ export default function CompaniesScreen() {
               color: colors.textPrimary,
             }}
           />
-        </View>
+        </GlassSurface>
 
         <ScrollView
           horizontal
@@ -112,7 +103,6 @@ const styles = StyleSheet.create({
     gap: 8,
     minHeight: 46,
     paddingHorizontal: 14,
-    borderWidth: 1,
   },
   chipRow: { flexDirection: 'row', gap: 7, paddingBottom: 2 },
 });

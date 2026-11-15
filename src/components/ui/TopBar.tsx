@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BrandLockup } from '@/components/ds';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon } from './Icon';
 import { Button } from './Button';
+import { GlassSurface } from './GlassSurface';
 
 interface TopBarProps {
   authenticated?: boolean;
@@ -29,7 +29,6 @@ export function TopBar({
   const theme = useTheme();
   const {
     colors,
-    glass,
     glassRadius,
     hitTargetMin,
     fontFamily,
@@ -38,20 +37,14 @@ export function TopBar({
     isDark,
     toggleTheme,
   } = theme;
-  const v = glass.panel;
 
   return (
-    <View style={[styles.wrap, v.shadow]}>
-      <BlurView
-        intensity={v.blurIntensity}
-        tint={v.blurTint}
+    <View style={styles.wrap}>
+      <GlassSurface
+        pointerEvents="none"
+        radius={0}
+        edge="bottom"
         style={StyleSheet.absoluteFillObject}
-      />
-      <View
-        style={[
-          StyleSheet.absoluteFillObject,
-          { backgroundColor: v.tint, borderBottomWidth: 1, borderBottomColor: v.border },
-        ]}
       />
       <View
         style={[
@@ -66,58 +59,66 @@ export function TopBar({
             onPress={toggleTheme}
             accessibilityRole="button"
             accessibilityLabel={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-            style={({ pressed }) => [
+            style={[
               styles.themeToggle,
-              {
-                width: hitTargetMin,
-                height: hitTargetMin,
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: glass.neutral.border,
-                backgroundColor: pressed ? glass.neutral.tintActive : glass.neutral.tint,
-                overflow: 'hidden',
-              },
+              { width: hitTargetMin, height: hitTargetMin, borderRadius: 999 },
             ]}
           >
-            <Icon name={isDark ? 'sun' : 'moon'} size={20} color={colors.accentPrimary} />
+            {({ pressed }) => (
+              <>
+                <GlassSurface
+                  pointerEvents="none"
+                  radius={999}
+                  pressed={pressed}
+                  interactive
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <Icon name={isDark ? 'sun' : 'moon'} size={20} color={colors.accentText} />
+              </>
+            )}
           </Pressable>
 
           {authenticated ? (
             <Pressable
               testID="topbar.profile"
               onPress={onProfile}
-              style={({ pressed }) => [
+              style={[
                 styles.profileChip,
-                {
-                  minHeight: hitTargetMin,
-                  borderRadius: glassRadius.control,
-                  borderWidth: 1,
-                  borderColor: glass.neutral.border,
-                  backgroundColor: pressed ? glass.neutral.tintActive : glass.neutral.tint,
-                },
+                { minHeight: hitTargetMin, borderRadius: glassRadius.control },
               ]}
             >
-              <Icon name="user" size={18} color={colors.accentPrimary} />
-              {/* minWidth: 0 is load-bearing on web — RNW compiles flex to real
-                  CSS flexbox, where a flex item's default min-width is `auto`
-                  (its content size), not 0. Without it here and on profileChip/
-                  actions above, this Text never shrinks below the full name's
-                  width no matter how narrow the screen, and numberOfLines'
-                  ellipsis never gets a chance to kick in — the chip just
-                  overflows the header instead of truncating. */}
-              <Text
-                style={{
-                  flexShrink: 1,
-                  minWidth: 0,
-                  fontFamily: fontFamily.body,
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.accentPrimary,
-                }}
-                numberOfLines={1}
-              >
-                {userName || 'Perfil'}
-              </Text>
+              {({ pressed }) => (
+                <>
+                  <GlassSurface
+                    pointerEvents="none"
+                    radius={glassRadius.control}
+                    pressed={pressed}
+                    interactive
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <Icon name="user" size={18} color={colors.accentText} />
+                  {/* minWidth: 0 is load-bearing on web — RNW compiles flex to real
+                      CSS flexbox, where a flex item's default min-width is `auto`
+                      (its content size), not 0. Without it here and on profileChip/
+                      actions above, this Text never shrinks below the full name's
+                      width no matter how narrow the screen, and numberOfLines'
+                      ellipsis never gets a chance to kick in — the chip just
+                      overflows the header instead of truncating. */}
+                  <Text
+                    style={{
+                      flexShrink: 1,
+                      minWidth: 0,
+                      fontFamily: fontFamily.body,
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.accentText,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {userName || 'Perfil'}
+                  </Text>
+                </>
+              )}
             </Pressable>
           ) : (
             <View style={styles.authActions}>
@@ -125,7 +126,7 @@ export function TopBar({
                 variant="secondary"
                 size="sm"
                 onPress={onLogin}
-                icon={<Icon name="sign-in" size={16} color={colors.accentPrimary} />}
+                icon={<Icon name="sign-in" size={16} color={colors.accentText} />}
               >
                 Entrar
               </Button>

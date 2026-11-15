@@ -2,7 +2,7 @@ import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { Text } from './Text';
-import { glassStyle } from './glassStyle';
+import { glassStyle } from '../ui/GlassSurface';
 
 const factory = createStyles(({ radii, size }) => ({
   base: {
@@ -37,7 +37,7 @@ export function Chip({ label, active = false, onPress, style, testID }: ChipProp
         s.base,
         active
           ? { backgroundColor: pressed ? colors.accentPressed : colors.accent }
-          : glassStyle(material, pressed),
+          : glassStyle(material, { hovered: pressed }),
         style,
       ]}
     >

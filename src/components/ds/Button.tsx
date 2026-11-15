@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, type StyleProp, type ViewStyle } from 're
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { Text } from './Text';
-import { glassStyle } from './glassStyle';
+import { glassStyle } from '../ui/GlassSurface';
 
 type Variant = 'primary' | 'secondary' | 'glass' | 'destructive';
 type Fg = 'onAccent' | 'text' | 'error';
@@ -63,7 +63,7 @@ export function Button({
           borderColor: colors.border,
         };
       case 'glass':
-        return glassStyle(material, pressed);
+        return glassStyle(material, { hovered: pressed });
       case 'destructive':
         return { backgroundColor: colors.errorBg, opacity: pressed ? 0.8 : 1 };
     }
