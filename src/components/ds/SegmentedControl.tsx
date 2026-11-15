@@ -4,7 +4,7 @@ import { createStyles, useStyles } from '@/theme/createStyles';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from './Text';
 
-const factory = createStyles(({ colors, radii, spacing, size, border }) => ({
+const factory = createStyles(({ colors, radii, spacing, size, border, opacity }) => ({
   track: {
     flexDirection: 'row',
     padding: spacing['2xs'],
@@ -25,6 +25,7 @@ const factory = createStyles(({ colors, radii, spacing, size, border }) => ({
   },
   active: { backgroundColor: colors.accent },
   hover: { backgroundColor: colors.surface },
+  disabled: { opacity: opacity.disabled },
 }));
 
 export interface SegmentedOption<T extends string> {
@@ -39,22 +40,29 @@ export interface SegmentedControlProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   accessibilityLabel: string;
+  /** Mostra o valor sem deixar mudar (ex.: o próprio papel, T7). */
+  disabled?: boolean;
 }
 
 const isHovered = (state: PressableStateCallbackType) =>
   !!(state as PressableStateCallbackType & { hovered?: boolean }).hovered;
 
-/** Alternador de vista (Lista | Tabela, web `lg`). O ativo é o acento sólido. */
+/** Alternador (Lista | Tabela no web `lg`; tipo e papel nos formulários T7). O ativo é o acento sólido. */
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
   accessibilityLabel,
+  disabled = false,
 }: SegmentedControlProps<T>) {
   const s = useStyles(factory);
   const { colors, size } = useTheme();
   return (
-    <View style={s.track} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
+    <View
+      style={[s.track, disabled ? s.disabled : null]}
+      accessibilityRole="tablist"
+      accessibilityLabel={accessibilityLabel}
+    >
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -62,7 +70,8 @@ export function SegmentedControl<T extends string>({
             key={o.value}
             testID={o.testID}
             accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
+            accessibilityState={{ selected: on, disabled }}
+            disabled={disabled}
             onPress={() => onChange(o.value)}
             style={(state) => [
               s.segment,

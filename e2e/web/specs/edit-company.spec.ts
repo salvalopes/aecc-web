@@ -4,22 +4,26 @@ import { API_URL, ASSOCIADO_COMPANY_ID, login, USERS } from '../helpers';
 
 const LOGO = path.join(__dirname, '..', 'fixtures', 'logo.png');
 
-async function openEditModal(page: Page) {
+// T7 (B12): o "Editar" de /my-companies abre o formulário em ecrã (/my-companies/:id/edit),
+// já não um modal. Guardar volta à lista, e o formulário sai do DOM.
+async function openEditForm(page: Page) {
   await page.goto('/my-companies');
   await page.getByTestId('my-companies.edit').click();
+  await expect(page).toHaveURL(new RegExp(`/my-companies/${ASSOCIADO_COMPANY_ID}/edit$`));
   await expect(page.getByTestId('company-edit.description')).toBeVisible();
 }
 
 async function saveAndWaitClose(page: Page) {
   await page.getByTestId('company-edit.save').click();
-  await expect(page.getByTestId('company-edit.description')).toHaveCount(0, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/my-companies$/, { timeout: 15_000 });
+  await expect(page.getByTestId('company-edit.description')).toHaveCount(0);
 }
 
 // Repetível sem reseed: escreve uma descrição única, confirma que persistiu e repõe
 // sempre a original no fim (mesmo que o teste falhe a meio).
 test('associado edita a descrição da própria empresa e ela persiste', async ({ page }) => {
   await login(page, USERS.associado);
-  await openEditModal(page);
+  await openEditForm(page);
 
   const description = page.getByTestId('company-edit.description');
   const original = await description.inputValue();
@@ -30,10 +34,10 @@ test('associado edita a descrição da própria empresa e ela persiste', async (
     await saveAndWaitClose(page);
 
     await page.reload();
-    await openEditModal(page);
+    await openEditForm(page);
     await expect(page.getByTestId('company-edit.description')).toHaveValue(unique);
   } finally {
-    await openEditModal(page);
+    await openEditForm(page);
     await page.getByTestId('company-edit.description').fill(original);
     await saveAndWaitClose(page);
   }
@@ -45,7 +49,7 @@ test('associado faz upload do logo e passa a ser servido pelo storage local E2E'
   request,
 }) => {
   await login(page, USERS.associado);
-  await openEditModal(page);
+  await openEditForm(page);
 
   // O expo-image-picker na web abre um <input type="file"> — apanhado pelo filechooser.
   const chooserPromise = page.waitForEvent('filechooser');

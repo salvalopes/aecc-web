@@ -23,7 +23,14 @@ export default function AppLayout() {
   return (
     <Stack screenOptions={screenOptions}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="products/[id]" options={{ title: 'Produto' }} />
+      <Stack.Screen name="products/[id]/index" options={{ title: 'Produto' }} />
+      {/* T7 (B12): formulários em ecrã, por cima das tabs. Substituem o `Modal`. */}
+      <Stack.Screen name="products/new" options={{ title: 'Novo produto' }} />
+      <Stack.Screen name="products/[id]/edit" options={{ title: 'Editar produto' }} />
+      <Stack.Screen name="my-companies/new" options={{ title: 'Nova empresa' }} />
+      <Stack.Screen name="my-companies/[id]/edit" options={{ title: 'Editar empresa' }} />
+      <Stack.Screen name="users/new" options={{ title: 'Novo utilizador' }} />
+      <Stack.Screen name="users/[id]/edit" options={{ title: 'Editar utilizador' }} />
       {/* Fora das tabs (U3): a rota continua a existir, sem entrada na navegação. */}
       <Stack.Screen name="favourites/index" options={{ title: 'Favoritos' }} />
     </Stack>

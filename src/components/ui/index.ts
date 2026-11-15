@@ -7,7 +7,6 @@ export { Chip } from './Chip';
 export { Badge } from './Badge';
 export { Card } from './Card';
 export { CategoryTile } from './CategoryTile';
-export { Modal } from './Modal';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { LoadingSpinner } from './LoadingSpinner';

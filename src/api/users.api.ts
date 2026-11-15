@@ -3,6 +3,7 @@ import type { ManagedUser, CreateUserRequest, UpdateUserRequest } from '@/types/
 
 export const usersApi = {
   list: () => apiClient.get<ManagedUser[]>('/users'),
+  get: (id: string) => apiClient.get<ManagedUser>(`/users/${id}`),
   create: (data: CreateUserRequest) => apiClient.post<ManagedUser>('/users', data),
   update: (id: string, data: UpdateUserRequest) => apiClient.put<ManagedUser>(`/users/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/users/${id}`),
