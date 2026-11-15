@@ -111,12 +111,12 @@ export default function AppLayout() {
           header: renderTopBar,
         }}
       />
+      {/* Placeholder sem entidade na API: a rota existe mas fica fora da tab bar (máx. 5 tabs) */}
       <Tabs.Screen
         name="favourites/index"
         options={{
+          href: null,
           title: 'Favoritos',
-          tabBarLabel: ({ color }) => <TabLabel label="Favoritos" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="heart" size={20} color={color} />,
           header: renderTopBar,
         }}
       />
