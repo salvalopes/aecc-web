@@ -2,6 +2,7 @@ import { Stack, router } from 'expo-router';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useStackScreenOptions } from '@/navigation/stackOptions';
+import { SessionLoadingState } from '@/components/templates/StateTemplates';
 
 // Guarda de sessão + Stack por cima das tabs. As tabs (`(tabs)`) só montam
 // depois de a sessão (e o papel) estarem resolvidos: mudar a visibilidade de
@@ -16,8 +17,8 @@ export default function AppLayout() {
     }
   }, [token, isLoading]);
 
-  if (isLoading) return null;
-  if (!token) return null;
+  // T2: sessão a carregar (e o instante antes do redirect), em vez de um ecrã vazio.
+  if (isLoading || !token) return <SessionLoadingState />;
 
   return (
     <Stack screenOptions={screenOptions}>

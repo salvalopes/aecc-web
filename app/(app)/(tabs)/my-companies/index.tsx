@@ -16,7 +16,8 @@ import {
   ErrorState,
   LoadingSpinner,
 } from '@/components/ui';
-import { RoleGuard } from '@/components/RoleGuard';
+import { useRequireRole } from '@/hooks/useRequireRole';
+import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';
 
 interface FormState {
   name: string;
@@ -90,11 +91,11 @@ function MyCompanyCard({ company }: { company: Company }) {
 }
 
 export default function MyCompaniesScreen() {
-  return (
-    <RoleGuard allow={['Associado', 'Admin']}>
-      <MyCompaniesContent />
-    </RoleGuard>
-  );
+  // O papel decide antes de montar o conteúdo (e os seus efeitos de dados).
+  const { allowed, checking } = useRequireRole(['Associado', 'Admin']);
+  if (checking) return <SessionLoadingState />;
+  if (!allowed) return <ForbiddenState />;
+  return <MyCompaniesContent />;
 }
 
 function MyCompaniesContent() {
