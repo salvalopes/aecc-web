@@ -56,11 +56,50 @@ company_logo() {
     | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).logoUrl??""))'
 }
 
+json_field() {
+  node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s)[process.argv[1]]??"")}catch{console.log("")}})' "$1"
+}
+
+# Pedido ao /connect/token (grant password do cliente aecc-native), resposta em JSON.
+token_request() {
+  curl -sS -X POST "$API/connect/token" -d grant_type=password -d client_id=aecc-native \
+    --data-urlencode "username=$1" --data-urlencode "password=$2" \
+    --data-urlencode 'scope=openid profile email offline_access roles aecc_api'
+}
+
+# Conta descartável (Cliente) criada pelo admin do seed: os fluxos de lockout e de conta
+# desativada nunca tocam na conta do seed. Define THROW_ID, THROW_EMAIL e THROW_PASSWORD
+# (palavra-passe aleatória, só em memória); apagada com drop_throwaway.
+create_throwaway() {
+  ADMIN_TOKEN=$(token_request admin@e2e.test "$E2E_SEED_PASSWORD" | json_field access_token)
+  [ -n "$ADMIN_TOKEN" ] || return 1
+  THROW_EMAIL="descartavel-$1-$TAG-$(date +%s)@e2e.test"
+  THROW_PASSWORD="Aa1!$(openssl rand -hex 8)"
+  THROW_ID=$(curl -fsS -X POST "$API/users" -H "authorization: Bearer $ADMIN_TOKEN" \
+    -H 'content-type: application/json' \
+    -d "{\"email\":\"$THROW_EMAIL\",\"password\":\"$THROW_PASSWORD\",\"fullName\":\"Descartavel\",\"role\":\"Cliente\"}" \
+    | json_field id)
+  [ -n "$THROW_ID" ]
+}
+
+drop_throwaway() {
+  if [ -n "${THROW_ID:-}" ]; then
+    curl -sS -o /dev/null -X DELETE "$API/users/$THROW_ID" -H "authorization: Bearer $ADMIN_TOKEN" || true
+  fi
+  THROW_ID=
+}
+
+# A conta do seed (associado) continua a entrar: prova de que não ficou bloqueada.
+seed_login_works() {
+  [ -n "$(token_request associado@e2e.test "$E2E_SEED_PASSWORD" | json_field access_token)" ]
+}
+
 if [ $# -gt 0 ]; then
   FLOWS=("$@")
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
-    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin)
+    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin
+    login-bloqueio login-desativada)
 fi
 
 rm -rf "$OUT"
@@ -78,6 +117,23 @@ for flow in "${FLOWS[@]}"; do
       curl -fsS -o /dev/null -X POST "$API/auth/register" \
         -H 'content-type: application/json' -d "{\"email\":\"$UNCONFIRMED_EMAIL\"}"
       EXTRA+=(-e "UNCONFIRMED_EMAIL=$UNCONFIRMED_EMAIL")
+      ;;
+    login-bloqueio|login-desativada)
+      if ! create_throwaway "$flow"; then
+        echo "$flow: não foi possível criar a conta descartável" >> "$SUMMARY"; STATUS=1; continue
+      fi
+      if [ "$flow" = login-bloqueio ]; then
+        # Identity: MaxFailedAccessAttempts = 5. Pausa entre pedidos para ficar abaixo do rate limit.
+        for n in 1 2 3 4 5; do
+          token_request "$THROW_EMAIL" "errada-$n" > /dev/null
+          sleep 1
+        done
+      else
+        curl -fsS -o /dev/null -X PUT "$API/users/$THROW_ID" -H "authorization: Bearer $ADMIN_TOKEN" \
+          -H 'content-type: application/json' \
+          -d '{"fullName":"Descartavel","role":"Cliente","isActive":false}'
+      fi
+      EXTRA+=(-e "THROWAWAY_EMAIL=$THROW_EMAIL" -e "THROWAWAY_PASSWORD=$THROW_PASSWORD")
       ;;
     deeplink-users-admin)
       EMAIL=admin@e2e.test
@@ -117,6 +173,16 @@ for flow in "${FLOWS[@]}"; do
   # O debug do Maestro (commands*.json, maestro.log) grava os valores de -e resolvidos:
   # fica só com as imagens (capturas e a da falha) e o log da consola.
   find "$OUT/$flow" -type f ! -name '*.png' -delete
+  case "$flow" in
+    login-bloqueio|login-desativada)
+      drop_throwaway
+      if seed_login_works; then
+        echo "$flow: a conta do seed continua a entrar" >> "$SUMMARY"
+      else
+        echo "$flow: a conta do seed NÃO entra" >> "$SUMMARY"; STATUS=1
+      fi
+      ;;
+  esac
   steps=$(grep -cE 'COMPLETED' "$OUT/$flow.log" || true)
   echo "$flow: exit $code, passos COMPLETED $steps" >> "$SUMMARY"
   [ $code -eq 0 ] || STATUS=1
