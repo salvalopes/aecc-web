@@ -34,3 +34,4 @@ e2e/web/.auth/
 # Builds nativos locais (expo run:ios / run:android)
 /ios
 /android
+/.artifacts/
