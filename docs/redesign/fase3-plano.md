@@ -487,24 +487,24 @@ Output literal no relatório da tarefa. Os ficheiros novos neste branch são só
 
 Esta tabela é atualizada no fim de cada passo e é a partir dela que se retoma depois de cada `/clear`. A versão de referência vive no branch do passo em curso.
 
-| Passo | Branch                                                        | Commit    | PR    | Estado                                                                                                         |
-| ----- | ------------------------------------------------------------- | --------- | ----- | -------------------------------------------------------------------------------------------------------------- |
-| B0    | `redesign/fase3-base`                                         | `7570e3a` | —     | concluído (lint 0 erros, tsc ok, Playwright 8/8)                                                               |
-| B1    | `redesign/fase3-base`                                         | `db73210` | —     | concluído (lint 0 erros, tsc ok, Playwright 8/8)                                                               |
-| B2    | `redesign/fase3-base`                                         | `63aac35` | —     | concluído (lint 0 erros, tsc ok, Playwright 8/8; Android: arranque sem ecrã branco por validar)                |
-| B5    | `redesign/fase3-base`                                         | `889ff1f` | —     | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5)              |
-| B5b   | `redesign/fase3-base`                                         | `9517048` | #19   | concluído (lint 0 erros, tsc ok, Playwright 8/8; PR base em draft, sem merge)                                  |
-| B3    | `redesign/fase3-b3-marca` → `redesign/fase3-ui`               | `d846cd9` | #20   | **aprovado** a 15/11/2026 (lint 0 erros, tsc ok, Playwright 8/8; PR #20 ainda por fazer merge; ver nota B3)    |
-| B4    | `redesign/fase3-b4-glass` (sobre o B3) → `redesign/fase3-ui`  | `6dcab91` | —     | **à espera de revisão** (lint 0 erros, tsc ok, Playwright 8/8; `grep BlurView app src` = 0; ver nota B4)       |
-| B6    | `redesign/fase3-b6-paleta` (sobre o B4) → `redesign/fase3-ui` | `COMMIT`  | PRNUM | **à espera de revisão** (lint 0 erros, tsc ok, Playwright 8/8; capturas web em `fase3/after/web`; ver nota B6) |
-| B7    | idem                                                          | —         | —     | pendente                                                                                                       |
-| B8    | idem                                                          | —         | —     | pendente                                                                                                       |
-| B9    | idem                                                          | —         | —     | pendente                                                                                                       |
-| B10   | idem                                                          | —         | —     | pendente                                                                                                       |
-| B11   | idem                                                          | —         | —     | pendente                                                                                                       |
-| B12   | idem                                                          | —         | —     | pendente                                                                                                       |
-| B13   | idem                                                          | —         | —     | pendente                                                                                                       |
-| B14   | idem                                                          | —         | —     | pendente                                                                                                       |
+| Passo | Branch                                                        | Commit    | PR  | Estado                                                                                                         |
+| ----- | ------------------------------------------------------------- | --------- | --- | -------------------------------------------------------------------------------------------------------------- |
+| B0    | `redesign/fase3-base`                                         | `7570e3a` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8)                                                               |
+| B1    | `redesign/fase3-base`                                         | `db73210` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8)                                                               |
+| B2    | `redesign/fase3-base`                                         | `63aac35` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; Android: arranque sem ecrã branco por validar)                |
+| B5    | `redesign/fase3-base`                                         | `889ff1f` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5)              |
+| B5b   | `redesign/fase3-base`                                         | `9517048` | #19 | concluído (lint 0 erros, tsc ok, Playwright 8/8; PR base em draft, sem merge)                                  |
+| B3    | `redesign/fase3-b3-marca` → `redesign/fase3-ui`               | `d846cd9` | #20 | **aprovado** a 15/11/2026 (lint 0 erros, tsc ok, Playwright 8/8; PR #20 ainda por fazer merge; ver nota B3)    |
+| B4    | `redesign/fase3-b4-glass` (sobre o B3) → `redesign/fase3-ui`  | `6dcab91` | —   | **à espera de revisão** (lint 0 erros, tsc ok, Playwright 8/8; `grep BlurView app src` = 0; ver nota B4)       |
+| B6    | `redesign/fase3-b6-paleta` (sobre o B4) → `redesign/fase3-ui` | `ce041d2` | #21 | **à espera de revisão** (lint 0 erros, tsc ok, Playwright 8/8; capturas web em `fase3/after/web`; ver nota B6) |
+| B7    | idem                                                          | —         | —   | pendente                                                                                                       |
+| B8    | idem                                                          | —         | —   | pendente                                                                                                       |
+| B9    | idem                                                          | —         | —   | pendente                                                                                                       |
+| B10   | idem                                                          | —         | —   | pendente                                                                                                       |
+| B11   | idem                                                          | —         | —   | pendente                                                                                                       |
+| B12   | idem                                                          | —         | —   | pendente                                                                                                       |
+| B13   | idem                                                          | —         | —   | pendente                                                                                                       |
+| B14   | idem                                                          | —         | —   | pendente                                                                                                       |
 
 **Nota B5:** as primitivas vivem em `src/components/ds/` (e não em `ui/`, como a §4.2 previa) porque `Button`, `Chip`, `IconButton`, `EmptyState` e `ErrorState` já existem em `ui/` com consumidores; reescrevê-los no sítio mudaria o visual. A B14 apaga os antigos e move `ds/` para `ui/`. `glassStyle.ts` aproxima o vidro (web: tint + `backdrop-filter`; nativo: sólido + hairline) até ao `GlassSurface` real da B4. O `IconButton` de contacto só tem os ícones existentes (sem telefone/email): os paths Phosphor Bold entram com o `Icon` novo (§3.6). `formatAddressLine` está em `src/utils/address.ts` e ainda não substitui os 2 `buildAddressLine` (migração nos passos visuais).
 
