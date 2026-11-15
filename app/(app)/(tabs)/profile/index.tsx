@@ -1,74 +1,104 @@
-import { Text, View } from 'react-native';
+import { useState } from 'react';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/theme/ThemeContext';
-import { Button } from '@/components/ui';
-import { Button as DsButton } from '@/components/ds';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { useTheme, type ThemePreference } from '@/theme/ThemeContext';
+import { useBreakpoint } from '@/theme/useBreakpoint';
+import { Button, SegmentedControl } from '@/components/ds';
+import { ListScaffold } from '@/components/templates/ListScaffold';
+import { FormSection } from '@/components/templates/FormLayout';
+import { InfoGroup, type InfoItem } from '@/components/detail/InfoGroup';
+import { ROLE_HINT, ROLE_LABEL } from '@/utils/roles';
+
+// T6 Perfil (B13), direção Maré.
+// Horizonte com o nome e o email (sem avatar genérico: a identidade é o nome).
+// Secções de definições como no T7: sm em coluna; md+ rótulo e explicação à esquerda (1fr)
+// e o controlo à direita (2fr), numa coluna de `layout.formPageMax` alinhada à esquerda.
+const factory = createStyles(({ spacing, layout }) => ({
+  page: { width: '100%', maxWidth: layout.formPageMax, gap: layout.sectionGap },
+  pageWide: { gap: spacing['5xl'] },
+  start: { alignSelf: 'flex-start' },
+}));
+
+const THEME_OPTIONS = [
+  { value: 'system', label: 'Sistema', testID: 'profile.theme-system' },
+  { value: 'light', label: 'Claro', icon: 'sun', testID: 'profile.theme-light' },
+  { value: 'dark', label: 'Escuro', icon: 'moon', testID: 'profile.theme-dark' },
+] as const;
+
+const THEME_HINT: Record<ThemePreference, string> = {
+  system: 'Segue a definição de aspeto do dispositivo.',
+  light: 'Fica claro, mesmo com o dispositivo em modo escuro.',
+  dark: 'Fica escuro, mesmo com o dispositivo em modo claro.',
+};
 
 export default function ProfileScreen() {
+  const s = useStyles(factory);
   const { user, logout } = useAuth();
-  const { colors, fontFamily, fontSize, fontWeight, isDark, toggleTheme, spacing } = useTheme();
+  const { preference, setPreference } = useTheme();
+  const { isWide } = useBreakpoint();
+  const [leaving, setLeaving] = useState(false);
 
   async function handleLogout() {
-    await logout();
-    router.replace('/(auth)/login');
+    setLeaving(true);
+    try {
+      await logout();
+      router.replace('/(auth)/login');
+    } finally {
+      setLeaving(false);
+    }
   }
 
+  const account: InfoItem[] = user
+    ? [
+        { key: 'role', label: 'Papel', value: ROLE_LABEL[user.role], testID: 'profile.role' },
+        // Só quando é exceção (como na lista de utilizadores).
+        ...(user.emailConfirmed
+          ? []
+          : [{ key: 'confirmed', label: 'Estado do email', value: 'Por confirmar' }]),
+      ]
+    : [];
+
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-        backgroundColor: colors.surfaceApp,
+    <ListScaffold
+      testID="profile.screen"
+      horizon={{
+        title: user?.fullName || 'Perfil',
+        meta: user?.email,
+        testID: 'profile.identity',
       }}
     >
-      <Text
-        style={{
-          fontFamily: fontFamily.display,
-          fontSize: fontSize.xl,
-          fontWeight: fontWeight.bold,
-          color: colors.textPrimary,
-          marginBottom: 4,
-        }}
-      >
-        {user?.fullName ?? '—'}
-      </Text>
-      <Text
-        style={{
-          fontFamily: fontFamily.body,
-          fontSize: fontSize.base,
-          color: colors.textSecondary,
-          marginBottom: 4,
-        }}
-      >
-        {user?.email ?? '—'}
-      </Text>
-      <Text
-        style={{
-          fontFamily: fontFamily.body,
-          fontSize: fontSize.sm,
-          color: colors.textTertiary,
-          marginBottom: 40,
-        }}
-      >
-        {user?.role ?? '—'}
-      </Text>
+      <View style={[s.page, isWide ? s.pageWide : null]}>
+        <FormSection testID="profile.theme" label="APARÊNCIA" description={THEME_HINT[preference]}>
+          <View style={s.start}>
+            <SegmentedControl
+              accessibilityLabel="Aparência"
+              options={THEME_OPTIONS}
+              value={preference}
+              onChange={setPreference}
+            />
+          </View>
+        </FormSection>
 
-      {/* Provisório: o toggle saiu com o TopBar (B7); o T6 traz system/light/dark (B13). */}
-      <DsButton
-        testID="profile.theme-toggle"
-        variant="secondary"
-        size="sm"
-        onPress={toggleTheme}
-        style={{ marginBottom: spacing.lg }}
-        label={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-      />
+        {user ? (
+          <FormSection label="CONTA" description={ROLE_HINT[user.role]}>
+            <InfoGroup testID="profile.account" items={account} />
+          </FormSection>
+        ) : null}
 
-      <Button testID="profile.logout" variant="destructive" onPress={handleLogout}>
-        Terminar sessão
-      </Button>
-    </View>
+        <FormSection label="SESSÃO" description="Termina a sessão neste dispositivo.">
+          <Button
+            testID="profile.logout"
+            variant="destructive"
+            label="Terminar sessão"
+            loading={leaving}
+            onPress={handleLogout}
+            fullWidth={!isWide}
+            style={isWide ? s.start : undefined}
+          />
+        </FormSection>
+      </View>
+    </ListScaffold>
   );
 }

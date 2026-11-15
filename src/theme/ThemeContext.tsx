@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Appearance, Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, type ThemeColors } from './colors';
@@ -32,6 +40,8 @@ import { textStyles } from './typography';
 const THEME_MODE_KEY = 'aecc_theme_mode';
 
 type ThemeMode = 'light' | 'dark';
+/** Escolha do utilizador no Perfil (T6). `system` segue o esquema do dispositivo. */
+export type ThemePreference = 'system' | ThemeMode;
 
 export interface Theme {
   colors: ThemeColors;
@@ -48,7 +58,8 @@ export interface Theme {
   textStyles: typeof textStyles;
   isDark: boolean;
   mode: ThemeMode;
-  toggleTheme: () => void;
+  preference: ThemePreference;
+  setPreference: (preference: ThemePreference) => void;
   spacing: typeof spacing;
   radius: typeof radius;
   glassRadius: typeof glassRadius;
@@ -101,11 +112,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.setProperty('--aecc-focus-ring', colors.focusRing);
   }, [colors]);
 
-  function toggleTheme() {
-    const next: ThemeMode = isDark ? 'light' : 'dark';
-    setOverride(next);
-    AsyncStorage.setItem(THEME_MODE_KEY, next);
-  }
+  const preference: ThemePreference = override ?? 'system';
+
+  // Sem override guardado, a app volta a seguir o sistema (e o nativo também, ver acima).
+  const setPreference = useCallback((next: ThemePreference) => {
+    if (next === 'system') {
+      setOverride(null);
+      AsyncStorage.removeItem(THEME_MODE_KEY);
+    } else {
+      setOverride(next);
+      AsyncStorage.setItem(THEME_MODE_KEY, next);
+    }
+  }, []);
 
   const theme = useMemo<Theme>(
     () => ({
@@ -122,7 +140,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       textStyles,
       isDark,
       mode,
-      toggleTheme,
+      preference,
+      setPreference,
       spacing,
       radius,
       glassRadius,
@@ -133,7 +152,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       fontWeight,
       shadow,
     }),
-    [colors, isDark, mode],
+    [colors, isDark, mode, preference, setPreference],
   );
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;

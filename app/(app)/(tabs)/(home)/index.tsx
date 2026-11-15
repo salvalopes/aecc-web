@@ -1,335 +1,169 @@
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  useWindowDimensions,
-} from 'react-native';
 import { useCallback, useEffect, useState, startTransition } from 'react';
+import { View } from 'react-native';
 import { router } from 'expo-router';
-import { useTheme } from '@/theme/ThemeContext';
 import { categoriesApi } from '@/api/categories.api';
 import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
 import type { Category, CompanyDirectoryEntry } from '@/types/api';
-import { Button, Card, CategoryTile, GlassSurface, Icon, LoadingSpinner } from '@/components/ui';
-import { BrandLockup } from '@/components/ds';
+import { useAuth } from '@/hooks/useAuth';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { useBreakpoint } from '@/theme/useBreakpoint';
+import { ErrorState, SearchField, Skeleton } from '@/components/ds';
+import { ListScaffold } from '@/components/templates/ListScaffold';
+import { countLabel } from '@/components/directory/categories';
+import {
+  CategoryList,
+  CategoryListSkeleton,
+  CompanyPreview,
+  CompanyPreviewSkeleton,
+  HomeSection,
+} from '@/components/home/HomeSections';
 
-const VALUE_PROPS = [
-  { icon: 'buildings' as const, label: 'Descubra\nempresas locais' },
-  { icon: 'users-three' as const, label: 'Conecte-se com\nprofissionais' },
-  { icon: 'seal-check' as const, label: 'Valorize o que é\nde Cascais' },
-  { icon: 'trend-up' as const, label: 'Impulsione\nnegócios' },
-];
+// T5 Início (B13), direção Maré (fase2 §4 B).
+// sm: horizonte com o lockup e a saudação → pesquisa em vidro a −26 → categorias → empresas.
+// md+: pesquisa à direita no horizonte; categorias (2fr) e empresas (3fr) lado a lado.
+// A pesquisa e as categorias abrem o diretório já filtrado (`/companies?search=|categoryId=`).
+const PREVIEW = 5;
 
-function SectionHeader({ title, onAction }: { title: string; onAction: () => void }) {
-  const { colors, fontFamily, fontSize, fontWeight } = useTheme();
-  return (
-    <View style={styles.sectionHeader}>
-      <Text
-        style={{
-          fontFamily: fontFamily.display,
-          fontWeight: fontWeight.bold,
-          fontSize: fontSize.md,
-          color: colors.textPrimary,
-        }}
-      >
-        {title}
-      </Text>
-      <Pressable onPress={onAction}>
-        <Text
-          style={{
-            fontFamily: fontFamily.body,
-            fontSize: fontSize.xs,
-            fontWeight: fontWeight.semibold,
-            color: colors.accentGoldText,
-          }}
-        >
-          Ver todas
-        </Text>
-      </Pressable>
-    </View>
-  );
+const factory = createStyles(({ spacing, layout }) => ({
+  search: { width: '100%', maxWidth: layout.formMaxWidth + spacing['6xl'] },
+  stack: { gap: layout.sectionGap },
+  split: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['4xl'] },
+  categories: { flex: 2, minWidth: 0 },
+  companies: { flex: 3, minWidth: 0 },
+}));
+
+interface HomeData {
+  categories: Category[];
+  companies: CompanyDirectoryEntry[];
+  totalCount: number;
+}
+
+function firstName(fullName: string | undefined) {
+  return fullName?.trim().split(/\s+/)[0] ?? '';
 }
 
 export default function HomeScreen() {
-  const theme = useTheme();
-  const { colors, glassRadius, fontFamily, fontSize, fontWeight, lineHeight, spacing } = theme;
-  const { width } = useWindowDimensions();
+  const s = useStyles(factory);
+  const { user } = useAuth();
+  const { isWide } = useBreakpoint();
 
   const [search, setSearch] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [companies, setCompanies] = useState<CompanyDirectoryEntry[]>([]);
+  const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    Promise.all([categoriesApi.list(), companiesApi.directory({ pageSize: 3 })])
-      .then(([cats, companiesPage]) =>
-        startTransition(() => {
-          setCategories(cats);
-          setCompanies(companiesPage.items);
-        }),
+    Promise.all([categoriesApi.list(), companiesApi.directory({ pageSize: PREVIEW })])
+      .then(([categories, page]) =>
+        startTransition(() =>
+          setData({
+            categories: categories.filter((c) => !c.parentId),
+            companies: page.items,
+            totalCount: page.totalCount,
+          }),
+        ),
       )
       .catch((e) =>
         startTransition(() =>
-          setError(e instanceof ApiError ? e.message : 'Erro ao carregar o início.'),
+          setError(e instanceof ApiError ? e.message : 'Não foi possível carregar o Início.'),
         ),
       )
-      .finally(() => startTransition(() => setLoading(false)));
+      .finally(() =>
+        startTransition(() => {
+          setLoading(false);
+          setRefreshing(false);
+        }),
+      );
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  function goToCompanies(params?: { search?: string; categoryId?: string; name?: string }) {
-    router.push({ pathname: '/companies', params });
-  }
+  const submitSearch = () => {
+    const term = search.trim();
+    router.push({ pathname: '/companies', params: term ? { search: term } : {} });
+  };
 
-  const numColumns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
+  const searchField = (
+    <View style={isWide ? s.search : null}>
+      <SearchField
+        testID="home.search"
+        value={search}
+        onChangeText={setSearch}
+        onSubmitEditing={submitSearch}
+        placeholder="Nome ou marca da empresa"
+        autoCorrect={false}
+        autoCapitalize="none"
+        autoComplete="off"
+      />
+    </View>
+  );
+
+  const name = firstName(user?.fullName);
+  const meta = data ? (
+    countLabel(data.totalCount, { query: '', category: null })
+  ) : error ? undefined : (
+    <Skeleton width={160} height={13} />
+  );
+  const density = isWide ? 'compact' : 'regular';
+
+  const categories =
+    loading && !data ? (
+      <CategoryListSkeleton />
+    ) : data && data.categories.length > 0 ? (
+      <CategoryList categories={data.categories} density={density} />
+    ) : null;
+
+  const companies =
+    loading && !data ? (
+      <CompanyPreviewSkeleton />
+    ) : data ? (
+      <CompanyPreview companies={data.companies} totalCount={data.totalCount} density={density} />
+    ) : null;
+
+  const sections = (
+    <View style={isWide ? s.split : s.stack}>
+      {categories ? (
+        <View style={isWide ? s.categories : null}>
+          <HomeSection label="CATEGORIAS" meta={data ? String(data.categories.length) : undefined}>
+            {categories}
+          </HomeSection>
+        </View>
+      ) : null}
+      {companies ? (
+        <View style={isWide ? s.companies : null}>
+          <HomeSection label="NO DIRETÓRIO">{companies}</HomeSection>
+        </View>
+      ) : null}
+    </View>
+  );
 
   return (
-    <ScrollView
+    <ListScaffold
       testID="home.screen"
-      style={{ flex: 1, backgroundColor: colors.surfaceApp }}
-      contentContainerStyle={styles.scrollContent}
+      horizon={{
+        title: name ? `Olá, ${name}.` : 'Olá.',
+        meta,
+        brand: true,
+        aside: isWide ? searchField : undefined,
+      }}
+      overlap={searchField}
+      refreshing={refreshing}
+      onRefresh={() => {
+        setRefreshing(true);
+        load();
+      }}
     >
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <View
-        style={[
-          styles.hero,
-          { backgroundColor: colors.surfaceSunken, borderBottomColor: colors.borderSubtle },
-        ]}
-      >
-        <GlassSurface opaque elevated radius={glassRadius.panel} style={styles.heroPanel}>
-          <BrandLockup width={200} style={styles.heroLogo} />
-          <Text
-            style={{
-              fontFamily: fontFamily.body,
-              fontSize: fontSize['2xs'],
-              fontWeight: fontWeight.bold,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              color: colors.accentGoldText,
-              marginBottom: spacing[8],
-            }}
-          >
-            Diretório de Empresas
-          </Text>
-          <Text
-            style={{
-              fontFamily: fontFamily.display,
-              fontWeight: fontWeight.bold,
-              fontSize: fontSize.xl,
-              lineHeight: fontSize.xl * lineHeight.snug,
-              color: colors.textPrimary,
-              textAlign: 'center',
-              maxWidth: 340,
-            }}
-          >
-            Conectamos empresas.{'\n'}Fortalecemos a comunidade.{'\n'}Impulsionamos Cascais.
-          </Text>
-
-          <View style={styles.heroForm}>
-            <GlassSurface radius={glassRadius.control} style={styles.searchBar}>
-              <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
-              <TextInput
-                // Anchors the scoped :focus-visible ring in public/index.html — that
-                // rule targets only this one id, nothing else on the page.
-                nativeID="aecc-search-input"
-                testID="home.search"
-                value={search}
-                onChangeText={setSearch}
-                // Without this the browser defaults to autoComplete="on" (RNW's own
-                // default): Safari then offers a "previous entries for this field"
-                // suggestions dropdown on focus, which renders as an opaque box that
-                // can overlap whatever sits below the field (the gold CTA here).
-                autoComplete="off"
-                placeholder="Pesquisar empresas..."
-                placeholderTextColor={colors.textTertiary}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontFamily: fontFamily.body,
-                  fontSize: fontSize.md,
-                  color: colors.textPrimary,
-                }}
-              />
-            </GlassSurface>
-            <Button
-              testID="home.search-submit"
-              variant="gold"
-              fullWidth
-              onPress={() => goToCompanies({ search: search.trim() || undefined })}
-            >
-              Ver empresas
-            </Button>
-          </View>
-        </GlassSurface>
-      </View>
-
-      {loading ? (
-        <LoadingSpinner />
-      ) : error ? (
-        <View style={styles.errorWrap}>
-          <Icon name="warning-circle" size={18} color={colors.error} />
-          <Text
-            style={{
-              fontFamily: fontFamily.body,
-              fontSize: fontSize.base,
-              color: colors.error,
-              textAlign: 'center',
-            }}
-          >
-            {error}
-          </Text>
-          <Button variant="secondary" size="sm" onPress={load}>
-            Tentar novamente
-          </Button>
-        </View>
+      {error && !data ? (
+        <ErrorState testID="home.error" message={error} onRetry={load} />
       ) : (
-        <>
-          {/* ── Value props ────────────────────────────────────────────────── */}
-          <View style={styles.valueProps}>
-            {VALUE_PROPS.map((v) => (
-              <View key={v.icon} style={styles.valueProp}>
-                <GlassSurface radius={999} style={styles.valuePropWell}>
-                  <Icon name={v.icon} size={22} color={colors.accentText} />
-                </GlassSurface>
-                <Text
-                  style={{
-                    fontFamily: fontFamily.body,
-                    fontSize: fontSize['2xs'],
-                    fontWeight: fontWeight.semibold,
-                    color: colors.textSecondary,
-                    textAlign: 'center',
-                    lineHeight: fontSize['2xs'] * 1.3,
-                  }}
-                >
-                  {v.label}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* ── Categories ───────────────────────────────────────────────────── */}
-          <SectionHeader title="Categorias" onAction={() => goToCompanies()} />
-          <View style={[styles.grid, { paddingHorizontal: spacing[6] }]}>
-            {categories.slice(0, 8).map((c) => (
-              <View key={c.id} style={{ width: `${100 / numColumns}%`, padding: spacing[3] }}>
-                <CategoryTile
-                  slug={c.slug}
-                  label={c.name}
-                  onPress={() => goToCompanies({ categoryId: c.id, name: c.name })}
-                />
-              </View>
-            ))}
-          </View>
-
-          {/* ── Featured companies ───────────────────────────────────────────── */}
-          <SectionHeader title="Empresas em destaque" onAction={() => goToCompanies()} />
-          <View style={[styles.companyList, { paddingHorizontal: spacing[6], gap: spacing[5] }]}>
-            {companies.map((co) => (
-              <Card
-                key={co.id}
-                interactive
-                padding={10}
-                onPress={() => router.push(`/companies/${co.id}`)}
-                style={styles.companyRow}
-              >
-                {co.logoUrl ? (
-                  <Image
-                    source={{ uri: co.logoUrl }}
-                    style={[styles.companyLogo, { borderRadius: theme.radius.md }]}
-                  />
-                ) : (
-                  <View
-                    style={[
-                      styles.companyLogo,
-                      styles.companyLogoFallback,
-                      { backgroundColor: colors.surfaceSunken, borderRadius: theme.radius.md },
-                    ]}
-                  >
-                    <Icon name="storefront" size={20} color={colors.textTertiary} />
-                  </View>
-                )}
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontFamily: fontFamily.body,
-                      fontWeight: fontWeight.bold,
-                      fontSize: fontSize.base,
-                      color: colors.textPrimary,
-                    }}
-                  >
-                    {co.name}
-                  </Text>
-                  {!!co.locality && (
-                    <View style={styles.companyLocality}>
-                      <Icon name="house-line" size={11} color={colors.textTertiary} />
-                      <Text
-                        style={{
-                          fontFamily: fontFamily.body,
-                          fontSize: fontSize['2xs'],
-                          color: colors.textTertiary,
-                        }}
-                      >
-                        {co.locality}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <Icon name="caret-right" size={16} color={colors.textTertiary} />
-              </Card>
-            ))}
-          </View>
-        </>
+        sections
       )}
-    </ScrollView>
+    </ListScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 24 },
-  hero: { padding: 20, borderBottomWidth: 1 },
-  heroPanel: { alignItems: 'center', padding: 20 },
-  heroLogo: { marginBottom: 6 },
-  heroForm: { width: '100%', maxWidth: 320, marginTop: 20, gap: 10 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  errorWrap: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 48 },
-  valueProps: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingTop: 20 },
-  valueProp: { width: '25%', alignItems: 'center', gap: 7, paddingHorizontal: 4, marginBottom: 8 },
-  valuePropWell: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  companyList: { flexDirection: 'column', paddingBottom: 8 },
-  companyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  companyLogo: { width: 46, height: 46 },
-  companyLogoFallback: { alignItems: 'center', justifyContent: 'center' },
-  companyLocality: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
-});

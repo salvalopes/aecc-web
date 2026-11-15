@@ -24,7 +24,7 @@ export interface TabConfig {
   roles?: readonly UserRole[];
   testID: string;
   /**
-   * Raiz T3 (`ListScaffold`): o ecrã gere as próprias safe areas (o `Horizon` em cima, o
+   * Raiz com horizonte (`ListScaffold`: T3, T5, T6): o ecrã gere as próprias safe areas (o `Horizon` em cima, o
    * `paddingBottom` em baixo). Desliga o inset automático das NativeTabs no 1.º ScrollView.
    */
   managesInsets?: boolean;
@@ -39,6 +39,7 @@ export const TABS: readonly TabConfig[] = [
     md: 'home',
     icon: 'house-line',
     testID: 'tab.home',
+    managesInsets: true,
   },
   {
     name: 'companies',
@@ -58,6 +59,7 @@ export const TABS: readonly TabConfig[] = [
     md: 'account_circle',
     icon: 'user',
     testID: 'tab.profile',
+    managesInsets: true,
   },
   {
     name: 'my-companies',
