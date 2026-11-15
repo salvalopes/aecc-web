@@ -1,15 +1,20 @@
-import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useLayoutEffect, useRef, useState, startTransition } from 'react';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { Image, Linking, Pressable, StyleSheet, Text as RNText, View } from 'react-native';
+import { useEffect, useRef, useState, startTransition } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { useBreakpoint } from '@/theme/useBreakpoint';
 import { companiesApi } from '@/api/companies.api';
 import { productsApi } from '@/api/products.api';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, requiredWhen } from '@/utils/validators';
+import { confirmDestructive } from '@/utils/confirm';
+import { formatAddressLine } from '@/utils/address';
+import { absoluteUrl, displayDomain, mapsUrl, telUrl } from '@/utils/text';
 import type {
   Category,
   Company,
@@ -18,19 +23,45 @@ import type {
   ProductType,
   UpdateCompanyRequest,
 } from '@/types/api';
+// Formulários (editar empresa, novo produto): continuam no `Modal` até à B12 (T7).
+import { Chip, Icon, Input, Modal, Switch } from '@/components/ui';
 import {
   Button,
-  Chip,
-  Icon,
-  Badge,
-  Card,
-  Input,
-  Modal,
-  Switch,
   EmptyState,
   ErrorState,
-  LoadingSpinner,
-} from '@/components/ui';
+  InlineAlert,
+  ListGroup,
+  Plate,
+  Skeleton,
+  SkeletonRow,
+  StateScreen,
+  Text,
+} from '@/components/ds';
+import { DetailScaffold, DetailSection } from '@/components/templates/DetailScaffold';
+import { InfoGroup, type InfoItem } from '@/components/detail/InfoGroup';
+import { ProductRow } from '@/components/detail/ProductRow';
+
+// T4 Detalhe da empresa (B11). sm: identidade, ações do dono, contactos e depois "Sobre" e os
+// produtos. md+: identidade e contactos numa coluna fixa à esquerda (1fr), conteúdo à direita
+// (2fr). As ações do dono saíram do header do `Stack` para junto da identidade.
+const factory = createStyles(({ colors, spacing, size, radii }) => ({
+  identity: { gap: spacing.xs },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  plateSkeleton: {
+    width: size.plate.lg,
+    height: size.plate.lg,
+    borderRadius: radii.group,
+    borderCurve: 'continuous',
+    backgroundColor: colors.raised,
+  },
+  skeletonText: { gap: spacing.sm, marginTop: spacing.xl },
+}));
+
+const openExternal = (url: string) => {
+  Linking.openURL(url).catch(() => {
+    // Sem app para o esquema (ex.: `tel:` no simulador): não há nada a fazer aqui.
+  });
+};
 
 interface FormState {
   name: string;
@@ -57,82 +88,50 @@ const DEFAULT_PRODUCT_FORM: ProductFormState = {
   memberBenefitDescription: '',
 };
 
-function buildAddressLine(company: Company): string | null {
-  const parts = [
-    company.address,
-    company.postalCode,
-    company.postalCodeLocality ?? company.locality,
-  ].filter((part): part is string => !!part && part.trim().length > 0);
-  return parts.length > 0 ? parts.join(', ') : null;
-}
-
-function ProductItem({ product }: { product: Product }) {
-  const { colors, fontFamily, fontSize, fontWeight, spacing } = useTheme();
-
+function CompanyDetailSkeleton() {
+  const s = useStyles(factory);
+  const { spacing } = useTheme();
   return (
-    <Card
-      interactive
-      onPress={() => router.push(`/products/${product.id}`)}
-      style={styles.productCard}
-    >
-      <View style={[styles.productHeader, { gap: spacing[4] }]}>
-        <Text
-          style={{
-            fontFamily: fontFamily.display,
-            fontSize: fontSize.base,
-            fontWeight: fontWeight.bold,
-            color: colors.textPrimary,
-            flex: 1,
-          }}
-        >
-          {product.name}
-        </Text>
-        <Badge tone={product.type === 'Product' ? 'success' : 'info'}>
-          {product.type === 'Product' ? 'Produto' : 'Serviço'}
-        </Badge>
-      </View>
-      {!!product.description && (
-        <Text
-          style={{
-            fontFamily: fontFamily.body,
-            fontSize: fontSize.sm,
-            color: colors.textSecondary,
-          }}
-          numberOfLines={2}
-        >
-          {product.description}
-        </Text>
-      )}
-      {product.hasMemberBenefit && (
-        <View style={[styles.benefitTag, { marginTop: spacing[3], gap: spacing[2] }]}>
-          <Icon name="star" size={13} color={colors.accentText} />
-          <Text
-            style={{
-              fontFamily: fontFamily.body,
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.semibold,
-              color: colors.accentText,
-            }}
-          >
-            Benefício membro
-          </Text>
+    <DetailScaffold
+      overTabs
+      testID="company-detail.loading"
+      lead={
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <View style={s.plateSkeleton} />
+          <View style={s.skeletonText}>
+            <Skeleton width="72%" height={spacing['2xl']} />
+            <Skeleton width="44%" />
+          </View>
         </View>
-      )}
-    </Card>
+      }
+    >
+      <DetailSection label="PRODUTOS E SERVIÇOS">
+        <ListGroup>
+          {[0, 1, 2].map((i) => (
+            <SkeletonRow key={i} index={i} last={i === 2} />
+          ))}
+        </ListGroup>
+      </DetailSection>
+    </DetailScaffold>
   );
 }
 
 export default function CompanyDetailScreen() {
   const { id, edit } = useLocalSearchParams<{ id: string; edit?: string }>();
   const { user } = useAuth();
-  const navigation = useNavigation();
   const theme = useTheme();
-  const { colors, fontFamily, fontSize, fontWeight, spacing, radius, lineHeight } = theme;
+  const { colors, fontFamily, fontSize, fontWeight, spacing, radius } = theme;
+  const s = useStyles(factory);
+  const { isWide } = useBreakpoint();
 
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Começa a carregar: sem isto, o 1.º render (antes do efeito) mostrava o estado de erro.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -174,46 +173,11 @@ export default function CompanyDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, isOwner, edit]);
 
-  useLayoutEffect(() => {
-    if (isOwner) {
-      navigation.setOptions({
-        headerRight: () => (
-          <View style={styles.headerActions}>
-            <Pressable onPress={handleDelete} style={styles.headerBtn} hitSlop={8}>
-              <Text
-                style={{
-                  fontFamily: fontFamily.body,
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.error,
-                }}
-              >
-                Apagar
-              </Text>
-            </Pressable>
-            <Pressable onPress={openEdit} style={styles.headerBtn} hitSlop={8}>
-              <Text
-                style={{
-                  fontFamily: fontFamily.body,
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.accentText,
-                }}
-              >
-                Editar
-              </Text>
-            </Pressable>
-          </View>
-        ),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOwner, navigation]);
-
   async function load() {
     if (!id) return;
     setLoading(true);
     setError(null);
+    setNotFound(false);
     try {
       const [co, prods] = await Promise.all([
         companiesApi.get(id),
@@ -224,9 +188,10 @@ export default function CompanyDetailScreen() {
         setProducts(prods);
       });
     } catch (e) {
-      startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar empresa.'),
-      );
+      startTransition(() => {
+        setNotFound(e instanceof ApiError && e.status === 404);
+        setError(e instanceof ApiError ? e.message : 'Não foi possível carregar a empresa.');
+      });
     } finally {
       startTransition(() => setLoading(false));
     }
@@ -246,23 +211,24 @@ export default function CompanyDetailScreen() {
       .catch(() => {});
   }, [isOwner]);
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!company) return;
-    Alert.alert('Apagar empresa', `Tem a certeza que quer apagar "${company.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Apagar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await companiesApi.delete(company.id);
-            router.back();
-          } catch (e) {
-            Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar empresa.');
-          }
-        },
-      },
-    ]);
+    const confirmed = await confirmDestructive({
+      title: 'Apagar empresa',
+      message: `Tem a certeza que quer apagar "${company.name}"?`,
+      confirmLabel: 'Apagar',
+    });
+    if (!confirmed) return;
+    setActionError(null);
+    setDeleting(true);
+    try {
+      await companiesApi.delete(company.id);
+      router.back();
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : 'Não foi possível apagar a empresa.');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   function openEdit() {
@@ -379,19 +345,29 @@ export default function CompanyDetailScreen() {
     }
   }
 
-  if (loading && !company) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.surfaceApp }]}>
-        <LoadingSpinner />
-      </View>
-    );
-  }
+  if (loading && !company) return <CompanyDetailSkeleton />;
 
-  if (error || !company) {
+  if (!company) {
+    if (notFound) {
+      return (
+        <StateScreen
+          testID="company-detail.not-found"
+          icon="magnifying-glass"
+          title="Empresa não encontrada"
+          description="A empresa pode ter saído do diretório ou o endereço está errado."
+          actionLabel="Ver o diretório"
+          onAction={() => router.replace('/companies')}
+        />
+      );
+    }
     return (
-      <View style={[styles.center, { backgroundColor: colors.surfaceApp }]}>
-        <ErrorState message={error ?? 'Empresa não encontrada.'} onRetry={load} />
-      </View>
+      <DetailScaffold overTabs>
+        <ErrorState
+          testID="company-detail.error"
+          message={error ?? 'Não foi possível carregar a empresa.'}
+          onRetry={load}
+        />
+      </DetailScaffold>
     );
   }
 
@@ -407,133 +383,179 @@ export default function CompanyDetailScreen() {
     marginTop: 16,
     marginBottom: 6,
   };
-  const profileFields = [
-    { label: 'Atividade', value: company.caeDescription },
-    { label: 'Telefone', value: company.phone },
-    { label: 'Email', value: company.contactEmail },
-    { label: 'Website', value: company.website },
-    { label: 'Morada', value: buildAddressLine(company) },
-  ].filter((f): f is { label: string; value: string } => !!f.value);
+
+  const title = company.tradeName ?? company.name;
+  const address = formatAddressLine(company);
+  const contacts: InfoItem[] = [];
+  if (company.phone) {
+    const phone = company.phone;
+    contacts.push({
+      key: 'phone',
+      icon: 'phone',
+      label: 'Telefone',
+      value: phone,
+      tabular: true,
+      onPress: () => openExternal(telUrl(phone)),
+      accessibilityLabel: `Ligar para ${title}, ${phone}`,
+      testID: 'company-detail.phone',
+    });
+  }
+  if (company.contactEmail) {
+    const email = company.contactEmail;
+    contacts.push({
+      key: 'email',
+      icon: 'envelope-simple',
+      label: 'Email',
+      value: email,
+      onPress: () => openExternal(`mailto:${email}`),
+      accessibilityLabel: `Enviar email para ${title}, ${email}`,
+      testID: 'company-detail.email',
+    });
+  }
+  if (company.website) {
+    const site = company.website;
+    contacts.push({
+      key: 'website',
+      icon: 'globe',
+      label: 'Site',
+      value: displayDomain(site),
+      onPress: () => openExternal(absoluteUrl(site)),
+      accessibilityLabel: `Abrir o site de ${title}, ${displayDomain(site)}`,
+      testID: 'company-detail.website',
+    });
+  }
+  if (address) {
+    contacts.push({
+      key: 'address',
+      icon: 'map-pin',
+      label: 'Morada',
+      value: address,
+      onPress: () => openExternal(mapsUrl(address)),
+      accessibilityLabel: `Ver no mapa: ${address}`,
+      testID: 'company-detail.address',
+    });
+  }
+
+  const lead = (
+    <>
+      <Plate company={company} size="lg" />
+      <View style={s.identity}>
+        <Text variant="title" testID="company-detail.title" accessibilityRole="header">
+          {title}
+        </Text>
+        {company.tradeName && company.tradeName !== company.name ? (
+          <Text variant="meta">{company.name}</Text>
+        ) : null}
+        {company.caeDescription ? (
+          <Text variant="meta" color="text3">
+            {company.caeDescription}
+          </Text>
+        ) : null}
+      </View>
+      {isOwner ? (
+        <View style={s.actions}>
+          <Button
+            testID="company-detail.edit"
+            label="Editar"
+            variant="secondary"
+            size="sm"
+            onPress={openEdit}
+          />
+          <Button
+            testID="company-detail.delete"
+            label="Apagar"
+            variant="destructive"
+            size="sm"
+            loading={deleting}
+            onPress={handleDelete}
+          />
+        </View>
+      ) : null}
+      {actionError ? (
+        <InlineAlert tone="error" message={actionError} testID="company-detail.action-error" />
+      ) : null}
+      {contacts.length > 0 ? <InfoGroup items={contacts} testID="company-detail.contacts" /> : null}
+    </>
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceApp }]}>
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ProductItem product={item} />}
-        ListHeaderComponent={
-          <View>
-            <View
-              style={[
-                styles.hero,
-                {
-                  backgroundColor: colors.surfaceCard,
-                  borderBottomColor: colors.borderSubtle,
-                  padding: spacing[9],
-                },
-              ]}
-            >
-              {!!currentLogoUri && (
-                <Image
-                  source={{ uri: currentLogoUri }}
-                  style={[styles.logo, { borderRadius: radius.md, marginBottom: spacing[6] }]}
-                />
-              )}
-              <Text
-                testID="company-detail.title"
-                style={{
-                  fontFamily: fontFamily.display,
-                  fontSize: fontSize.xl,
-                  fontWeight: fontWeight.black,
-                  color: colors.textPrimary,
-                  marginBottom: spacing[3],
-                }}
-              >
-                {company.name}
-              </Text>
-              {!!company.tradeName && (
-                <Text
-                  style={{
-                    fontFamily: fontFamily.body,
-                    fontSize: fontSize.base,
-                    color: colors.textSecondary,
-                    marginBottom: spacing[3],
-                  }}
-                >
-                  {company.tradeName}
-                </Text>
-              )}
-              {!!company.description && (
-                <Text
-                  style={{
-                    fontFamily: fontFamily.body,
-                    fontSize: fontSize.base,
-                    lineHeight: fontSize.base * lineHeight.normal,
-                    color: colors.textSecondary,
-                    marginBottom: spacing[4],
-                  }}
-                >
-                  {company.description}
-                </Text>
-              )}
-              {profileFields.length > 0 && (
-                <View style={{ gap: spacing[3], marginBottom: spacing[4] }}>
-                  {profileFields.map((f) => (
-                    <Text
-                      key={f.label}
-                      style={{
-                        fontFamily: fontFamily.body,
-                        fontSize: fontSize.sm,
-                        color: colors.textSecondary,
-                      }}
-                    >
-                      <Text style={{ fontWeight: fontWeight.semibold, color: colors.textPrimary }}>
-                        {f.label}:{' '}
-                      </Text>
-                      {f.value}
-                    </Text>
-                  ))}
-                </View>
-              )}
-              <Text
-                style={{
-                  fontFamily: fontFamily.body,
-                  fontSize: fontSize.xs,
-                  color: colors.textTertiary,
-                }}
-              >
-                Cooldown leads: {company.leadCooldownMinutes} min
-              </Text>
-            </View>
-            <Text
-              style={[
-                styles.sectionTitle,
-                {
-                  fontFamily: fontFamily.body,
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.bold,
-                  color: colors.textSecondary,
-                  paddingHorizontal: spacing[8],
-                  paddingTop: spacing[9],
-                  paddingBottom: spacing[4],
-                },
-              ]}
-            >
-              Produtos e Serviços
-            </Text>
-          </View>
-        }
-        ListEmptyComponent={<EmptyState message="Sem produtos para esta empresa." />}
-        contentContainerStyle={styles.list}
+    <View style={styles.container}>
+      <DetailScaffold
+        overTabs
+        testID="company-detail.screen"
+        lead={lead}
         refreshing={loading}
         onRefresh={load}
-      />
+      >
+        {company.description ? (
+          <DetailSection label="SOBRE">
+            <Text variant="body" color="text2">
+              {company.description}
+            </Text>
+          </DetailSection>
+        ) : null}
 
-      {isOwner && (
-        <Button onPress={openCreateProduct} style={styles.fab}>
-          + Novo Produto
-        </Button>
-      )}
+        <DetailSection
+          label={`PRODUTOS E SERVIÇOS · ${products.length}`}
+          action={
+            isOwner ? (
+              <Button
+                testID="company-detail.create-product"
+                label="Novo produto"
+                size="sm"
+                onPress={openCreateProduct}
+              />
+            ) : undefined
+          }
+        >
+          <ListGroup>
+            {products.length === 0 ? (
+              <EmptyState
+                testID="company-detail.products-empty"
+                align="start"
+                icon="basket"
+                title="Ainda sem produtos ou serviços"
+                description={
+                  isOwner
+                    ? 'Usa "Novo produto" para publicar o primeiro.'
+                    : 'Esta empresa ainda não publicou produtos ou serviços.'
+                }
+              />
+            ) : (
+              products.map((p, i) => (
+                <ProductRow
+                  key={p.id}
+                  product={p}
+                  last={i === products.length - 1}
+                  density={isWide ? 'compact' : 'regular'}
+                  onPress={() => router.push(`/products/${p.id}`)}
+                />
+              ))
+            )}
+          </ListGroup>
+        </DetailSection>
+
+        {isOwner ? (
+          <DetailSection label="PEDIDOS DE CONTACTO">
+            <InfoGroup
+              testID="company-detail.leads"
+              items={[
+                {
+                  key: 'lead-email',
+                  label: 'Email de destino',
+                  value: company.leadDestinationEmail,
+                },
+                {
+                  key: 'lead-cooldown',
+                  label: 'Intervalo mínimo entre pedidos',
+                  value: `${company.leadCooldownMinutes} min`,
+                  tabular: true,
+                },
+              ]}
+            />
+          </DetailSection>
+        ) : null}
+      </DetailScaffold>
 
       <Modal
         visible={modalVisible}
@@ -552,15 +574,15 @@ export default function CompanyDetailScreen() {
               marginBottom: spacing[6],
             }}
           >
-            <Text
+            <RNText
               style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}
             >
               {formError}
-            </Text>
+            </RNText>
           </View>
         )}
 
-        <Text
+        <RNText
           style={{
             fontFamily: fontFamily.body,
             fontSize: fontSize.sm,
@@ -570,7 +592,7 @@ export default function CompanyDetailScreen() {
           }}
         >
           Logo
-        </Text>
+        </RNText>
         <Pressable
           testID="company-edit.logo-upload"
           style={[
@@ -591,7 +613,7 @@ export default function CompanyDetailScreen() {
           ) : (
             <>
               <Icon name="image-square" size={20} color={colors.textTertiary} />
-              <Text
+              <RNText
                 style={{
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.sm,
@@ -601,13 +623,13 @@ export default function CompanyDetailScreen() {
                 }}
               >
                 Escolher imagem…
-              </Text>
+              </RNText>
             </>
           )}
         </Pressable>
         {!!currentLogoUri && (
           <Pressable onPress={pickLogo} style={{ marginTop: spacing[4] }}>
-            <Text
+            <RNText
               style={{
                 fontFamily: fontFamily.body,
                 fontSize: fontSize.sm,
@@ -615,7 +637,7 @@ export default function CompanyDetailScreen() {
               }}
             >
               Alterar logo
-            </Text>
+            </RNText>
           </Pressable>
         )}
 
@@ -675,17 +697,17 @@ export default function CompanyDetailScreen() {
               marginBottom: spacing[6],
             }}
           >
-            <Text
+            <RNText
               style={{ fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.error }}
             >
               {productFormError}
-            </Text>
+            </RNText>
           </View>
         )}
 
-        <Text style={productLabelStyle}>Categoria *</Text>
+        <RNText style={productLabelStyle}>Categoria *</RNText>
         {productFieldErrors.categoryId && (
-          <Text
+          <RNText
             style={{
               fontFamily: fontFamily.body,
               fontSize: fontSize.xs,
@@ -694,7 +716,7 @@ export default function CompanyDetailScreen() {
             }}
           >
             {productFieldErrors.categoryId}
-          </Text>
+          </RNText>
         )}
         {flatCategories.map((cat) => {
           const selected = productForm.categoryId === cat.id;
@@ -710,7 +732,7 @@ export default function CompanyDetailScreen() {
               ]}
               onPress={() => setProductForm((f) => ({ ...f, categoryId: cat.id }))}
             >
-              <Text
+              <RNText
                 style={{
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.base,
@@ -719,13 +741,13 @@ export default function CompanyDetailScreen() {
                 }}
               >
                 {cat.name}
-              </Text>
+              </RNText>
               {selected && <Icon name="check" size={16} color={colors.accentText} />}
             </Pressable>
           );
         })}
 
-        <Text style={productLabelStyle}>Tipo *</Text>
+        <RNText style={productLabelStyle}>Tipo *</RNText>
         <View style={styles.typeToggle}>
           {(['Product', 'Service'] as const).map((t) => (
             <Chip
@@ -761,7 +783,7 @@ export default function CompanyDetailScreen() {
         />
 
         <View style={styles.switchRow}>
-          <Text
+          <RNText
             style={{
               fontFamily: fontFamily.body,
               fontSize: fontSize.sm,
@@ -770,7 +792,7 @@ export default function CompanyDetailScreen() {
             }}
           >
             Tem benefício para membros
-          </Text>
+          </RNText>
           <Switch
             value={productForm.hasMemberBenefit}
             onValueChange={(v) => setProductForm((f) => ({ ...f, hasMemberBenefit: v }))}
@@ -796,18 +818,9 @@ export default function CompanyDetailScreen() {
   );
 }
 
+// Só os formulários (`Modal`) usam estes estilos; saem com a B12 (T7).
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  hero: { borderBottomWidth: 1, alignItems: 'flex-start' },
-  logo: { width: 64, height: 64 },
-  sectionTitle: { textTransform: 'uppercase', letterSpacing: 0.5 },
-  list: { paddingBottom: 24 },
-  productCard: { marginHorizontal: 12, marginBottom: 8 },
-  productHeader: { flexDirection: 'row', alignItems: 'center' },
-  benefitTag: { flexDirection: 'row', alignItems: 'center' },
-  headerActions: { flexDirection: 'row' },
-  headerBtn: { paddingHorizontal: 12, paddingVertical: 6 },
   logoPicker: {
     width: 100,
     height: 100,
@@ -818,7 +831,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   logoPreview: { width: 100, height: 100 },
-  fab: { position: 'absolute', bottom: 24, right: 20 },
   pickerOption: {
     flexDirection: 'row',
     alignItems: 'center',

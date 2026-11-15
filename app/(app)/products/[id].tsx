@@ -1,25 +1,32 @@
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useLayoutEffect, useState, startTransition } from 'react';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { Image, Pressable, ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
+import { useEffect, useState, startTransition } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { useBreakpoint } from '@/theme/useBreakpoint';
+// Formulário de edição: continua no `Modal` até à B12 (T7).
+import { Icon, Button as LegacyButton, Input, Switch, Chip, Modal } from '@/components/ui';
 import {
-  Icon,
   Button,
-  IconButton,
-  Input,
-  Switch,
-  Chip,
-  Badge,
-  Modal,
+  CompanyRow,
   ErrorState,
-  LoadingSpinner,
-} from '@/components/ui';
+  InlineAlert,
+  ListGroup,
+  Skeleton,
+  StateScreen,
+  Text,
+} from '@/components/ds';
+import { DetailScaffold, DetailSection } from '@/components/templates/DetailScaffold';
+import { InfoGroup } from '@/components/detail/InfoGroup';
+import { GalleryPlaceholder, ProductGallery } from '@/components/detail/ProductGallery';
+import { productTypeLabel } from '@/components/detail/ProductRow';
 import { productsApi } from '@/api/products.api';
 import { companiesApi } from '@/api/companies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
+import { confirmDestructive } from '@/utils/confirm';
 import { ImageLightbox } from '@/components/ImageLightbox';
 import type {
   Product,
@@ -39,17 +46,70 @@ interface FormState {
   memberBenefitDescription: string;
 }
 
+// T4 Detalhe do produto (B11). sm: galeria (se houver imagens) e depois a informação.
+// md+: galeria à esquerda (3fr, fixa no web) e informação à direita (2fr). As ações do dono
+// saíram do header do `Stack` para junto do título.
+const factory = createStyles(({ colors, spacing, radii }) => ({
+  identity: { gap: spacing.xs },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  benefit: {
+    gap: spacing.xs,
+    padding: spacing.lg,
+    borderRadius: radii.group,
+    borderCurve: 'continuous',
+    backgroundColor: colors.accentSoft,
+  },
+  benefitHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  benefitText: { color: colors.accentSoftText },
+  mediaSkeleton: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: radii.group,
+    borderCurve: 'continuous',
+    backgroundColor: colors.raised,
+  },
+  skeletonText: { gap: spacing.sm },
+}));
+
+function ProductDetailSkeleton() {
+  const s = useStyles(factory);
+  const { spacing } = useTheme();
+  return (
+    <DetailScaffold
+      testID="product-detail.loading"
+      leadFlex={3}
+      lead={<View style={s.mediaSkeleton} />}
+    >
+      <View
+        style={s.skeletonText}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Skeleton width="24%" />
+        <Skeleton width="80%" height={spacing['2xl']} />
+        <Skeleton width="92%" />
+        <Skeleton width="64%" />
+      </View>
+    </DetailScaffold>
+  );
+}
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const navigation = useNavigation();
   const theme = useTheme();
+  const s = useStyles(factory);
+  const { isWide } = useBreakpoint();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Começa a carregar: sem isto, o 1.º render (antes do efeito) mostrava o estado de erro.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -62,29 +122,18 @@ export default function ProductDetailScreen() {
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [galleryError, setGalleryError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const isOwner = !!user && !!company && company.ownerUserId === user.id;
 
-  useLayoutEffect(() => {
-    if (isOwner) {
-      navigation.setOptions({
-        headerRight: () => (
-          <View style={styles.headerActions}>
-            <IconButton icon="pencil-simple" label="Editar" onPress={openEdit} />
-            <IconButton icon="trash" label="Apagar" tone="danger" onPress={handleDelete} />
-          </View>
-        ),
-      });
-    }
-  }, [isOwner, navigation]);
-
   async function load() {
     if (!id) return;
     setLoading(true);
     setError(null);
+    setNotFound(false);
     try {
       const prod = await productsApi.get(id);
       const [co, cats] = await Promise.all([
@@ -97,9 +146,10 @@ export default function ProductDetailScreen() {
         setCategories(cats);
       });
     } catch (e) {
-      startTransition(() =>
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar produto.'),
-      );
+      startTransition(() => {
+        setNotFound(e instanceof ApiError && e.status === 404);
+        setError(e instanceof ApiError ? e.message : 'Não foi possível carregar o produto.');
+      });
     } finally {
       startTransition(() => setLoading(false));
     }
@@ -120,26 +170,28 @@ export default function ProductDetailScreen() {
       memberBenefitDescription: product.memberBenefitDescription ?? '',
     });
     setFormError(null);
+    setGalleryError(null);
     setModalVisible(true);
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!product) return;
-    Alert.alert('Apagar produto', `Tem a certeza que quer apagar "${product.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Apagar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await productsApi.delete(product.id);
-            router.back();
-          } catch (e) {
-            Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar produto.');
-          }
-        },
-      },
-    ]);
+    const confirmed = await confirmDestructive({
+      title: 'Apagar produto',
+      message: `Tem a certeza que quer apagar "${product.name}"?`,
+      confirmLabel: 'Apagar',
+    });
+    if (!confirmed) return;
+    setActionError(null);
+    setDeleting(true);
+    try {
+      await productsApi.delete(product.id);
+      router.back();
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : 'Não foi possível apagar o produto.');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function handleSave() {
@@ -185,6 +237,7 @@ export default function ProductDetailScreen() {
 
     const asset = result.assets[0];
 
+    setGalleryError(null);
     setUploadingImage(true);
     try {
       const newImage = await productsApi.addImage(id!, asset);
@@ -192,7 +245,7 @@ export default function ProductDetailScreen() {
         setProduct((prev) => (prev ? { ...prev, images: [...prev.images, newImage] } : prev)),
       );
     } catch (e) {
-      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao enviar imagem.');
+      setGalleryError(e instanceof ApiError ? e.message : 'Não foi possível enviar a imagem.');
     } finally {
       setUploadingImage(false);
     }
@@ -200,6 +253,7 @@ export default function ProductDetailScreen() {
 
   async function handleFeatureImage(img: ProductImage) {
     if (!product) return;
+    setGalleryError(null);
     try {
       await productsApi.featureImage(product.id, img.id);
       startTransition(() =>
@@ -214,12 +268,13 @@ export default function ProductDetailScreen() {
         ),
       );
     } catch (e) {
-      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao marcar imagem.');
+      setGalleryError(e instanceof ApiError ? e.message : 'Não foi possível destacar a imagem.');
     }
   }
 
   async function handleDeleteImage(img: ProductImage) {
     if (!product) return;
+    setGalleryError(null);
     setDeletingImageId(img.id);
     try {
       await productsApi.deleteImage(product.id, img.id);
@@ -232,7 +287,7 @@ export default function ProductDetailScreen() {
         }),
       );
     } catch (e) {
-      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Erro ao apagar imagem.');
+      setGalleryError(e instanceof ApiError ? e.message : 'Não foi possível apagar a imagem.');
     } finally {
       setDeletingImageId(null);
     }
@@ -253,197 +308,126 @@ export default function ProductDetailScreen() {
     marginBottom: 6,
   };
 
-  if (loading && !product) {
+  if (loading && !product) return <ProductDetailSkeleton />;
+
+  if (!product) {
+    if (notFound) {
+      return (
+        <StateScreen
+          testID="product-detail.not-found"
+          icon="magnifying-glass"
+          title="Produto não encontrado"
+          description="O produto pode ter sido retirado pela empresa ou o endereço está errado."
+          actionLabel="Ver o diretório"
+          onAction={() => router.replace('/companies')}
+        />
+      );
+    }
     return (
-      <View style={[styles.center, { backgroundColor: theme.colors.surfaceApp }]}>
-        <LoadingSpinner />
-      </View>
+      <DetailScaffold>
+        <ErrorState
+          testID="product-detail.error"
+          message={error ?? 'Não foi possível carregar o produto.'}
+          onRetry={load}
+        />
+      </DetailScaffold>
     );
   }
 
-  if (error || !product) {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.surfaceApp }]}>
-        <ErrorState message={error ?? 'Produto não encontrado.'} onRetry={load} />
-      </View>
-    );
-  }
+  const hasImages = product.images.length > 0;
+  const lead = hasImages ? (
+    <ProductGallery images={product.images} onOpen={setLightboxIndex} />
+  ) : isWide ? (
+    <GalleryPlaceholder service={product.type === 'Service'} />
+  ) : undefined;
+
+  const details = currentCategory
+    ? [{ key: 'category', label: 'Categoria', value: currentCategory.name }]
+    : [];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surfaceApp }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Gallery — presentation only, no edit controls.
-            A plain ScrollView (not FlatList) avoids nesting a virtualized
-            list inside the outer vertical ScrollView, which left stale
-            rows on screen after the image count shrank (e.g. delete). */}
-        {product.images.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gallery}>
-            {product.images.map((item, index) => (
-              <Pressable
-                key={item.id}
-                style={styles.galleryItemWrap}
-                onPress={() => setLightboxIndex(index)}
-              >
-                <Image source={{ uri: item.imageUrl }} style={styles.galleryImage} />
-                {item.isFeatured && (
-                  <View
-                    style={[
-                      styles.featuredBadge,
-                      { backgroundColor: theme.colors.featured, borderRadius: theme.radius.xs },
-                    ]}
-                  >
-                    <Icon name="star" size={13} color="#403000" />
-                  </View>
-                )}
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
-
-        <View
-          style={[
-            styles.hero,
-            {
-              backgroundColor: theme.colors.surfaceCard,
-              borderBottomColor: theme.colors.borderSubtle,
-            },
-          ]}
-        >
-          <View style={styles.heroHeader}>
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.display,
-                fontSize: theme.fontSize.xl,
-                fontWeight: theme.fontWeight.black,
-                color: theme.colors.textPrimary,
-                flex: 1,
-              }}
-            >
-              {product.name}
-            </Text>
-            <Badge tone={product.type === 'Product' ? 'success' : 'info'}>
-              {product.type === 'Product' ? 'Produto' : 'Serviço'}
-            </Badge>
-          </View>
-          {!!product.description && (
-            <Text
-              style={{
-                fontFamily: theme.fontFamily.body,
-                fontSize: theme.fontSize.base,
-                color: theme.colors.textSecondary,
-                lineHeight: theme.fontSize.base * theme.lineHeight.normal,
-              }}
-            >
-              {product.description}
-            </Text>
-          )}
-        </View>
-
-        <View style={[styles.section, { backgroundColor: theme.colors.surfaceCard }]}>
-          <Text
-            style={{
-              fontFamily: theme.fontFamily.body,
-              fontSize: theme.fontSize.xs,
-              fontWeight: theme.fontWeight.bold,
-              color: theme.colors.textTertiary,
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              marginBottom: 12,
-            }}
-          >
-            Detalhes
+    <View style={styles.container}>
+      <DetailScaffold
+        testID="product-detail.screen"
+        lead={lead}
+        leadFlex={3}
+        refreshing={loading}
+        onRefresh={load}
+      >
+        <View style={s.identity}>
+          <Text variant="label" color="accentText">
+            {productTypeLabel(product).toUpperCase()}
           </Text>
-
-          {currentCategory && (
-            <View style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}>
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.body,
-                  fontSize: theme.fontSize.base,
-                  color: theme.colors.textSecondary,
-                }}
-              >
-                Categoria
-              </Text>
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.body,
-                  fontSize: theme.fontSize.base,
-                  color: theme.colors.textPrimary,
-                  fontWeight: theme.fontWeight.medium,
-                }}
-              >
-                {currentCategory.name}
-              </Text>
-            </View>
-          )}
-
-          {company && (
-            <Pressable
-              style={[styles.detailRow, { borderBottomColor: theme.colors.borderSubtle }]}
-              onPress={() => router.push(`/companies/${company.id}`)}
-            >
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.body,
-                  fontSize: theme.fontSize.base,
-                  color: theme.colors.textSecondary,
-                }}
-              >
-                Empresa
-              </Text>
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.body,
-                  fontSize: theme.fontSize.base,
-                  color: theme.colors.textLink,
-                  fontWeight: theme.fontWeight.medium,
-                }}
-              >
-                {company.name}
-              </Text>
-            </Pressable>
-          )}
-
-          {product.hasMemberBenefit && (
-            <View
-              style={[
-                styles.benefitBox,
-                {
-                  backgroundColor: theme.colors.infoBg,
-                  borderLeftColor: theme.colors.accentPrimary,
-                },
-              ]}
-            >
-              <View style={styles.benefitTitleRow}>
-                <Icon name="star" size={14} color={theme.colors.accentText} />
-                <Text
-                  style={{
-                    fontFamily: theme.fontFamily.body,
-                    fontSize: theme.fontSize.base,
-                    fontWeight: theme.fontWeight.bold,
-                    color: theme.colors.accentText,
-                  }}
-                >
-                  Benefício para membros
-                </Text>
-              </View>
-              {!!product.memberBenefitDescription && (
-                <Text
-                  style={{
-                    fontFamily: theme.fontFamily.body,
-                    fontSize: theme.fontSize.sm,
-                    color: theme.colors.textSecondary,
-                    lineHeight: theme.fontSize.sm * theme.lineHeight.normal,
-                  }}
-                >
-                  {product.memberBenefitDescription}
-                </Text>
-              )}
-            </View>
-          )}
+          <Text variant="title" testID="product-detail.title" accessibilityRole="header">
+            {product.name}
+          </Text>
         </View>
-      </ScrollView>
+
+        {isOwner ? (
+          <View style={s.actions}>
+            <Button
+              testID="product-detail.edit"
+              label="Editar"
+              variant="secondary"
+              size="sm"
+              onPress={openEdit}
+            />
+            <Button
+              testID="product-detail.delete"
+              label="Apagar"
+              variant="destructive"
+              size="sm"
+              loading={deleting}
+              onPress={handleDelete}
+            />
+          </View>
+        ) : null}
+        {actionError ? (
+          <InlineAlert tone="error" message={actionError} testID="product-detail.action-error" />
+        ) : null}
+
+        {product.description ? (
+          <Text variant="body" color="text2">
+            {product.description}
+          </Text>
+        ) : null}
+
+        {product.hasMemberBenefit ? (
+          <View style={s.benefit} testID="product-detail.benefit">
+            <View style={s.benefitHead}>
+              <Icon name="star" size={theme.size.icon.sm} color={theme.colors.accentSoftText} />
+              <Text variant="label" style={s.benefitText}>
+                BENEFÍCIO PARA MEMBROS
+              </Text>
+            </View>
+            {product.memberBenefitDescription ? (
+              <Text variant="body" style={s.benefitText}>
+                {product.memberBenefitDescription}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {company ? (
+          <DetailSection label="EMPRESA">
+            <ListGroup>
+              <CompanyRow
+                testID="product-detail.company"
+                company={company}
+                last
+                density={isWide ? 'compact' : 'regular'}
+                onPress={() => router.push(`/companies/${company.id}`)}
+              />
+            </ListGroup>
+          </DetailSection>
+        ) : null}
+
+        {details.length > 0 ? (
+          <DetailSection label="DETALHES">
+            <InfoGroup items={details} testID="product-detail.details" />
+          </DetailSection>
+        ) : null}
+      </DetailScaffold>
 
       <Modal
         visible={modalVisible}
@@ -462,7 +446,7 @@ export default function ProductDetailScreen() {
               marginBottom: 12,
             }}
           >
-            <Text
+            <RNText
               style={{
                 fontFamily: theme.fontFamily.body,
                 fontSize: theme.fontSize.sm,
@@ -470,11 +454,11 @@ export default function ProductDetailScreen() {
               }}
             >
               {formError}
-            </Text>
+            </RNText>
           </View>
         )}
 
-        <Text style={labelStyle}>Categoria *</Text>
+        <RNText style={labelStyle}>Categoria *</RNText>
         {flatCategories.map((cat) => {
           const selected = form.categoryId === cat.id;
           return (
@@ -489,7 +473,7 @@ export default function ProductDetailScreen() {
               ]}
               onPress={() => setForm((f) => ({ ...f, categoryId: cat.id }))}
             >
-              <Text
+              <RNText
                 style={{
                   fontFamily: theme.fontFamily.body,
                   fontSize: theme.fontSize.base,
@@ -498,13 +482,13 @@ export default function ProductDetailScreen() {
                 }}
               >
                 {cat.name}
-              </Text>
+              </RNText>
               {selected && <Icon name="check" size={16} color={theme.colors.accentText} />}
             </Pressable>
           );
         })}
 
-        <Text style={labelStyle}>Tipo *</Text>
+        <RNText style={labelStyle}>Tipo *</RNText>
         <View style={styles.typeToggle}>
           {(['Product', 'Service'] as const).map((t) => (
             <Chip
@@ -537,7 +521,7 @@ export default function ProductDetailScreen() {
         />
 
         <View style={styles.switchRow}>
-          <Text
+          <RNText
             style={{
               fontFamily: theme.fontFamily.body,
               fontSize: theme.fontSize.sm,
@@ -546,7 +530,7 @@ export default function ProductDetailScreen() {
             }}
           >
             Tem benefício para membros
-          </Text>
+          </RNText>
           <Switch
             value={form.hasMemberBenefit}
             onValueChange={(v) => setForm((f) => ({ ...f, hasMemberBenefit: v }))}
@@ -564,7 +548,10 @@ export default function ProductDetailScreen() {
           />
         )}
 
-        <Text style={labelStyle}>Galeria de imagens</Text>
+        <RNText style={labelStyle}>Galeria de imagens</RNText>
+        {galleryError ? (
+          <InlineAlert tone="error" message={galleryError} testID="product-edit.gallery-error" />
+        ) : null}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -583,32 +570,38 @@ export default function ProductDetailScreen() {
                 <View
                   style={[
                     styles.featuredBadgeSmall,
-                    { backgroundColor: theme.colors.featured, borderRadius: theme.radius.xs },
+                    { backgroundColor: theme.colors.accent, borderRadius: theme.radius.xs },
                   ]}
                 >
-                  <Icon name="star" size={11} color="#403000" />
+                  <Icon name="star" size={11} color={theme.colors.onAccent} />
                 </View>
               )}
               <View style={styles.compactActions}>
                 {!img.isFeatured && (
                   <Pressable
-                    style={[styles.compactActionBtn, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Destacar esta imagem"
+                    style={[styles.compactActionBtn, { backgroundColor: theme.colors.surface }]}
                     onPress={() => handleFeatureImage(img)}
                     hitSlop={4}
                   >
-                    <Icon name="star" size={12} color="#fff" />
+                    <Icon name="star" size={12} color={theme.colors.text} />
                   </Pressable>
                 )}
                 <Pressable
-                  style={[styles.compactActionBtn, { backgroundColor: theme.colors.error }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Apagar esta imagem"
+                  style={[styles.compactActionBtn, { backgroundColor: theme.colors.errorBg }]}
                   onPress={() => handleDeleteImage(img)}
                   disabled={deletingImageId === img.id}
                   hitSlop={4}
                 >
                   {deletingImageId === img.id ? (
-                    <Text style={{ color: '#fff', fontSize: theme.fontSize['2xs'] }}>…</Text>
+                    <RNText style={{ color: theme.colors.error, fontSize: theme.fontSize['2xs'] }}>
+                      …
+                    </RNText>
                   ) : (
-                    <Icon name="x" size={12} color="#fff" />
+                    <Icon name="x" size={12} color={theme.colors.error} />
                   )}
                 </Pressable>
               </View>
@@ -616,7 +609,7 @@ export default function ProductDetailScreen() {
           ))}
         </ScrollView>
 
-        <Button
+        <LegacyButton
           variant="secondary"
           size="sm"
           onPress={handleAddImage}
@@ -625,7 +618,7 @@ export default function ProductDetailScreen() {
           style={styles.addImageBtn}
         >
           {product.images.length >= 15 ? 'Máx. 15 imagens' : '+ Adicionar imagem'}
-        </Button>
+        </LegacyButton>
       </Modal>
 
       <ImageLightbox
@@ -638,43 +631,10 @@ export default function ProductDetailScreen() {
   );
 }
 
+// Só o formulário (`Modal`) usa estes estilos; saem com a B12 (T7).
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  scrollContent: { paddingBottom: 40 },
-
-  gallery: { backgroundColor: '#000' },
-  galleryItemWrap: { position: 'relative', marginRight: 2 },
-  galleryImage: { width: 320, height: 320 },
-  featuredBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
   addImageBtn: { marginTop: 12 },
-
-  hero: {
-    padding: 20,
-    borderBottomWidth: 1,
-  },
-  heroHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8 },
-  section: { marginTop: 12, padding: 16 },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  benefitBox: {
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-    borderLeftWidth: 3,
-  },
-  benefitTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  headerActions: { flexDirection: 'row', gap: 4 },
 
   compactGallery: { marginTop: 8 },
   compactGalleryContent: { gap: 10, paddingRight: 4 },

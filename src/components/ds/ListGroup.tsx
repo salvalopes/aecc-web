@@ -37,6 +37,9 @@ const factory = createStyles(({ colors, border, size, spacing }) => ({
     height: border.hairline,
     backgroundColor: colors.border,
   },
+  // …depois de um ícone (16 + 20 + 12) ou alinhada com o texto, sem nada à esquerda (16)
+  ruleIcon: { left: spacing.lg + size.icon.md + spacing.md },
+  ruleText: { left: spacing.lg },
 }));
 
 export interface ListRowProps extends ViewProps {
@@ -46,6 +49,8 @@ export interface ListRowProps extends ViewProps {
   chevron?: boolean;
   /** `compact`: linha de 64 (web `md+`); `regular`: 72 (mobile). */
   density?: 'regular' | 'compact';
+  /** Onde começa a hairline: depois do `plate` (omissão), de um `icon` ou do início do `text`. */
+  inset?: 'plate' | 'icon' | 'text';
 }
 
 // O RNW passa `hovered` ao callback de estilo; no nativo não existe (hover só no web).
@@ -57,6 +62,7 @@ export function ListRow({
   last,
   chevron,
   density = 'regular',
+  inset = 'plate',
   children,
   style,
   ...rest
@@ -67,7 +73,12 @@ export function ListRow({
     <>
       {children}
       {chevron ? <Icon name="caret-right" size={size.icon.sm} color={colors.text3} /> : null}
-      {last ? null : <View pointerEvents="none" style={s.rule} />}
+      {last ? null : (
+        <View
+          pointerEvents="none"
+          style={[s.rule, inset === 'icon' ? s.ruleIcon : inset === 'text' ? s.ruleText : null]}
+        />
+      )}
     </>
   );
   const base = [s.row, density === 'compact' ? s.compact : null];
