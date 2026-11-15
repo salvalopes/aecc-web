@@ -9,11 +9,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff',
-  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.aecc.app',
@@ -21,7 +16,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#ffffff',
+      monochromeImage: './assets/adaptive-icon-monochrome.png',
+      backgroundColor: '#0C3247', // fundo do icon-navy-deep
     },
     package: 'com.aecc.app',
   },
@@ -31,7 +27,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
     description: 'Associação Empresarial do Concelho de Cascais',
   },
-  plugins: ['expo-router', 'expo-secure-store', 'expo-asset', 'expo-font'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    'expo-asset',
+    'expo-font',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-symbol.png',
+        imageWidth: 140,
+        resizeMode: 'contain',
+        backgroundColor: '#EEF2F5',
+        dark: { image: './assets/splash-symbol.png', backgroundColor: '#08161F' },
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },

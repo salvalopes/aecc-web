@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
+import { BrandLockup } from '@/components/ds';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
@@ -50,12 +50,9 @@ export default function LoginScreen() {
 
   return (
     <View testID="login.screen" style={styles.container}>
-      <Image
-        source={require('../../assets/brand/aecc-logo.webp')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.subtitle}>Associação de Empresários de Cascais</Text>
+      {/* variant="light": o fundo deste ecrã é #fff fixo até à B8 */}
+      <BrandLockup width={160} variant="light" style={styles.logo} />
+      <Text style={styles.subtitle}>Associação Empresarial do Concelho de Cascais</Text>
 
       <TextInput
         testID="login.email"
@@ -128,7 +125,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  logo: { width: 160, height: 56, alignSelf: 'center', marginBottom: 8 },
+  logo: { alignSelf: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 40 },
   input: {
     borderWidth: 1,

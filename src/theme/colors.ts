@@ -1,5 +1,5 @@
 // Color tokens — Aug-2026 "Yellow Pages" renovation. Every hue is sampled
-// directly from the real brand mark (assets/brand/aecc-logo.webp): navy
+// directly from the real brand mark (assets/brand/redesign-2026/): navy
 // wordmark #134d6f, gold ribbon #edb12d, red #d22f2d, green #0e904f, blue
 // #2e8fc2. Light mode is a warm cream ladder tinted toward the gold; dark
 // mode is navy-black with gold as the lead accent ("detalhes amarelos").
