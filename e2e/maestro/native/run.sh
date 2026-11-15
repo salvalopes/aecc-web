@@ -18,8 +18,9 @@ ENV_FILE=${E2E_ENV_FILE:-$MAIN_CHECKOUT/../aecc-api/.env.e2e}
 API=${E2E_HOST_API:-http://127.0.0.1:5080/api}
 API_CONTAINER=${E2E_API_CONTAINER:-aecc-e2e-api-1}
 FLOW_DIR="$REPO/e2e/maestro/native"
-OUT="$REPO/.artifacts/maestro/$PLATFORM"
-SHOTS="$REPO/docs/native/fase-b/$PLATFORM"
+TAG=${RUN_TAG:-$PLATFORM}
+OUT="$REPO/.artifacts/maestro/$TAG"
+SHOTS="$REPO/docs/native/fase-c/$TAG"
 LOGO="$REPO/e2e/web/fixtures/logo.png"
 
 set -a
