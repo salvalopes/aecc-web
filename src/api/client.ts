@@ -1,4 +1,10 @@
+import { Platform } from 'react-native';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5000/api';
+// Só nativo (AuthContext.native): limite de tempo por pedido, para o arranque com sessão
+// (H3) e os ecrãs não ficarem pendurados com a API inalcançável. A web não muda.
+const IS_NATIVE = Platform.OS !== 'web';
+const NATIVE_TIMEOUT_MS = 30_000;
 
 type TokenGetter = () => string | null;
 type TokenRefresher = () => Promise<boolean>;
@@ -45,15 +51,26 @@ async function doRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let signal = init.signal;
+  if (IS_NATIVE && !signal) {
+    const controller = new AbortController();
+    timer = setTimeout(() => controller.abort(), NATIVE_TIMEOUT_MS);
+    signal = controller.signal;
+  }
+
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers,
       credentials: 'include',
+      ...(signal ? { signal } : {}),
     });
   } catch {
     throw new NetworkError();
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 
   if (!response.ok) {
@@ -80,6 +97,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     return await doRequest<T>(path, init);
   } catch (e) {
+    // Nativo: o refresher é single-flight (AuthContext.native), por isso pedidos 401
+    // concorrentes esperam pela mesma renovação e repetem. Web: comportamento de sempre.
+    if (IS_NATIVE && e instanceof ApiError && e.status === 401) {
+      if (await tryRefreshToken()) return doRequest<T>(path, init);
+      throw e;
+    }
     if (e instanceof ApiError && e.status === 401 && !isRefreshing) {
       isRefreshing = true;
       try {

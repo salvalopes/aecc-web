@@ -1,0 +1,26 @@
+# Arranque com sessão (H3): depois do login, matar a app e reabrir sem limpar o estado.
+# A app lê o refresh token do SecureStore, renova, carrega o utilizador e entra no
+# Início sem passar pelo login.
+appId: com.aecc.app
+name: sessao-restaurada (nativo)
+---
+- runFlow: _login.yaml
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 60000
+- assertNotVisible:
+    id: "login.screen"
+- assertVisible: "Editar"
+- waitForAnimationToEnd
+- takeScreenshot: sessao-restaurada
+
+# Segunda volta: o refresh token novo (rotação) também tem de servir.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 60000

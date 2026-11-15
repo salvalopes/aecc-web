@@ -1,0 +1,31 @@
+# Logout: Perfil → Terminar sessão volta ao login; reabrir a app continua no login
+# (o refresh token saiu do SecureStore).
+appId: com.aecc.app
+name: logout (nativo)
+---
+- runFlow: _login.yaml
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible:
+      id: "profile.screen"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "profile.logout"
+    direction: DOWN
+- tapOn:
+    id: "profile.logout"
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 15000
+- takeScreenshot: logout
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 60000
+- assertNotVisible:
+    id: "home.screen"

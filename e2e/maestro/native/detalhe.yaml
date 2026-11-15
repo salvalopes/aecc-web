@@ -1,0 +1,23 @@
+# Detalhe de empresa (T4): a partir do diretório.
+appId: com.aecc.app
+name: detalhe (nativo)
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: "companies.search"
+- inputText: "conceicao"
+- extendedWaitUntil:
+    visible:
+      id: "directory.row"
+    timeout: 15000
+- tapOn:
+    id: "directory.row"
+- extendedWaitUntil:
+    visible:
+      id: "company-detail.title"
+    timeout: 15000
+- assertVisible:
+    id: "company-detail.title"
+    text: ".*Conceição.*"
+- waitForAnimationToEnd
+- takeScreenshot: detalhe

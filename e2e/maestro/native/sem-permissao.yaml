@@ -1,0 +1,20 @@
+# Sem permissão (T2): o associado abre /users/new (só Admin) por deep link e vê o estado "sem
+# permissão"; a ação volta ao Início. (No nativo, /users é uma tab escondida das NativeTabs
+# para quem não é Admin e o deep link nem navega; por isso a rota do Stack.)
+appId: com.aecc.app
+name: sem-permissao (nativo)
+---
+- runFlow: _login.yaml
+- openLink: "aecc://users/new"
+- extendedWaitUntil:
+    visible:
+      id: "state.forbidden"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: sem-permissao
+- tapOn:
+    id: "state.forbidden.action"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000

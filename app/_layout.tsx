@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import {
   DefaultTheme,
   DarkTheme,
@@ -40,6 +41,9 @@ function RootLayoutNav() {
 
   return (
     <NavigationThemeProvider value={navTheme}>
+      {/* Ícones da status bar pelo tema em vigor (incl. o override do Perfil): escuros no
+          claro e claros no escuro. Sem efeito na web. */}
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <AuthProvider>
         <Stack screenOptions={{ headerShown: false }} />
       </AuthProvider>

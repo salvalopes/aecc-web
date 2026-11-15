@@ -1,0 +1,16 @@
+# Subfluxo iOS: PHPicker (fotos do simulador; o run.sh junta a de teste com
+# `xcrun simctl addmedia`) + recorte 1:1 (allowsEditing).
+# As miniaturas não têm rótulo estável e "Fotografias" é o separador do seletor: toca-se na
+# primeira miniatura (a mais recente, a de teste) por posição.
+appId: com.aecc.app
+---
+- extendedWaitUntil:
+    visible: "Fotografias|Photos"
+    timeout: 20000
+- waitForAnimationToEnd
+- tapOn:
+    point: "16%,25%"
+- extendedWaitUntil:
+    visible: "Escolher|Choose"
+    timeout: 20000
+- tapOn: "Escolher|Choose"
