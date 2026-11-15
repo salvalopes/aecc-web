@@ -48,6 +48,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-asset',
     'expo-font',
     [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'A AECC precisa de acesso às suas fotografias para escolher o logótipo da empresa e as imagens dos produtos.',
+        cameraPermission: false,
+        microphonePermission: false,
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         image: './assets/splash-symbol.png',
