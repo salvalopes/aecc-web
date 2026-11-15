@@ -7,6 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
+import { spacing } from '@/theme/tokens';
 import { Surface } from './Surface';
 import { Skeleton } from './Skeleton';
 import { Text } from './Text';
@@ -14,10 +15,10 @@ import { Text } from './Text';
 // Tabela da Maré (T3 web `lg`): cabeçalho `raised` fixo no topo do scroll, linhas de 48.
 // Nativo: não é usada (a vista Tabela só existe no web ≥ 1280).
 const sticky = (Platform.OS === 'web'
-  ? { position: 'sticky', top: 0, zIndex: 1 }
+  ? { position: 'sticky', top: spacing[0], zIndex: 1 }
   : {}) as unknown as ViewStyle;
 
-const factory = createStyles(({ colors, spacing, size, border, radii }) => ({
+const factory = createStyles(({ colors, spacing, size, border, radius }) => ({
   table: { borderWidth: border.hairline, borderColor: colors.border },
   row: {
     flexDirection: 'row',
@@ -28,13 +29,13 @@ const factory = createStyles(({ colors, spacing, size, border, radii }) => ({
   },
   header: {
     backgroundColor: colors.raised,
-    borderTopLeftRadius: radii.group,
-    borderTopRightRadius: radii.group,
+    borderTopLeftRadius: radius.group,
+    borderTopRightRadius: radius.group,
     ...sticky,
   },
   body: { borderTopWidth: border.hairline, borderTopColor: colors.border },
   hover: { backgroundColor: colors.raised },
-  cell: { minWidth: 0 },
+  cell: { minWidth: spacing[0] },
 }));
 
 export interface DataTableColumn<T> {

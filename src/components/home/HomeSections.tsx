@@ -14,7 +14,7 @@ import {
   Skeleton,
   SkeletonRow,
   Text,
-} from '@/components/ds';
+} from '@/components/ui';
 
 // T5 Início (B13), direção Maré: as secções do Início são grupos sólidos com o rótulo por
 // cima, como no resto da app. Sem tiles nem cartões iguais em grelha (skill: AI tells).
@@ -27,7 +27,7 @@ const factory = createStyles(({ spacing }) => ({
     gap: spacing.md,
     paddingHorizontal: spacing.xs,
   },
-  text: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  text: { flex: 1, minWidth: spacing[0], gap: spacing['2xs'] },
   grow: { flex: 1 },
 }));
 

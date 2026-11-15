@@ -14,7 +14,7 @@ import {
   SkeletonRow,
   Text,
   type DataTableColumn,
-} from '@/components/ds';
+} from '@/components/ui';
 import type { CompanyDirectoryEntry } from '@/types/api';
 import { absoluteUrl, displayDomain, telUrl } from '@/utils/text';
 
@@ -26,7 +26,7 @@ const MORE_SKELETONS = 3;
 const factory = createStyles(({ spacing }) => ({
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   company: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  companyName: { flex: 1, minWidth: 0 },
+  companyName: { flex: 1, minWidth: spacing[0] },
 }));
 
 const open = (url: string) => {

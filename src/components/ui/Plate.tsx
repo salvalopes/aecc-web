@@ -11,7 +11,7 @@ export interface PlateProps {
 
 /** Logo sobre `logoPlate` ou, sem logo, iniciais sobre `accentSoft`. */
 export function Plate({ company, size = 'md' }: PlateProps) {
-  const { colors, size: sizes, radii } = useTheme();
+  const { colors, size: sizes, radius, border } = useTheme();
   const px = sizes.plate[size];
   const logo = company.logoUrl;
   return (
@@ -20,10 +20,10 @@ export function Plate({ company, size = 'md' }: PlateProps) {
       style={{
         width: px,
         height: px,
-        borderRadius: size === 'lg' ? radii.group : radii.plate,
+        borderRadius: size === 'lg' ? radius.group : radius.plate,
         borderCurve: 'continuous',
         backgroundColor: logo ? colors.logoPlate : colors.accentSoft,
-        borderWidth: logo ? 1 : 0,
+        borderWidth: logo ? border.default : 0,
         borderColor: colors.border,
         alignItems: 'center',
         justifyContent: 'center',

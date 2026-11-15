@@ -1,7 +1,7 @@
 import { ScrollView, View } from 'react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
-import { Chip } from '@/components/ds';
+import { Chip } from '@/components/ui';
 import { GlassGroup } from '@/components/ui/GlassSurface';
 import type { Category } from '@/types/api';
 import { topLevelOf } from './categories';

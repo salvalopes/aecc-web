@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme, type ThemePreference } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { Button, SegmentedControl } from '@/components/ds';
+import { Button, SegmentedControl } from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { FormSection } from '@/components/templates/FormLayout';
 import { InfoGroup, type InfoItem } from '@/components/detail/InfoGroup';

@@ -1,35 +1,45 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { createStyles, useStyles } from '@/theme/createStyles';
 import { Icon } from './Icon';
+import { Text } from './Text';
 import { Button } from './Button';
 
-interface ErrorStateProps {
-  message?: string;
-  onRetry?: () => void;
-}
+const factory = createStyles(({ colors, radius, spacing }) => ({
+  panel: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.group,
+    borderCurve: 'continuous',
+    backgroundColor: colors.errorBg,
+  },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  message: { flex: 1 },
+}));
 
-export function ErrorState({ message = 'Ocorreu um erro.', onRetry }: ErrorStateProps) {
-  const { colors, fontFamily, fontSize } = useTheme();
+/** Painel inline (D5) com a mensagem e, opcionalmente, "Tentar de novo". */
+export function ErrorState({
+  message,
+  onRetry,
+  testID,
+}: {
+  message: string;
+  onRetry?: () => void;
+  testID?: string;
+}) {
+  const s = useStyles(factory);
+  const { colors, size } = useTheme();
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', gap: 12, padding: 48 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Icon name="warning-circle" size={18} color={colors.error} />
-        <Text
-          style={{
-            fontFamily: fontFamily.body,
-            fontSize: fontSize.base,
-            color: colors.error,
-            textAlign: 'center',
-          }}
-        >
+    <View testID={testID} accessibilityRole="alert" style={s.panel}>
+      <View style={s.head}>
+        <Icon name="warning-circle" size={size.icon.md} color={colors.error} />
+        <Text variant="name" color="error" style={s.message}>
           {message}
         </Text>
       </View>
-      {onRetry && (
-        <Button variant="secondary" size="sm" onPress={onRetry}>
-          Tentar novamente
-        </Button>
-      )}
+      {onRetry ? (
+        <Button label="Tentar de novo" variant="secondary" size="sm" onPress={onRetry} />
+      ) : null}
     </View>
   );
 }

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { BrandLockup, Surface, Text, TextLink, type TextLinkProps } from '@/components/ds';
+import { BrandLockup, Surface, Text, TextLink, type TextLinkProps } from '@/components/ui';
 
 // T1 Autenticação (fase3-plano §4.1), direção Maré.
 // sm: faixa `horizon` com o lockup e o título à esquerda; o formulário numa única superfície

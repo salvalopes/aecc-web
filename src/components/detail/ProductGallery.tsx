@@ -3,15 +3,15 @@ import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { Icon } from '@/components/ui/Icon';
-import { Text } from '@/components/ds';
+import { Text } from '@/components/ui';
 import type { ProductImage } from '@/types/api';
 
-const factory = createStyles(({ colors, radii, spacing, border, size }) => ({
+const factory = createStyles(({ colors, radius, spacing, border, size }) => ({
   wrap: { gap: spacing.md },
   main: {
     width: '100%',
     aspectRatio: 4 / 3,
-    borderRadius: radii.group,
+    borderRadius: radius.group,
     borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: colors.raised,
@@ -26,18 +26,19 @@ const factory = createStyles(({ colors, radii, spacing, border, size }) => ({
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radii.capsule,
+    borderRadius: radius.capsule,
     backgroundColor: colors.accent,
   },
   thumbs: { gap: spacing.sm },
   thumb: {
     width: size.thumb,
     height: size.thumb,
-    borderRadius: radii.plate,
+    borderRadius: radius.plate,
     borderCurve: 'continuous',
     overflow: 'hidden',
     borderWidth: border.accentBar,
-    borderColor: 'transparent',
+    // Reserva o espaço da barra; sobre `raised` não se vê (o fundo passa por baixo da borda).
+    borderColor: colors.raised,
     backgroundColor: colors.raised,
   },
   thumbActive: { borderColor: colors.accent },

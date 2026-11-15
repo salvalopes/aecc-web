@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StateScreen } from '@/components/ds';
+import { StateScreen } from '@/components/ui';
 
 // T2 Estado (fase3-plano §4.1): os estados de ecrã inteiro que não são conteúdo.
 // O texto vive aqui para que os mesmos estados digam sempre o mesmo.

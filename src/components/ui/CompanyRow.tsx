@@ -8,7 +8,7 @@ import { Highlight } from './Highlight';
 import { Text } from './Text';
 
 const factory = createStyles(({ spacing }) => ({
-  text: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  text: { flex: 1, minWidth: spacing[0], gap: spacing['2xs'] },
 }));
 
 export interface CompanyRowProps {

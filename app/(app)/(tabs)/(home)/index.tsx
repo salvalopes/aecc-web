@@ -8,7 +8,7 @@ import type { Category, CompanyDirectoryEntry } from '@/types/api';
 import { useAuth } from '@/hooks/useAuth';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { ErrorState, SearchField, Skeleton } from '@/components/ds';
+import { ErrorState, SearchField, Skeleton } from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { countLabel } from '@/components/directory/categories';
 import {
@@ -29,8 +29,8 @@ const factory = createStyles(({ spacing, layout }) => ({
   search: { width: '100%', maxWidth: layout.formMaxWidth + spacing['6xl'] },
   stack: { gap: layout.sectionGap },
   split: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['4xl'] },
-  categories: { flex: 2, minWidth: 0 },
-  companies: { flex: 3, minWidth: 0 },
+  categories: { flex: 2, minWidth: spacing[0] },
+  companies: { flex: 3, minWidth: spacing[0] },
 }));
 
 interface HomeData {

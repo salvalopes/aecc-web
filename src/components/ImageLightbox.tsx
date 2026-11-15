@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Image, Modal, Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
-import { IconButton, Text } from '@/components/ds';
+import { IconButton, Text } from '@/components/ui';
 
 interface LightboxImage {
   id: string;
@@ -28,9 +28,9 @@ const factory = createStyles(({ colors, spacing, layout, size }) => ({
     paddingHorizontal: layout.gutter,
     paddingVertical: spacing.sm,
   },
-  // `minHeight: 0` + imagem com `flex: 1`: no web, `height: 100%` não ficava limitado pelo palco
+  // `minHeight` a zero + imagem com `flex: 1`: no web, a altura a 100% não ficava limitado pelo palco
   // e uma imagem alta saía do ecrã.
-  stage: { flex: 1, minHeight: 0, paddingBottom: spacing['2xl'] },
+  stage: { flex: 1, minHeight: spacing[0], paddingBottom: spacing['2xl'] },
   image: { flex: 1, width: '100%' },
   nav: {
     position: 'absolute',

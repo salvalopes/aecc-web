@@ -23,7 +23,7 @@ import {
   SkeletonRow,
   StateScreen,
   Text,
-} from '@/components/ds';
+} from '@/components/ui';
 import { DetailScaffold, DetailSection } from '@/components/templates/DetailScaffold';
 import { InfoGroup, type InfoItem } from '@/components/detail/InfoGroup';
 import { ProductRow } from '@/components/detail/ProductRow';
@@ -32,14 +32,14 @@ import { ProductRow } from '@/components/detail/ProductRow';
 // produtos. md+: identidade e contactos numa coluna fixa à esquerda (1fr), conteúdo à direita
 // (2fr). As ações do dono saíram do header do `Stack` para junto da identidade. Editar e
 // "Novo produto" são ecrãs T7 próprios (B12); ao voltar, o detalhe recarrega sem esqueleto.
-const factory = createStyles(({ colors, spacing, size, radii }) => ({
+const factory = createStyles(({ colors, spacing, size, radius }) => ({
   container: { flex: 1 },
   identity: { gap: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   plateSkeleton: {
     width: size.plate.lg,
     height: size.plate.lg,
-    borderRadius: radii.group,
+    borderRadius: radius.group,
     borderCurve: 'continuous',
     backgroundColor: colors.raised,
   },

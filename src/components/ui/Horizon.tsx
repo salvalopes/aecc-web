@@ -32,9 +32,9 @@ const factory = createStyles(({ colors, spacing, layout }) => ({
   overlap: { paddingBottom: spacing['3xl'] - layout.searchOverlap },
   overlapWide: { paddingBottom: spacing['5xl'] - layout.searchOverlap },
   hero: { gap: spacing.xs },
-  heroWide: { flex: 1, minWidth: 0 },
+  heroWide: { flex: 1, minWidth: spacing[0] },
   aside: { alignSelf: 'flex-start' },
-  asideWide: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
+  asideWide: { flex: 1, minWidth: spacing[0], alignItems: 'flex-end' },
 }));
 
 export interface HorizonProps {

@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { required, requiredWhen } from '@/utils/validators';
 import type { Category, Product, ProductType } from '@/types/api';
-import { Chip, SegmentedControl, TextField } from '@/components/ds';
+import { Chip, SegmentedControl, TextField } from '@/components/ui';
 import { FormField, FormSection, FormSwitch } from '@/components/templates/FormLayout';
 
 // Campos do produto (T7, B12): os mesmos em "Novo produto" e "Editar produto".

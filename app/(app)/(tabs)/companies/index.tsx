@@ -7,7 +7,7 @@ import type { Category } from '@/types/api';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useBreakpoint } from '@/theme/useBreakpoint';
 import { useCompanyDirectory } from '@/hooks/useCompanyDirectory';
-import { SearchField, SegmentedControl, Skeleton } from '@/components/ds';
+import { SearchField, SegmentedControl, Skeleton } from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { CategoryChips } from '@/components/directory/CategoryChips';
 import { CategorySidebar } from '@/components/directory/CategorySidebar';

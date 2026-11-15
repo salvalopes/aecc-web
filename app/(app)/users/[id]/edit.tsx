@@ -8,7 +8,7 @@ import { useRequireRole } from '@/hooks/useRequireRole';
 import { required } from '@/utils/validators';
 import { closeForm } from '@/navigation/closeForm';
 import type { ManagedUser } from '@/types/api';
-import { ErrorState, StateScreen } from '@/components/ds';
+import { ErrorState, StateScreen } from '@/components/ui';
 import { DetailScaffold } from '@/components/templates/DetailScaffold';
 import { FormLayout } from '@/components/templates/FormLayout';
 import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';

@@ -10,31 +10,8 @@ import {
 import { Appearance, Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, type ThemeColors } from './colors';
-import {
-  lightGlass,
-  darkGlass,
-  lightMaterial,
-  darkMaterial,
-  type GlassTokens,
-  type GlassMaterial,
-} from './glass';
-import {
-  spacing,
-  radius,
-  glassRadius,
-  hitTargetMin,
-  fontFamily,
-  fontSize,
-  lineHeight,
-  fontWeight,
-  shadow,
-  radii,
-  size,
-  border,
-  opacity,
-  breakpoints,
-  layout,
-} from './tokens';
+import { lightMaterial, darkMaterial, type GlassMaterial } from './glass';
+import { spacing, radius, size, border, opacity, breakpoints, layout } from './tokens';
 import { textStyles } from './typography';
 
 const THEME_MODE_KEY = 'aecc_theme_mode';
@@ -45,11 +22,11 @@ export type ThemePreference = 'system' | ThemeMode;
 
 export interface Theme {
   colors: ThemeColors;
-  glass: GlassTokens;
-  /** Material único da Maré; a B4 apaga as 5 variantes de `glass`. */
+  /** Material único do vidro (Maré), consumido pelo `GlassSurface`. */
   material: GlassMaterial;
   scheme: 'light' | 'dark';
-  radii: typeof radii;
+  spacing: typeof spacing;
+  radius: typeof radius;
   size: typeof size;
   border: typeof border;
   opacity: typeof opacity;
@@ -60,15 +37,6 @@ export interface Theme {
   mode: ThemeMode;
   preference: ThemePreference;
   setPreference: (preference: ThemePreference) => void;
-  spacing: typeof spacing;
-  radius: typeof radius;
-  glassRadius: typeof glassRadius;
-  hitTargetMin: typeof hitTargetMin;
-  fontFamily: typeof fontFamily;
-  fontSize: typeof fontSize;
-  lineHeight: typeof lineHeight;
-  fontWeight: typeof fontWeight;
-  shadow: typeof shadow;
 }
 
 const ThemeContext = createContext<Theme | null>(null);
@@ -105,10 +73,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // those surfaces on the wrong color. Once mounted, this is the single
   // place that overwrites them to the theme actually in effect, keeping
   // every background on the page — including the ones CSS alone can't
-  // reach — on the same colors.surfaceApp the rest of the app already uses.
+  // reach — on the same colors.bg the rest of the app already uses.
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    document.documentElement.style.setProperty('--aecc-surface-app', colors.surfaceApp);
+    document.documentElement.style.setProperty('--aecc-surface-app', colors.bg);
     document.documentElement.style.setProperty('--aecc-focus-ring', colors.focusRing);
   }, [colors]);
 
@@ -128,10 +96,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = useMemo<Theme>(
     () => ({
       colors,
-      glass: isDark ? darkGlass : lightGlass,
       material: isDark ? darkMaterial : lightMaterial,
       scheme: mode,
-      radii,
+      spacing,
+      radius,
       size,
       border,
       opacity,
@@ -142,15 +110,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       mode,
       preference,
       setPreference,
-      spacing,
-      radius,
-      glassRadius,
-      hitTargetMin,
-      fontFamily,
-      fontSize,
-      lineHeight,
-      fontWeight,
-      shadow,
     }),
     [colors, isDark, mode, preference, setPreference],
   );

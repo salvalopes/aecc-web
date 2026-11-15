@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabSlot, useTabTrigger, useTabsWithTriggers } from 'expo-router/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { TABS, isTabVisible, type TabConfig } from '@/navigation/tabs';
-import { BrandLockup, Text } from '@/components/ds';
-import { GlassSurface, Icon } from '@/components/ui';
+import { BrandLockup, GlassSurface, Icon, Text } from '@/components/ui';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useBreakpoint } from '@/theme/useBreakpoint';
 import { useTheme } from '@/theme/ThemeContext';
@@ -123,7 +122,7 @@ function TabButton({ tab, wide }: { tab: TabConfig; wide: boolean }) {
 
 const stylesFactory = createStyles((t) => ({
   root: { flex: 1, backgroundColor: t.colors.bg },
-  fill: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+  fill: StyleSheet.absoluteFillObject,
   slot: { flex: 1 },
   topBar: {
     flexDirection: 'row',
@@ -140,7 +139,7 @@ const stylesFactory = createStyles((t) => ({
     gap: t.spacing.sm,
     minHeight: t.size.hitTarget,
     paddingHorizontal: t.spacing.lg,
-    borderRadius: t.radii.capsule,
+    borderRadius: t.radius.capsule,
   },
   capsulePressed: { backgroundColor: t.colors.raised },
   capsuleActive: { backgroundColor: t.colors.accentSoft },
@@ -148,7 +147,7 @@ const stylesFactory = createStyles((t) => ({
   bottomBar: { flexDirection: 'row', alignItems: 'stretch', zIndex: 1 },
   barItem: {
     flex: 1,
-    minWidth: 0,
+    minWidth: t.spacing[0],
     alignItems: 'center',
     justifyContent: 'center',
     gap: t.spacing['2xs'],

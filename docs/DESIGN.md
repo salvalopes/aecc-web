@@ -1,6 +1,6 @@
 # Design system — AECC (direção B · Maré)
 
-Referência viva do design system. A análise e as decisões que o originaram estão em `docs/redesign/fase3-plano.md` (e `docs/redesign/fase2-direcoes.md` para a direção). **Estado:** a base (tokens, `useStyles`, primitivas) existe; os ecrãs ainda usam os aliases antigos até à B6+ (ver "Estado da migração").
+Referência viva do design system. A análise e as decisões que o originaram estão em `docs/redesign/fase3-plano.md` (e `docs/redesign/fase2-direcoes.md` para a direção). **Estado:** migração concluída na B14. Só existem os papéis da Maré, as primitivas vivem em `src/components/ui/` e não há literais de cor nem de espaçamento fora de `src/theme/` (ver "Estado da migração").
 
 Stack: Expo SDK 55 + React Native + react-native-web. Sem Tailwind nem NativeWind. Sem dependências de animação.
 
@@ -23,8 +23,8 @@ Stack: Expo SDK 55 + React Native + react-native-web. Sem Tailwind nem NativeWin
 import { createStyles, useStyles } from '@/theme/createStyles';
 
 // Uma factory por ficheiro, no topo do módulo (referência estável para a memoização).
-const factory = createStyles(({ colors, radii, spacing }) => ({
-  box: { backgroundColor: colors.surface, borderRadius: radii.group, padding: spacing.lg },
+const factory = createStyles(({ colors, radius, spacing }) => ({
+  box: { backgroundColor: colors.surface, borderRadius: radius.group, padding: spacing.lg },
 }));
 
 export function Thing() {
@@ -35,22 +35,23 @@ export function Thing() {
 
 - Estilos que dependem de estado (pressed, focused, erro) vão inline ou em arrays com o token do papel.
 - `useTheme()` continua a ser o único ponto de acesso ao tema. Nunca importar a paleta (`palette.ts` é privada ao `theme`).
-- Regra ESLint para `StyleSheet.create` solto: B14.
+- `StyleSheet.create` fora de `src/theme/` é **erro** de ESLint (`no-restricted-syntax`, desde a B14). Constantes fora da factory (ex.: `position: 'sticky'` no web) importam os tokens de `@/theme/tokens`.
+- Zero também é token: `spacing[0]` (ex.: `minWidth: spacing[0]` para deixar um filho de `flex` encolher).
 
 ---
 
 ## 3. Tokens (`src/theme/`)
 
-| Ficheiro           | Conteúdo                                                                                      |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| `palette.ts`       | valores brutos da Maré (privado)                                                              |
-| `colors.ts`        | `ThemeColors` por papel + aliases antigos `@deprecated` (apagados na B14)                     |
-| `glass.ts`         | `GlassMaterial` por esquema (+ as 5 variantes antigas, apagadas na B4)                        |
-| `typography.ts`    | família Geist, `textStyles`, `tabular`, `inputMin`                                            |
-| `tokens.ts`        | `spacing`, `radii`, `size`, `border`, `opacity`, `breakpoints`, `layout`, `glassShadow` (web) |
-| `createStyles.ts`  | `createStyles` / `useStyles`                                                                  |
-| `useBreakpoint.ts` | `sm` < 768 · `md` ≥ 768 · `lg` ≥ 1280                                                         |
-| `ThemeContext.tsx` | `ThemeProvider` / `useTheme`                                                                  |
+| Ficheiro           | Conteúdo                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `palette.ts`       | valores brutos da Maré (privado)                                                          |
+| `colors.ts`        | `ThemeColors` por papel (os aliases antigos saíram na B14)                                |
+| `glass.ts`         | `GlassMaterial` por esquema (as 5 variantes antigas saíram na B14)                        |
+| `typography.ts`    | família Geist, `textStyles`, `tabular`, `inputMin`                                        |
+| `tokens.ts`        | `spacing`, `radius`, `size`, `border`, `opacity`, `breakpoints`, `layout`, `shadow` (web) |
+| `createStyles.ts`  | `createStyles` / `useStyles`                                                              |
+| `useBreakpoint.ts` | `sm` < 768 · `md` ≥ 768 · `lg` ≥ 1280                                                     |
+| `ThemeContext.tsx` | `ThemeProvider` / `useTheme`                                                              |
 
 ### Cor (papéis)
 
@@ -90,11 +91,11 @@ Geist (400/500/600/700), carregada no `_layout.tsx` raiz com os nomes `Geist_400
 
 ### Espaçamento, raios, tamanhos
 
-- **spacing:** `xs 4 · sm 8 · md 12 · lg 16 · xl 20 · 2xl 24 · 3xl 28 · 4xl 32 · 5xl 40 · 6xl 48` (e `2xs 2`). As chaves numéricas antigas são `@deprecated`.
-- **radii:** `xs 6` (barras de skeleton) · `sm 10` · `plate 12` · `control 14` (botões, campos) · `group 20` (superfícies, painéis) · `capsule 999` (pesquisa, chips).
-- **size:** `icon {16,20,24,28}` · `hitTarget 44` · `plate {32,48,96}` · `row {mobile 72, web 64, table 48}` · `search 52`.
+- **spacing:** `xs 4 · sm 8 · md 12 · lg 16 · xl 20 · 2xl 24 · 3xl 28 · 4xl 32 · 5xl 40 · 6xl 48` (e `0`, `2xs 2`).
+- **radius:** `xs 6` (barras de skeleton) · `sm 10` · `plate 12` · `control 14` (botões, campos) · `group 20` (superfícies, painéis) · `capsule 999` (pesquisa, chips).
+- **size:** `icon {16,20,24,28}` · `hitTarget 44` · `plate {32,48,96}` · `control {sm 40, md 48}` (botões, campos) · `row {mobile 72, web 64, table 48}` · `search 52` · `thumb 64`.
 - **layout:** `gutter 20` · `sectionGap 28` · `maxWidth 1240` · `horizonHeight 200` · `searchOverlap −26`.
-- **opacity:** `disabled 0.45`. **border:** `hairline` · `default 1` · `accentBar 3`.
+- **opacity:** `disabled 0.45`. **border:** `hairline` · `default 1` · `focus 2` · `accentBar 3`.
 
 ---
 
@@ -104,17 +105,17 @@ Geist (400/500/600/700), carregada no `_layout.tsx` raiz com os nomes `Geist_400
 | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | iOS 26 (Reduce Transparency desligado) | `GlassView` (`expo-glass-effect`); `GlassGroup` = `GlassContainer` para fundir vidros vizinhos |
 | iOS < 26, Reduce Transparency, Android | superfície sólida `material.solid` + hairline `material.border` (sem sombra)                   |
-| Web                                    | `material.tint` + `backdropFilter: material.webFilter` + `boxShadow` com `glassShadow(...)`    |
+| Web                                    | `material.tint` + `backdropFilter: material.webFilter` + `boxShadow` com `shadow(...)`         |
 
 Regras: sem `overflow: 'hidden'` no `GlassView`; legibilidade garantida pelo fallback sólido; nunca texto fino sobre vidro sem contraste verificado.
 
-**Hoje (B4):** `src/components/ui/GlassSurface.tsx` exporta `GlassSurface`, `GlassGroup`, `useGlassCapability` e `glassStyle` (o fallback). iOS 26 com Liquid Glass disponível e sem "Reduzir transparência" usa `GlassView`/`GlassContainer`; iOS < 26, Android e web usam o fallback (web: tint + `backdrop-filter`; nativo: sólido + hairline). A ênfase vem de `tintColor` e o `opaque` dá sólido onde é preciso contraste AA (hero). Nenhum ficheiro importa `BlurView`; o pacote `expo-blur` só sai na B14.
+**Hoje (B4):** `src/components/ui/GlassSurface.tsx` exporta `GlassSurface`, `GlassGroup`, `useGlassCapability` e `glassStyle` (o fallback). iOS 26 com Liquid Glass disponível e sem "Reduzir transparência" usa `GlassView`/`GlassContainer`; iOS < 26, Android e web usam o fallback (web: tint + `backdrop-filter`; nativo: sólido + hairline). A ênfase vem de `tintColor` e o `opaque` dá sólido onde é preciso contraste AA (hero). O `expo-blur` foi desinstalado na B14.
 
 ---
 
-## 5. Componentes (`src/components/ds/`)
+## 5. Componentes (`src/components/ui/`)
 
-Vivem em `ds/` até à B14 (`ui/` ainda tem os antigos, com consumidores); depois movem-se para `ui/`.
+Importar do barril `@/components/ui` (inclui `Icon` e `GlassSurface`). Criadas em `ds/` na B5 e movidas para `ui/` na B14, depois de apagados os componentes antigos (`Badge`, `Card`, `CategoryTile`, `Input`, `LoadingSpinner` e os `Button`/`Chip`/`IconButton`/`Switch`/`EmptyState`/`ErrorState` anteriores).
 
 | Componente                  | Papel                                                                                     | Resolve |
 | --------------------------- | ----------------------------------------------------------------------------------------- | ------- |
@@ -180,12 +181,12 @@ Sem `react-native-reanimated` aprovado, **não há código de animação** nem `
 
 ## 8. Estado da migração
 
-| Passo  | Estado                                                                                                                                         |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| B1     | tema novo + aliases antigos (sem mudança visual)                                                                                               |
-| B2     | Geist carregada                                                                                                                                |
-| B5     | primitivas em `ds/`, sem consumidores                                                                                                          |
-| B3–B13 | ecrãs migram para `ds/`; B6 troca a paleta                                                                                                     |
-| B14    | apaga aliases, componentes antigos, fontes antigas, `expo-blur`; regra ESLint; auditoria de literais (objetivo: 0 cores, < 5% de espaçamentos) |
+| Passo  | Estado                                                                                                                                              |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1     | tema novo + aliases antigos (sem mudança visual)                                                                                                    |
+| B2     | Geist carregada                                                                                                                                     |
+| B5     | primitivas em `ds/`, sem consumidores                                                                                                               |
+| B3–B13 | ecrãs migram para `ds/`; B6 troca a paleta                                                                                                          |
+| B14    | feito: aliases, componentes antigos, fontes antigas e `expo-blur` apagados; `ds/` → `ui/`; regra ESLint em erro; auditoria: 0 cores, 0 espaçamentos |
 
 A tabela canónica por passo está em `docs/redesign/fase3-plano.md` §9.

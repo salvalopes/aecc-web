@@ -1,5 +1,5 @@
 // Família única Geist (TTF estáticos 400/500/600/700 em assets/fonts/geist/).
-// Os ficheiros são carregados no _layout raiz na B2; até lá nada usa isto.
+// Carregados no _layout raiz.
 import type { TextStyle } from 'react-native';
 
 export const geist = {

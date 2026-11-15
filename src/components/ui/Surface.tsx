@@ -1,8 +1,8 @@
 import { View, type ViewProps } from 'react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 
-const factory = createStyles(({ colors, radii }) => ({
-  base: { borderRadius: radii.group, borderCurve: 'continuous', overflow: 'hidden' },
+const factory = createStyles(({ colors, radius }) => ({
+  base: { borderRadius: radius.group, borderCurve: 'continuous', overflow: 'hidden' },
   surface: { backgroundColor: colors.surface },
   raised: { backgroundColor: colors.raised },
 }));

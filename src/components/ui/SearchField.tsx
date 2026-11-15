@@ -3,17 +3,17 @@ import { Platform, Pressable, TextInput, View, type TextInputProps } from 'react
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { geist, inputMin } from '@/theme/typography';
-import { Icon } from '@/components/ui/Icon';
-import { glassStyle } from '../ui/GlassSurface';
+import { Icon } from './Icon';
+import { glassStyle } from './GlassSurface';
 
-const factory = createStyles(({ colors, radii, size, border }) => ({
+const factory = createStyles(({ colors, radius, size, border, spacing }) => ({
   wrap: {
     height: size.search,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingLeft: 18,
-    borderRadius: radii.capsule,
+    gap: spacing.md,
+    paddingLeft: spacing.lg,
+    borderRadius: radius.capsule,
     borderCurve: 'continuous',
   },
   input: {
@@ -30,9 +30,9 @@ const factory = createStyles(({ colors, radii, size, border }) => ({
     right: -border.default,
     bottom: -border.default,
     left: -border.default,
-    borderRadius: radii.capsule,
+    borderRadius: radius.capsule,
     borderCurve: 'continuous',
-    borderWidth: 2,
+    borderWidth: border.focus,
     borderColor: colors.focusRing,
   },
   // web: o anel é o da cápsula; sem o outline por omissão do browser no <input>.

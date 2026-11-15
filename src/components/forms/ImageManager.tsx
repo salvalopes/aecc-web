@@ -3,7 +3,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import type { ProductImage } from '@/types/api';
 import { Icon } from '@/components/ui/Icon';
-import { Button, IconButton, InlineAlert, Text } from '@/components/ds';
+import { Button, IconButton, InlineAlert, Text } from '@/components/ui';
 import { FormSection } from '@/components/templates/FormLayout';
 
 /** Limite da API por produto. */
@@ -12,17 +12,18 @@ export const MAX_PRODUCT_IMAGES = 15;
 // Galeria no "Editar produto" (T7, B12). Ao contrário dos campos, cada ação grava logo
 // (adicionar, destacar, apagar), e a secção di-lo. Grelha de miniaturas `size.plate.lg`:
 // a destacada tem a barra `accent` e a estrela; as outras, "Destacar". Tocar abre o lightbox.
-const factory = createStyles(({ colors, spacing, size, radii, border }) => ({
+const factory = createStyles(({ colors, spacing, size, radius, border }) => ({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   tile: { width: size.plate.lg, gap: spacing.xs },
   thumb: {
     width: size.plate.lg,
     height: size.plate.lg,
-    borderRadius: radii.plate,
+    borderRadius: radius.plate,
     borderCurve: 'continuous',
     overflow: 'hidden',
     borderWidth: border.accentBar,
-    borderColor: 'transparent',
+    // Reserva o espaço da barra; sobre `raised` não se vê (o fundo passa por baixo da borda).
+    borderColor: colors.raised,
     backgroundColor: colors.raised,
   },
   thumbFeatured: { borderColor: colors.accent },
@@ -33,7 +34,7 @@ const factory = createStyles(({ colors, spacing, size, radii, border }) => ({
     left: spacing.xs,
     width: size.icon.lg,
     height: size.icon.lg,
-    borderRadius: radii.capsule,
+    borderRadius: radius.capsule,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.accent,
