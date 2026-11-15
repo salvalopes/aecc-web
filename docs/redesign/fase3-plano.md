@@ -487,23 +487,25 @@ Output literal no relatório da tarefa. Os ficheiros novos neste branch são só
 
 Esta tabela é atualizada no fim de cada passo e é a partir dela que se retoma depois de cada `/clear`. A versão de referência vive no branch do passo em curso.
 
-| Passo | Branch                              | Commit    | PR  | Estado                                           |
-| ----- | ----------------------------------- | --------- | --- | ------------------------------------------------ |
-| B0    | `redesign/fase3-base`               | `7570e3a` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8) |
-| B1    | `redesign/fase3-base`               | `db73210` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8) |
-| B2    | `redesign/fase3-base`               | `63aac35` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; Android: arranque sem ecrã branco por validar) |
-| B5    | `redesign/fase3-base`               | `889ff1f` | —   | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5) |
-| B5b   | `redesign/fase3-base`               | `9517048` | #19 | concluído (lint 0 erros, tsc ok, Playwright 8/8; PR base em draft, sem merge) |
-| B3    | `redesign/fase3-ui` (+ 1 por passo) | —         | —   | pendente                                         |
-| B4    | idem                                | —         | —   | pendente                                         |
-| B6    | idem                                | —         | —   | pendente                                         |
-| B7    | idem                                | —         | —   | pendente                                         |
-| B8    | idem                                | —         | —   | pendente                                         |
-| B9    | idem                                | —         | —   | pendente                                         |
-| B10   | idem                                | —         | —   | pendente                                         |
-| B11   | idem                                | —         | —   | pendente                                         |
-| B12   | idem                                | —         | —   | pendente                                         |
-| B13   | idem                                | —         | —   | pendente                                         |
-| B14   | idem                                | —         | —   | pendente                                         |
+| Passo | Branch                                          | Commit      | PR      | Estado                                                                                                                  |
+| ----- | ----------------------------------------------- | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| B0    | `redesign/fase3-base`                           | `7570e3a`   | —       | concluído (lint 0 erros, tsc ok, Playwright 8/8)                                                                        |
+| B1    | `redesign/fase3-base`                           | `db73210`   | —       | concluído (lint 0 erros, tsc ok, Playwright 8/8)                                                                        |
+| B2    | `redesign/fase3-base`                           | `63aac35`   | —       | concluído (lint 0 erros, tsc ok, Playwright 8/8; Android: arranque sem ecrã branco por validar)                         |
+| B5    | `redesign/fase3-base`                           | `889ff1f`   | —       | concluído (lint 0 erros, tsc ok, Playwright 8/8; primitivas em `src/components/ds/`, ver nota B5)                       |
+| B5b   | `redesign/fase3-base`                           | `9517048`   | #19     | concluído (lint 0 erros, tsc ok, Playwright 8/8; PR base em draft, sem merge)                                           |
+| B3    | `redesign/fase3-b3-marca` → `redesign/fase3-ui` | `B3_COMMIT` | `B3_PR` | **à espera de aprovação** (lint 0 erros, tsc ok, Playwright 8/8; capturas em `docs/redesign/fase3/after/`; ver nota B3) |
+| B4    | idem                                            | —           | —       | pendente                                                                                                                |
+| B6    | idem                                            | —           | —       | pendente                                                                                                                |
+| B7    | idem                                            | —           | —       | pendente                                                                                                                |
+| B8    | idem                                            | —           | —       | pendente                                                                                                                |
+| B9    | idem                                            | —           | —       | pendente                                                                                                                |
+| B10   | idem                                            | —           | —       | pendente                                                                                                                |
+| B11   | idem                                            | —           | —       | pendente                                                                                                                |
+| B12   | idem                                            | —           | —       | pendente                                                                                                                |
+| B13   | idem                                            | —           | —       | pendente                                                                                                                |
+| B14   | idem                                            | —           | —       | pendente                                                                                                                |
 
 **Nota B5:** as primitivas vivem em `src/components/ds/` (e não em `ui/`, como a §4.2 previa) porque `Button`, `Chip`, `IconButton`, `EmptyState` e `ErrorState` já existem em `ui/` com consumidores; reescrevê-los no sítio mudaria o visual. A B14 apaga os antigos e move `ds/` para `ui/`. `glassStyle.ts` aproxima o vidro (web: tint + `backdrop-filter`; nativo: sólido + hairline) até ao `GlassSurface` real da B4. O `IconButton` de contacto só tem os ícones existentes (sem telefone/email): os paths Phosphor Bold entram com o `Icon` novo (§3.6). `formatAddressLine` está em `src/utils/address.ts` e ainda não substitui os 2 `buildAddressLine` (migração nos passos visuais).
+
+**Nota B3:** ícone = `icon-navy-deep` (fundo `#0C3247`, o mais próximo do dark da Maré e com o melhor contraste das quatro faixas em tamanhos pequenos). Adaptive Android: foreground + monocromático, `backgroundColor #0C3247`. Splash: plugin `expo-splash-screen` (já instalado) com `aecc-symbol-1024.png`, fundo `#EEF2F5` / dark `#08161F`. PWA 192/512, `apple-touch-icon` (180) e favicon regerados a partir do `icon-navy-deep` (os do pacote eram do `icon-navy`); `manifest.json` com `#08161F`. `BrandLockup` está em `src/components/ds/` e usa **cópias sem `@3x`** em `assets/brand/aecc-logo-{light,dark}.png`: o `expo export -p web` emite `…@3x.png` mas escreve o URI sem o sufixo (404 no web). Nos ecrãs de login/registo o lockup fica fixo em `variant="light"` porque o fundo é `#fff` fixo até à B8. As metas `theme-color` de `index.html` ficam para a B6 (seguem a paleta atual). Dev build nativo sem `expo-dev-client`: o Metro tem de estar na porta **8081** (a app não procura outra).

@@ -1,19 +1,14 @@
 import { Tabs, router } from 'expo-router';
 import { useEffect } from 'react';
-import { Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon, TopBar } from '@/components/ui';
+import { BrandLockup } from '@/components/ds';
 
 function HeaderLogo() {
-  return (
-    <Image
-      source={require('../../assets/brand/aecc-logo.webp')}
-      style={{ width: 40, height: 40, marginLeft: 16 }}
-      resizeMode="contain"
-    />
-  );
+  return <BrandLockup width={96} style={{ marginLeft: 16 }} />;
 }
 
 // Renderer partilhado por todos os separadores: em vez de cortar o texto quando

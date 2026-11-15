@@ -1,6 +1,7 @@
 // Primitivas da Fase 3 / B5 (direção Maré). Sem consumidores até à B6+.
 // Vivem ao lado de `ui/` porque Button/Chip/IconButton/EmptyState/ErrorState já existem lá
 // e têm consumidores; a B14 apaga os antigos e move esta pasta para `ui/`.
+export { BrandLockup, type BrandLockupProps } from './BrandLockup';
 export { Text, type TextProps } from './Text';
 export { Button, type ButtonProps } from './Button';
 export { IconButton, type IconButtonProps } from './IconButton';

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
+import { BrandLockup } from '@/components/ds';
 import { authApi } from '@/api/auth.api';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
@@ -44,11 +44,7 @@ export default function RegisterScreen() {
   if (submitted) {
     return (
       <View style={styles.container}>
-        <Image
-          source={require('../../assets/brand/aecc-logo.webp')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <BrandLockup width={160} variant="light" style={styles.logo} />
         <Text style={styles.message}>
           Verifica o teu email para confirmares a conta e definires a tua palavra-passe.
         </Text>
@@ -64,11 +60,8 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../../assets/brand/aecc-logo.webp')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      {/* variant="light": o fundo deste ecrã é #fff fixo até à B8 */}
+      <BrandLockup width={160} variant="light" style={styles.logo} />
       <Text style={styles.subtitle}>Criar conta</Text>
 
       <TextInput
@@ -101,7 +94,7 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  logo: { width: 160, height: 56, alignSelf: 'center', marginBottom: 8 },
+  logo: { alignSelf: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 40 },
   input: {
     borderWidth: 1,

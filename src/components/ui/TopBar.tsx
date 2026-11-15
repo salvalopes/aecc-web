@@ -1,4 +1,5 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BrandLockup } from '@/components/ds';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
 import { Icon } from './Icon';
@@ -58,12 +59,7 @@ export function TopBar({
           { paddingVertical: compact ? 10 : 14, paddingHorizontal: compact ? 16 : 24 },
         ]}
       >
-        <Image
-          source={require('../../../assets/brand/aecc-logo.webp')}
-          style={{ height: compact ? 36 : 48, width: compact ? 110 : 146, flexShrink: 0 }}
-          resizeMode="contain"
-          accessibilityLabel="AECC — Associação Empresarial do Concelho de Cascais"
-        />
+        <BrandLockup width={compact ? 86 : 114} style={{ flexShrink: 0 }} />
 
         <View style={styles.actions}>
           <Pressable

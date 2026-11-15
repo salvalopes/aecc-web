@@ -17,6 +17,7 @@ import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
 import type { Category, CompanyDirectoryEntry } from '@/types/api';
 import { Button, Card, CategoryTile, Icon, LoadingSpinner } from '@/components/ui';
+import { BrandLockup } from '@/components/ds';
 
 const VALUE_PROPS = [
   { icon: 'buildings' as const, label: 'Descubra\nempresas locais' },
@@ -127,12 +128,7 @@ export default function HomeScreen() {
             ]}
           />
 
-          <Image
-            source={require('../../assets/brand/aecc-logo.webp')}
-            style={styles.heroLogo}
-            resizeMode="contain"
-            accessibilityLabel="AECC — Associação Empresarial do Concelho de Cascais"
-          />
+          <BrandLockup width={200} style={styles.heroLogo} />
           <Text
             style={{
               fontFamily: fontFamily.body,
@@ -342,7 +338,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 24 },
   hero: { padding: 20, borderBottomWidth: 1 },
   heroPanel: { alignItems: 'center', padding: 20, borderWidth: 1, overflow: 'hidden' },
-  heroLogo: { width: '70%', maxWidth: 220, height: 64, marginBottom: 6 },
+  heroLogo: { marginBottom: 6 },
   heroForm: { width: '100%', maxWidth: 320, marginTop: 20, gap: 10 },
   searchBar: {
     flexDirection: 'row',
