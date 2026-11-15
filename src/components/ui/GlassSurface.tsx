@@ -3,7 +3,7 @@ import { AccessibilityInfo, Platform, View, type StyleProp, type ViewStyle } fro
 import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useTheme } from '@/theme/ThemeContext';
 import type { GlassMaterial } from '@/theme/glass';
-import { glassShadow } from '@/theme/tokens';
+import { border as borderWidth, shadow } from '@/theme/tokens';
 
 /**
  * Capability do vidro: `true` só no iOS 26+ com o Liquid Glass disponível e sem
@@ -36,18 +36,18 @@ export function glassStyle(
   const { hovered = false, edge = 'all', opaque = false, elevated = false } = opts;
   const border: ViewStyle =
     edge === 'all'
-      ? { borderWidth: 1, borderColor: m.border }
+      ? { borderWidth: borderWidth.default, borderColor: m.border }
       : edge === 'top'
-        ? { borderTopWidth: 1, borderColor: m.border }
+        ? { borderTopWidth: borderWidth.default, borderColor: m.border }
         : edge === 'bottom'
-          ? { borderBottomWidth: 1, borderColor: m.border }
+          ? { borderBottomWidth: borderWidth.default, borderColor: m.border }
           : {};
   if (Platform.OS === 'web') {
     return {
       backgroundColor: opaque ? m.solid : hovered ? m.tintHover : m.tint,
       ...border,
       backdropFilter: opaque ? undefined : m.webFilter,
-      boxShadow: elevated ? glassShadow(m.highlight, m.shadowTint) : `inset 0 1px 0 ${m.highlight}`,
+      boxShadow: elevated ? shadow(m.highlight, m.shadowTint) : `inset 0 1px 0 ${m.highlight}`,
     } as unknown as ViewStyle;
   }
   return { backgroundColor: m.solid, ...border };
@@ -56,7 +56,7 @@ export function glassStyle(
 export interface GlassSurfaceProps {
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
-  /** Raio (por omissão `radii.control`). Passar 0 para barras de ecrã inteiro. */
+  /** Raio (por omissão `radius.control`). Passar 0 para barras de ecrã inteiro. */
   radius?: number;
   /** Cor de ênfase (ação primária, chip ativo, destrutivo): tinge o vidro. */
   tintColor?: string;
@@ -88,9 +88,9 @@ export function GlassSurface({
   pointerEvents,
   testID,
 }: GlassSurfaceProps) {
-  const { material, radii, scheme } = useTheme();
+  const { material, radius: radiusScale, scheme } = useTheme();
   const liquid = useGlassCapability();
-  const r = radius ?? radii.control;
+  const r = radius ?? radiusScale.control;
   const shape: ViewStyle = { borderRadius: r, borderCurve: 'continuous', overflow: 'hidden' };
 
   if (liquid) {

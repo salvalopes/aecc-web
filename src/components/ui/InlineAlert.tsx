@@ -1,16 +1,16 @@
 import { View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from './Icon';
 import { Text } from './Text';
 
-const factory = createStyles(({ radii }) => ({
+const factory = createStyles(({ radius, spacing }) => ({
   box: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    padding: 12,
-    borderRadius: radii.control,
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.control,
     borderCurve: 'continuous',
   },
   message: { flex: 1 },

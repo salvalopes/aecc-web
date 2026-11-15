@@ -5,20 +5,20 @@ import { ListRow } from './ListGroup';
 
 /** Barra de skeleton (estática: o shimmer fica na especificação de motion). */
 export function Skeleton({ width, height = 12 }: { width: DimensionValue; height?: number }) {
-  const { colors, radii } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View
       accessible={false}
-      style={{ width, height, borderRadius: radii.xs, backgroundColor: colors.raised }}
+      style={{ width, height, borderRadius: radius.xs, backgroundColor: colors.raised }}
     />
   );
 }
 
-const factory = createStyles(({ colors, size, radii, spacing }) => ({
+const factory = createStyles(({ colors, size, radius, spacing }) => ({
   plate: {
     width: size.plate.md,
     height: size.plate.md,
-    borderRadius: radii.plate,
+    borderRadius: radius.plate,
     borderCurve: 'continuous',
     backgroundColor: colors.raised,
   },

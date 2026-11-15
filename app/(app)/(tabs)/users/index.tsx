@@ -18,7 +18,7 @@ import {
   Plate,
   SkeletonRow,
   Text,
-} from '@/components/ds';
+} from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { useRequireRole } from '@/hooks/useRequireRole';
 import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';
@@ -35,7 +35,7 @@ const factory = createStyles(({ spacing }) => ({
   sections: { gap: spacing['2xl'] },
   section: { gap: spacing.sm },
   sectionLabel: { paddingHorizontal: spacing.xs },
-  text: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  text: { flex: 1, minWidth: spacing[0], gap: spacing['2xs'] },
   nameLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   actions: { flexDirection: 'row', alignItems: 'center' },
 }));

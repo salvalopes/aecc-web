@@ -5,14 +5,14 @@ import { createStyles, useStyles } from '@/theme/createStyles';
 import { geist, inputMin } from '@/theme/typography';
 import { Text } from './Text';
 
-const factory = createStyles(({ colors, radii, opacity, spacing }) => ({
-  wrap: { gap: 8 },
+const factory = createStyles(({ colors, radius, opacity, spacing, size, border }) => ({
+  wrap: { gap: spacing.sm },
   input: {
-    minHeight: 48,
-    paddingHorizontal: 16,
-    borderRadius: radii.control,
+    minHeight: size.control.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.control,
     borderCurve: 'continuous',
-    borderWidth: 1,
+    borderWidth: border.default,
     backgroundColor: colors.surface,
     color: colors.text,
     fontFamily: geist.regular,

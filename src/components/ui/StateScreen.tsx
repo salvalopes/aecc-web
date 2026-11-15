@@ -1,7 +1,7 @@
 import { ActivityIndicator, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { Button } from './Button';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button, InlineAlert, TextField } from '@/components/ds';
+import { Button, InlineAlert, TextField } from '@/components/ui';
 import { AuthScaffold } from '@/components/templates/AuthScaffold';
 import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/hooks/useAuth';

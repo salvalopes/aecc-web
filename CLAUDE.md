@@ -2,9 +2,9 @@
 
 - Stack obrigatória: Expo (SDK 55) + React Native + react-native-web + StyleSheet + tokens de `src/theme/` via `useTheme()`. Este projeto NÃO usa Tailwind, NativeWind nem Unistyles; não os introduzir.
 - Arquitetura de estilos (decidida, Fase 3): `createStyles(theme)` + `useStyles()` (`src/theme/createStyles.ts`), uma factory por ficheiro no topo do módulo. Sem literais de cor, espaçamento, raio ou tipografia nos ecrãs: só tokens por papel. Referência: `docs/DESIGN.md`.
-- Componentes novos: usar as primitivas de `src/components/ds/` (Text, Button, TextField, ListGroup/CompanyRow, etc.); não criar variantes locais. `ds/` passa a `ui/` na B14; os componentes antigos de `ui/` ficam só até serem migrados.
-- Tipografia: Geist (única família). Libre Franklin e Source Sans saem na B14.
-- Vidro: um único material (`theme.material`) via `GlassSurface`/`GlassGroup` (B4). `expo-blur`/`BlurView` não se usam em código novo e saem na B14.
+- Componentes novos: usar as primitivas de `src/components/ui/` (barril `@/components/ui`: Text, Button, TextField, ListGroup/CompanyRow, Icon, GlassSurface, etc.); não criar variantes locais. `StyleSheet.create` fora de `src/theme/` é erro de ESLint.
+- Tipografia: Geist (única família).
+- Vidro: um único material (`theme.material`) via `GlassSurface`/`GlassGroup` (B4). O `expo-blur` foi removido; não reintroduzir `BlurView`.
 - Navegação (B7): NativeTabs no iOS/Android e `_layout.web.tsx` com tabs headless no web, configuração única em `src/navigation/tabs.ts`. Os `testID` são o contrato dos E2E: não os renomear sem atualizar os specs.
 - Não instalar dependências novas (incl. react-native-reanimated, react-native-gesture-handler, react-native-worklets, expo-haptics, expo-linear-gradient, bibliotecas de ícones) sem aprovação explícita.
 - design-taste-frontend-v1: é opt-in (não carrega sozinha) — invocar explicitamente pelo nome em qualquer tarefa de design visual (direção visual, tokens, mockups, implementação de ecrãs). Decide apenas layout, cor, tipografia e hierarquia, em todas as plataformas. Ignorar Tailwind, Next.js, Motion/Framer, CSS e "above the fold". Estados de hover só se aplicam ao build web.

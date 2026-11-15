@@ -2,10 +2,10 @@ import { View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { ListGroup, ListRow, Text } from '@/components/ds';
+import { ListGroup, ListRow, Text } from '@/components/ui';
 
 const factory = createStyles(({ spacing }) => ({
-  text: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  text: { flex: 1, minWidth: spacing[0], gap: spacing['2xs'] },
 }));
 
 export interface InfoItem {

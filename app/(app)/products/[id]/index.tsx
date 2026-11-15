@@ -15,7 +15,7 @@ import {
   Skeleton,
   StateScreen,
   Text,
-} from '@/components/ds';
+} from '@/components/ui';
 import { DetailScaffold, DetailSection } from '@/components/templates/DetailScaffold';
 import { InfoGroup } from '@/components/detail/InfoGroup';
 import { GalleryPlaceholder, ProductGallery } from '@/components/detail/ProductGallery';
@@ -32,14 +32,14 @@ import type { Product, Company, Category } from '@/types/api';
 // md+: galeria à esquerda (3fr, fixa no web) e informação à direita (2fr). As ações do dono
 // saíram do header do `Stack` para junto do título. Editar (e gerir as imagens) é um ecrã
 // T7 próprio (`/products/:id/edit`, B12); ao voltar, o detalhe recarrega sem esqueleto.
-const factory = createStyles(({ colors, spacing, radii }) => ({
+const factory = createStyles(({ colors, spacing, radius }) => ({
   container: { flex: 1 },
   identity: { gap: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   benefit: {
     gap: spacing.xs,
     padding: spacing.lg,
-    borderRadius: radii.group,
+    borderRadius: radius.group,
     borderCurve: 'continuous',
     backgroundColor: colors.accentSoft,
   },
@@ -48,7 +48,7 @@ const factory = createStyles(({ colors, spacing, radii }) => ({
   mediaSkeleton: {
     width: '100%',
     aspectRatio: 4 / 3,
-    borderRadius: radii.group,
+    borderRadius: radius.group,
     borderCurve: 'continuous',
     backgroundColor: colors.raised,
   },

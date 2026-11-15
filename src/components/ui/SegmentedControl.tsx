@@ -1,14 +1,14 @@
 import { Pressable, View, type PressableStateCallbackType } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
-const factory = createStyles(({ colors, radii, spacing, size, border, opacity }) => ({
+const factory = createStyles(({ colors, radius, spacing, size, border, opacity }) => ({
   track: {
     flexDirection: 'row',
     padding: spacing['2xs'],
-    borderRadius: radii.capsule,
+    borderRadius: radius.capsule,
     borderCurve: 'continuous',
     backgroundColor: colors.raised,
     borderWidth: border.hairline,
@@ -20,7 +20,7 @@ const factory = createStyles(({ colors, radii, spacing, size, border, opacity })
     gap: spacing.sm,
     minHeight: size.hitTarget - spacing.xs,
     paddingHorizontal: spacing.lg,
-    borderRadius: radii.capsule,
+    borderRadius: radius.capsule,
     borderCurve: 'continuous',
   },
   active: { backgroundColor: colors.accent },

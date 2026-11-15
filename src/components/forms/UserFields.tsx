@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import type { UserRole } from '@/types/api';
-import { SegmentedControl, TextField } from '@/components/ds';
+import { SegmentedControl, TextField } from '@/components/ui';
 import { FormField, FormSection, FormSwitch } from '@/components/templates/FormLayout';
 import { ROLE_HINT, ROLE_LABEL } from '@/utils/roles';
 

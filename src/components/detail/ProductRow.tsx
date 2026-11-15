@@ -2,14 +2,14 @@ import { Image, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { Icon } from '@/components/ui/Icon';
-import { ListRow, Text } from '@/components/ds';
+import { ListRow, Text } from '@/components/ui';
 import type { Product } from '@/types/api';
 
-const factory = createStyles(({ colors, size, radii, spacing }) => ({
+const factory = createStyles(({ colors, size, radius, spacing }) => ({
   thumb: {
     width: size.plate.md,
     height: size.plate.md,
-    borderRadius: radii.plate,
+    borderRadius: radius.plate,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',
@@ -17,7 +17,7 @@ const factory = createStyles(({ colors, size, radii, spacing }) => ({
     backgroundColor: colors.accentSoft,
   },
   image: { width: size.plate.md, height: size.plate.md },
-  text: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  text: { flex: 1, minWidth: spacing[0], gap: spacing['2xs'] },
   meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.xs },
 }));
 

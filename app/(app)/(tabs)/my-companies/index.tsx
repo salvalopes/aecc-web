@@ -10,7 +10,7 @@ import {
   ErrorState,
   ListGroup,
   SkeletonRow,
-} from '@/components/ds';
+} from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { useRequireRole } from '@/hooks/useRequireRole';
 import { ForbiddenState, SessionLoadingState } from '@/components/templates/StateTemplates';

@@ -10,7 +10,7 @@ import { useFormValidation } from '@/hooks/useFormValidation';
 import { confirmDestructive } from '@/utils/confirm';
 import { closeForm } from '@/navigation/closeForm';
 import type { Category, Company, Product, ProductImage } from '@/types/api';
-import { ErrorState, StateScreen } from '@/components/ds';
+import { ErrorState, StateScreen } from '@/components/ui';
 import { DetailScaffold } from '@/components/templates/DetailScaffold';
 import { FormLayout } from '@/components/templates/FormLayout';
 import { ForbiddenState } from '@/components/templates/StateTemplates';

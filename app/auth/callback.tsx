@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { StateScreen } from '@/components/ds';
+import { StateScreen } from '@/components/ui';
 
 export default function AuthCallbackScreen() {
   const { code, state, error, error_description } = useLocalSearchParams<{

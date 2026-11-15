@@ -2,9 +2,10 @@ import type { ReactNode } from 'react';
 import { Platform, RefreshControl, ScrollView, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
+import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { Text } from '@/components/ds';
+import { Text } from '@/components/ui';
 
 // T4 Detalhe (fase3-plano §4.1), direção Maré. Ecrã empurrado: o header do `Stack` dá o
 // "voltar", por isso não há horizonte. Tudo alinhado à esquerda.
@@ -12,7 +13,7 @@ import { Text } from '@/components/ds';
 // md+: duas colunas na grelha de 1240 — `lead` à esquerda (fixa no web) e conteúdo à direita,
 // com a proporção do ecrã (`leadFlex` / `contentFlex`).
 const sticky = (Platform.OS === 'web'
-  ? { position: 'sticky', top: 20 }
+  ? { position: 'sticky', top: spacing.xl }
   : {}) as unknown as ViewStyle;
 
 const factory = createStyles(({ colors, spacing, layout }) => ({
@@ -35,7 +36,7 @@ const factory = createStyles(({ colors, spacing, layout }) => ({
   lead: { gap: spacing.xl },
   leadWide: { minWidth: layout.sidebarMin, ...sticky },
   content: { gap: layout.sectionGap },
-  contentWide: { minWidth: 0 },
+  contentWide: { minWidth: spacing[0] },
   section: { gap: spacing.md },
   sectionHead: {
     flexDirection: 'row',

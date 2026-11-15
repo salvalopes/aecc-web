@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Button, InlineAlert, TextField, TextLink } from '@/components/ds';
+import { Button, InlineAlert, TextField, TextLink } from '@/components/ui';
 import { AuthPrompt, AuthScaffold } from '@/components/templates/AuthScaffold';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';

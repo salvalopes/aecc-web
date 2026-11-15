@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { combine, emailFormat, required, type FieldRule } from '@/utils/validators';
-import { Button, Plate, TextField } from '@/components/ds';
+import { Button, Plate, TextField } from '@/components/ui';
 import { FormField, FormSection } from '@/components/templates/FormLayout';
 
 // Campos da empresa (T7, B12): os mesmos em "Nova empresa" e "Editar empresa".

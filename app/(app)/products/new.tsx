@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { closeForm } from '@/navigation/closeForm';
 import type { Category, Company } from '@/types/api';
-import { ErrorState, StateScreen } from '@/components/ds';
+import { ErrorState, StateScreen } from '@/components/ui';
 import { DetailScaffold } from '@/components/templates/DetailScaffold';
 import { FormLayout } from '@/components/templates/FormLayout';
 import { ForbiddenState } from '@/components/templates/StateTemplates';

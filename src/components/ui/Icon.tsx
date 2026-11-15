@@ -1,4 +1,5 @@
 import Svg, { Path } from 'react-native-svg';
+import { useTheme } from '@/theme/ThemeContext';
 
 // Phosphor Icons (MIT, https://phosphoricons.com) — "regular" weight, copied
 // verbatim as filled 256-viewBox path data. Replaced Lucide in the Aug-2026
@@ -135,10 +136,11 @@ interface IconProps {
   color?: string;
 }
 
-export function Icon({ name, size = 20, color = '#000000' }: IconProps) {
+export function Icon({ name, size = 20, color }: IconProps) {
+  const { colors } = useTheme();
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256">
-      <Path d={PATHS[name]} fill={color} />
+      <Path d={PATHS[name]} fill={color ?? colors.text} />
     </Svg>
   );
 }

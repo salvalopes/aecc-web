@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { Button, InlineAlert, ListGroup, ListRow, Skeleton, Switch, Text } from '@/components/ds';
+import { Button, InlineAlert, ListGroup, ListRow, Skeleton, Switch, Text } from '@/components/ui';
 
 // T7 Formulário em ecrã (fase3-plano §4.1 e §4.2 #24), direção Maré. Substitui o `Modal`.
 // Ecrã empurrado no `Stack` de `(app)`, por cima das tabs: o header dá o título e o "voltar".
@@ -47,11 +47,11 @@ const factory = createStyles(({ colors, spacing, layout, border }) => ({
   section: { gap: spacing.lg },
   sectionWide: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['4xl'] },
   sectionHead: { gap: spacing.xs },
-  sectionHeadWide: { flex: 1, minWidth: 0 },
+  sectionHeadWide: { flex: 1, minWidth: spacing[0] },
   sectionBody: { gap: spacing.xl },
-  sectionBodyWide: { flex: 2, minWidth: 0 },
+  sectionBodyWide: { flex: 2, minWidth: spacing[0] },
   field: { gap: spacing.sm },
-  switchText: { flex: 1, minWidth: 0, gap: spacing['2xs'] },
+  switchText: { flex: 1, minWidth: spacing[0], gap: spacing['2xs'] },
   skeletonField: { gap: spacing.sm },
 }));
 

@@ -1,7 +1,7 @@
 import { Pressable, View, type PressableStateCallbackType, type ViewProps } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from './Icon';
 import { Surface } from './Surface';
 
 const groupFactory = createStyles(({ colors, border }) => ({
@@ -31,8 +31,8 @@ const factory = createStyles(({ colors, border, size, spacing }) => ({
   // hairline indentada: começa depois do plate (16 + 48 + 12)
   rule: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: spacing[0],
+    right: spacing[0],
     left: spacing.lg + size.plate.md + spacing.md,
     height: border.hairline,
     backgroundColor: colors.border,

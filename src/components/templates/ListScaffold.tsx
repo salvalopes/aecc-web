@@ -10,16 +10,17 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
+import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { Horizon, type HorizonProps } from '@/components/ds';
+import { Horizon, type HorizonProps } from '@/components/ui';
 
 // T3 Lista (fase3-plano §4.1), direção Maré.
 // sm: horizonte → elemento a sobrepor a borda (−26, a pesquisa) → conteúdo em coluna única.
 // md+: horizonte em largura total (título à esquerda, `aside` à direita) → coluna de 1240.
 // lg com `sidebar`: 1fr (fixa, a sobrepor o horizonte) + 3fr (conteúdo). Nada centrado no texto.
 const sticky = (Platform.OS === 'web'
-  ? { position: 'sticky', top: 20 }
+  ? { position: 'sticky', top: spacing.xl }
   : {}) as unknown as ViewStyle;
 
 const factory = createStyles(({ colors, spacing, layout }) => ({
@@ -45,7 +46,7 @@ const factory = createStyles(({ colors, spacing, layout }) => ({
   sidebar: { flex: 1, minWidth: layout.sidebarMin, zIndex: 1, ...sticky },
   content: {
     flex: 3,
-    minWidth: 0,
+    minWidth: spacing[0],
     gap: spacing.lg,
     paddingTop: -layout.searchOverlap + spacing.xl,
   },
