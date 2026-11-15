@@ -4,6 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'AECC',
   slug: 'aecc',
+  scheme: 'aecc', // só no branch design/fase2-direcoes: deep link dos protótipos
   version: '0.1.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
