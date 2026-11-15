@@ -1,144 +1,95 @@
-import type { ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
+import { ActivityIndicator, Pressable, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import type { GlassVariant } from '@/theme/glass';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { Text } from './Text';
+import { glassStyle } from './GlassSurface';
 
-type ButtonVariant = 'primary' | 'gold' | 'secondary' | 'destructive' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type Variant = 'primary' | 'secondary' | 'glass' | 'destructive';
+type Fg = 'onAccent' | 'text' | 'error';
 
-interface ButtonProps {
-  children: string;
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  disabled?: boolean;
-  loading?: boolean;
-  icon?: ReactNode;
-  fullWidth?: boolean;
+const factory = createStyles(({ radius, opacity, spacing, size }) => ({
+  base: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.control,
+    borderCurve: 'continuous',
+    paddingHorizontal: spacing.xl,
+  },
+  md: { minHeight: size.control.md },
+  sm: { minHeight: size.control.sm, paddingHorizontal: spacing.lg },
+  disabled: { opacity: opacity.disabled },
+}));
+
+export interface ButtonProps {
+  label: string;
   onPress?: () => void;
+  variant?: Variant;
+  size?: 'sm' | 'md';
+  /** Mostra o indicador e bloqueia o toque (D6). */
+  loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-const SIZES: Record<ButtonSize, { padY: number; padX: number; minH: number }> = {
-  sm: { padY: 8, padX: 14, minH: 36 },
-  md: { padY: 13, padX: 20, minH: 44 },
-  lg: { padY: 16, padX: 28, minH: 52 },
-};
-
-// "Seamless" glass button — translucent tint over a BlurView backdrop, a lit
-// border, and an ambient shadow (tokens/glass.css in the AECC design
-// system). Hover doesn't exist on touch, so only idle/pressed tints are used.
 export function Button({
-  children,
+  label,
+  onPress,
   variant = 'primary',
   size = 'md',
-  disabled = false,
   loading = false,
-  icon = null,
-  fullWidth = false,
-  onPress,
+  disabled = false,
+  fullWidth,
   style,
   testID,
 }: ButtonProps) {
-  const theme = useTheme();
-  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight } = theme;
-  const s = SIZES[size];
+  const s = useStyles(factory);
+  const { colors, material, border } = useTheme();
+  const inactive = disabled || loading;
 
-  const destructive: GlassVariant = {
-    tint: 'rgba(176, 34, 32, 0.88)',
-    tintActive: 'rgba(120, 22, 21, 0.97)',
-    border: 'rgba(255, 255, 255, 0.26)',
-    blurIntensity: glass.neutral.blurIntensity,
-    blurTint: glass.neutral.blurTint,
-    shadow: glass.neutral.shadow,
-  };
+  const fg: Fg = variant === 'primary' ? 'onAccent' : variant === 'destructive' ? 'error' : 'text';
 
-  const config: Record<ButtonVariant, { glass: GlassVariant | null; fg: string }> = {
-    primary: { glass: glass.primary, fg: colors.textOnPrimary },
-    gold: { glass: glass.gold, fg: colors.textOnGold },
-    secondary: { glass: glass.neutral, fg: colors.accentPrimary },
-    destructive: { glass: destructive, fg: '#ffffff' },
-    ghost: { glass: null, fg: colors.accentPrimary },
+  const background = (pressed: boolean): ViewStyle => {
+    switch (variant) {
+      case 'primary':
+        return { backgroundColor: pressed ? colors.accentPressed : colors.accent };
+      case 'secondary':
+        return {
+          backgroundColor: pressed ? colors.raised : colors.surface,
+          borderWidth: border.default,
+          borderColor: colors.border,
+        };
+      case 'glass':
+        return glassStyle(material, { hovered: pressed });
+      case 'destructive':
+        return { backgroundColor: colors.errorBg, opacity: pressed ? 0.8 : 1 };
+    }
   };
-  const { glass: v, fg } = config[variant];
 
   return (
-    <View style={[fullWidth && { width: '100%' }, v ? v.shadow : null, style]}>
-      <Pressable
-        testID={testID}
-        onPress={onPress}
-        disabled={disabled || loading}
-        style={({ pressed }) => [
-          {
-            minHeight: s.minH,
-            borderRadius: glassRadius.control,
-            overflow: 'hidden',
-            borderWidth: v ? 1 : 0,
-            borderColor: v?.border ?? 'transparent',
-            opacity: disabled ? 0.45 : 1,
-          },
-          pressed && !v ? { backgroundColor: glass.neutral.tintActive } : null,
-        ]}
-      >
-        {({ pressed }) => (
-          <>
-            {v && (
-              <BlurView
-                intensity={v.blurIntensity}
-                tint={v.blurTint}
-                style={StyleSheet.absoluteFillObject}
-              />
-            )}
-            {v && (
-              <View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  { backgroundColor: pressed ? v.tintActive : v.tint },
-                ]}
-              />
-            )}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                minHeight: s.minH,
-                paddingVertical: s.padY,
-                paddingHorizontal: s.padX,
-                transform: pressed ? [{ translateY: 1 }] : undefined,
-              }}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={fg} />
-              ) : (
-                <>
-                  {icon}
-                  <Text
-                    style={{
-                      fontFamily: fontFamily.body,
-                      fontSize: fontSize[size === 'lg' ? 'md' : size === 'sm' ? 'sm' : 'base'],
-                      fontWeight: fontWeight.bold,
-                      color: fg,
-                    }}
-                  >
-                    {children}
-                  </Text>
-                </>
-              )}
-            </View>
-          </>
-        )}
-      </Pressable>
-    </View>
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      disabled={inactive}
+      onPress={onPress}
+      hitSlop={size === 'sm' ? 2 : 0}
+      style={({ pressed }) => [
+        s.base,
+        s[size],
+        background(pressed),
+        fullWidth ? { alignSelf: 'stretch' } : null,
+        inactive ? s.disabled : null,
+        style,
+      ]}
+    >
+      {loading ? <ActivityIndicator size="small" color={colors[fg]} /> : null}
+      <Text variant="name" color={fg}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }

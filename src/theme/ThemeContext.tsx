@@ -1,39 +1,42 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import { Appearance, Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, type ThemeColors } from './colors';
-import { lightGlass, darkGlass, type GlassTokens } from './glass';
-import {
-  spacing,
-  radius,
-  glassRadius,
-  hitTargetMin,
-  fontFamily,
-  fontSize,
-  lineHeight,
-  fontWeight,
-  shadow,
-} from './tokens';
+import { lightMaterial, darkMaterial, type GlassMaterial } from './glass';
+import { spacing, radius, size, border, opacity, breakpoints, layout } from './tokens';
+import { textStyles } from './typography';
 
 const THEME_MODE_KEY = 'aecc_theme_mode';
 
 type ThemeMode = 'light' | 'dark';
+/** Escolha do utilizador no Perfil (T6). `system` segue o esquema do dispositivo. */
+export type ThemePreference = 'system' | ThemeMode;
 
-interface Theme {
+export interface Theme {
   colors: ThemeColors;
-  glass: GlassTokens;
-  isDark: boolean;
-  mode: ThemeMode;
-  toggleTheme: () => void;
+  /** Material único do vidro (Maré), consumido pelo `GlassSurface`. */
+  material: GlassMaterial;
+  scheme: 'light' | 'dark';
   spacing: typeof spacing;
   radius: typeof radius;
-  glassRadius: typeof glassRadius;
-  hitTargetMin: typeof hitTargetMin;
-  fontFamily: typeof fontFamily;
-  fontSize: typeof fontSize;
-  lineHeight: typeof lineHeight;
-  fontWeight: typeof fontWeight;
-  shadow: typeof shadow;
+  size: typeof size;
+  border: typeof border;
+  opacity: typeof opacity;
+  breakpoints: typeof breakpoints;
+  layout: typeof layout;
+  textStyles: typeof textStyles;
+  isDark: boolean;
+  mode: ThemeMode;
+  preference: ThemePreference;
+  setPreference: (preference: ThemePreference) => void;
 }
 
 const ThemeContext = createContext<Theme | null>(null);
@@ -50,6 +53,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Nativo: a tab bar das NativeTabs e o GlassView não seguem um esquema
+  // definido só em JS. Com override manual, o esquema da app inteira passa a
+  // ser esse (fase3-plano §2.2-3); sem override, volta ao do sistema.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    Appearance.setColorScheme(override ?? 'unspecified');
+  }, [override]);
+
   const mode: ThemeMode = override ?? (systemScheme === 'dark' ? 'dark' : 'light');
   const isDark = mode === 'dark';
   const colors = isDark ? darkColors : lightColors;
@@ -62,37 +73,45 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // those surfaces on the wrong color. Once mounted, this is the single
   // place that overwrites them to the theme actually in effect, keeping
   // every background on the page — including the ones CSS alone can't
-  // reach — on the same colors.surfaceApp the rest of the app already uses.
+  // reach — on the same colors.bg the rest of the app already uses.
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    document.documentElement.style.setProperty('--aecc-surface-app', colors.surfaceApp);
+    document.documentElement.style.setProperty('--aecc-surface-app', colors.bg);
     document.documentElement.style.setProperty('--aecc-focus-ring', colors.focusRing);
   }, [colors]);
 
-  function toggleTheme() {
-    const next: ThemeMode = isDark ? 'light' : 'dark';
-    setOverride(next);
-    AsyncStorage.setItem(THEME_MODE_KEY, next);
-  }
+  const preference: ThemePreference = override ?? 'system';
+
+  // Sem override guardado, a app volta a seguir o sistema (e o nativo também, ver acima).
+  const setPreference = useCallback((next: ThemePreference) => {
+    if (next === 'system') {
+      setOverride(null);
+      AsyncStorage.removeItem(THEME_MODE_KEY);
+    } else {
+      setOverride(next);
+      AsyncStorage.setItem(THEME_MODE_KEY, next);
+    }
+  }, []);
 
   const theme = useMemo<Theme>(
     () => ({
       colors,
-      glass: isDark ? darkGlass : lightGlass,
-      isDark,
-      mode,
-      toggleTheme,
+      material: isDark ? darkMaterial : lightMaterial,
+      scheme: mode,
       spacing,
       radius,
-      glassRadius,
-      hitTargetMin,
-      fontFamily,
-      fontSize,
-      lineHeight,
-      fontWeight,
-      shadow,
+      size,
+      border,
+      opacity,
+      breakpoints,
+      layout,
+      textStyles,
+      isDark,
+      mode,
+      preference,
+      setPreference,
     }),
-    [colors, isDark, mode],
+    [colors, isDark, mode, preference, setPreference],
   );
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;

@@ -1,57 +1,60 @@
 import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { createStyles, useStyles } from '@/theme/createStyles';
 import { Icon, type IconName } from './Icon';
 
-type Tone = 'default' | 'danger' | 'accent';
+const factory = createStyles(({ size, radius, opacity }) => ({
+  base: {
+    width: size.hitTarget,
+    height: size.hitTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.control,
+    borderCurve: 'continuous',
+  },
+  contact: { borderRadius: radius.capsule },
+  disabled: { opacity: opacity.disabled },
+}));
 
-interface IconButtonProps {
+export interface IconButtonProps {
   icon: IconName;
   label: string;
-  tone?: Tone;
-  size?: number;
-  disabled?: boolean;
   onPress?: () => void;
+  /** `contact`: círculo sobre `raised` (telefone, email, site). */
+  variant?: 'plain' | 'contact';
+  disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export function IconButton({
   icon,
   label,
-  tone = 'default',
-  size = 20,
-  disabled = false,
   onPress,
+  variant = 'plain',
+  disabled,
   style,
+  testID,
 }: IconButtonProps) {
-  const { colors, radius, hitTargetMin } = useTheme();
-  const color =
-    tone === 'danger'
-      ? colors.error
-      : tone === 'accent'
-        ? colors.accentPrimary
-        : colors.textSecondary;
-
+  const s = useStyles(factory);
+  const { colors, size } = useTheme();
+  const contact = variant === 'contact';
   return (
     <Pressable
-      accessibilityLabel={label}
+      testID={testID}
       accessibilityRole="button"
-      onPress={onPress}
+      accessibilityLabel={label}
       disabled={disabled}
+      onPress={onPress}
       style={({ pressed }) => [
-        {
-          alignItems: 'center',
-          justifyContent: 'center',
-          minWidth: hitTargetMin,
-          minHeight: hitTargetMin,
-          paddingHorizontal: 10,
-          borderRadius: radius.md,
-          backgroundColor: pressed ? colors.surfaceSunken : 'transparent',
-          opacity: disabled ? 0.4 : 1,
-        },
+        s.base,
+        contact ? s.contact : null,
+        pressed || contact ? { backgroundColor: colors.raised } : null,
+        disabled ? s.disabled : null,
         style,
       ]}
     >
-      <Icon name={icon} size={size} color={color} />
+      <Icon name={icon} size={size.icon.md} color={contact ? colors.accentText : colors.text} />
     </Pressable>
   );
 }

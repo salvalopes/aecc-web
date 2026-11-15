@@ -1,22 +1,28 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { router } from 'expo-router';
+import { Button, InlineAlert, TextField, TextLink } from '@/components/ui';
+import { AuthScaffold } from '@/components/templates/AuthScaffold';
 import { authApi } from '@/api/auth.api';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, emailFormat, combine } from '@/utils/validators';
+
+interface FormState {
+  email: string;
+}
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { fieldErrors, validate } = useFormValidation<FormState>();
 
   async function handleSubmit() {
-    if (!email) return;
+    const isValid = validate(
+      { email },
+      { email: combine(required('O email é obrigatório.'), emailFormat()) },
+    );
+    if (!isValid) return;
+
     setLoading(true);
     try {
       await authApi.forgotPassword({ email });
@@ -28,94 +34,48 @@ export default function ForgotPasswordScreen() {
     }
   }
 
+  const goToLogin = () => router.replace('/(auth)/login');
+
   if (submitted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>AECC</Text>
-        <Text style={styles.subtitle}>Esqueci-me da palavra-passe</Text>
-        <Text testID="forgot-password.success" style={styles.message}>
-          Se o endereço de email estiver registado, vais receber um link para redefinir a
-          palavra-passe nos próximos minutos.
-        </Text>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonOutline]}
-          onPress={() => router.replace('/(auth)/login')}
-        >
-          <Text style={styles.buttonOutlineText}>Voltar ao login</Text>
-        </TouchableOpacity>
-      </View>
+      <AuthScaffold title="Verifica o teu email" subtitle={`Pedido enviado para ${email.trim()}.`}>
+        <InlineAlert
+          testID="forgot-password.success"
+          tone="success"
+          message="Se o email estiver registado, vais receber um link para redefinir a palavra-passe nos próximos minutos."
+        />
+        <Button label="Voltar ao login" variant="secondary" onPress={goToLogin} fullWidth />
+      </AuthScaffold>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>AECC</Text>
-      <Text style={styles.subtitle}>Esqueci-me da palavra-passe</Text>
-
-      <Text style={styles.description}>
-        Introduz o teu email e enviamos-te um link para redefinires a palavra-passe.
-      </Text>
-
-      <TextInput
+    <AuthScaffold
+      title="Recuperar acesso"
+      subtitle="Indica o email da tua conta e enviamos um link para definires uma nova palavra-passe."
+      footer={<TextLink label="Voltar ao login" onPress={goToLogin} />}
+    >
+      <TextField
         testID="forgot-password.email"
-        style={styles.input}
-        placeholder="Email"
+        label="Email"
+        placeholder="nome@empresa.pt"
         value={email}
         onChangeText={setEmail}
+        error={fieldErrors.email}
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="send"
+        onSubmitEditing={handleSubmit}
       />
-
-      <TouchableOpacity
+      <Button
+        label="Enviar link"
         testID="forgot-password.submit"
-        style={styles.button}
+        loading={loading}
         onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Enviar link</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.back()} style={styles.backLink}>
-        <Text style={styles.backLinkText}>Voltar ao login</Text>
-      </TouchableOpacity>
-    </View>
+        fullWidth
+      />
+    </AuthScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 24 },
-  description: { fontSize: 14, textAlign: 'center', color: '#555', marginBottom: 24 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#0a7ea4',
-    marginTop: 8,
-  },
-  buttonOutlineText: { color: '#0a7ea4', fontSize: 16, fontWeight: '600' },
-  message: { fontSize: 15, textAlign: 'center', color: '#333', marginBottom: 32, lineHeight: 22 },
-  backLink: { marginTop: 20, alignItems: 'center' },
-  backLinkText: { color: '#0a7ea4', fontSize: 14 },
-});

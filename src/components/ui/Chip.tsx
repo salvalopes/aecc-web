@@ -1,48 +1,48 @@
-import { Pressable, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { createStyles, useStyles } from '@/theme/createStyles';
+import { Text } from './Text';
+import { glassStyle } from './GlassSurface';
 
-interface ChipProps {
-  children: string;
+const factory = createStyles(({ radius, size, spacing }) => ({
+  base: {
+    minHeight: size.hitTarget,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.capsule,
+    borderCurve: 'continuous',
+  },
+}));
+
+export interface ChipProps {
+  label: string;
   active?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-export function Chip({ children, active = false, onPress, style, testID }: ChipProps) {
-  const { colors, radius, fontFamily, fontSize, fontWeight } = useTheme();
-
+/** Cápsula; ativo = acento sólido (o vidro com tint chega na B4). */
+export function Chip({ label, active = false, onPress, style, testID }: ChipProps) {
+  const s = useStyles(factory);
+  const { colors, material } = useTheme();
   return (
     <Pressable
       testID={testID}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={({ pressed }) => [
-        {
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 8,
-          paddingHorizontal: 14,
-          borderRadius: radius.pill,
-          borderWidth: 1,
-          borderColor: active ? colors.accentPrimary : colors.borderDefault,
-          backgroundColor: active
-            ? colors.accentPrimary
-            : pressed
-              ? colors.surfaceSunken
-              : colors.surfaceCard,
-        },
+        s.base,
+        active
+          ? { backgroundColor: pressed ? colors.accentPressed : colors.accent }
+          : glassStyle(material, { hovered: pressed }),
         style,
       ]}
     >
-      <Text
-        style={{
-          fontFamily: fontFamily.body,
-          fontSize: fontSize.sm,
-          fontWeight: active ? fontWeight.semibold : fontWeight.regular,
-          color: active ? colors.textOnPrimary : colors.textSecondary,
-        }}
-      >
-        {children}
+      <Text variant="meta" color={active ? 'onAccent' : 'text'}>
+        {label}
       </Text>
     </Pressable>
   );

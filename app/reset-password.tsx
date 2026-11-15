@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Button, InlineAlert, TextField, TextLink } from '@/components/ui';
+import { AuthScaffold } from '@/components/templates/AuthScaffold';
 import { authApi } from '@/api/auth.api';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { required, passwordStrength, matches, combine } from '@/utils/validators';
+
+interface FormState {
+  newPassword: string;
+  confirmPassword: string;
+}
+
+const PASSWORD_HINT = 'Mínimo 8 caracteres, com maiúscula, minúscula e número.';
 
 export default function ResetPasswordScreen() {
   const { userId, token } = useLocalSearchParams<{ userId?: string; token?: string }>();
@@ -16,139 +19,100 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const { fieldErrors, formError, validate, applyApiError } = useFormValidation<FormState>();
+
+  const goToLogin = () => router.replace('/(auth)/login');
+  const requestNewLink = () => router.replace('/(auth)/forgot-password');
 
   if (!userId || !token) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>AECC</Text>
-        <Text style={styles.subtitle}>Redefinir palavra-passe</Text>
-        <Text style={styles.error}>Link inválido: parâmetros em falta.</Text>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonOutline]}
-          onPress={() => router.replace('/(auth)/login')}
-        >
-          <Text style={styles.buttonOutlineText}>Ir para login</Text>
-        </TouchableOpacity>
-      </View>
+      <AuthScaffold title="Link inválido" subtitle="Este link de redefinição está incompleto.">
+        <InlineAlert
+          tone="error"
+          message="Abre de novo o link a partir do email, sem o editar, ou pede um link novo."
+        />
+        <Button label="Pedir novo link" onPress={requestNewLink} fullWidth />
+        <Button label="Ir para o login" variant="secondary" onPress={goToLogin} fullWidth />
+      </AuthScaffold>
     );
   }
 
   if (success) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>AECC</Text>
-        <Text style={styles.subtitle}>Redefinir palavra-passe</Text>
-        <Text style={styles.successMessage}>Palavra-passe redefinida com sucesso!</Text>
-        <TouchableOpacity style={styles.button} onPress={() => router.replace('/(auth)/login')}>
-          <Text style={styles.buttonText}>Ir para login</Text>
-        </TouchableOpacity>
-      </View>
+      <AuthScaffold
+        title="Palavra-passe alterada"
+        subtitle="Já podes entrar com a nova palavra-passe."
+      >
+        <InlineAlert tone="success" message="A palavra-passe foi redefinida." />
+        <Button label="Ir para o login" onPress={goToLogin} fullWidth />
+      </AuthScaffold>
     );
   }
 
   async function handleSubmit() {
-    setValidationError(null);
-    setApiError(null);
-
-    if (newPassword.length < 8) {
-      setValidationError('A palavra-passe deve ter pelo menos 8 caracteres.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setValidationError('As palavras-passe não coincidem.');
-      return;
-    }
+    const isValid = validate(
+      { newPassword, confirmPassword },
+      {
+        newPassword: passwordStrength(),
+        confirmPassword: combine(
+          required('Confirma a palavra-passe.'),
+          matches('newPassword', 'As palavras-passe não coincidem.'),
+        ),
+      },
+    );
+    if (!isValid) return;
 
     setLoading(true);
     try {
       await authApi.resetPassword({ userId: userId!, token: token!, newPassword });
       setSuccess(true);
-    } catch (e: unknown) {
-      setApiError(e instanceof Error ? e.message : 'Erro ao redefinir a palavra-passe.');
+    } catch (e) {
+      applyApiError(e, { NewPassword: 'newPassword', Password: 'newPassword' });
     } finally {
       setLoading(false);
     }
   }
 
-  const displayError = validationError ?? apiError;
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>AECC</Text>
-      <Text style={styles.subtitle}>Redefinir palavra-passe</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nova palavra-passe"
+    <AuthScaffold
+      title="Nova palavra-passe"
+      subtitle="Escolhe a palavra-passe que vais passar a usar para entrar."
+    >
+      <TextField
+        label="Nova palavra-passe"
+        hint={PASSWORD_HINT}
         value={newPassword}
         onChangeText={setNewPassword}
+        error={fieldErrors.newPassword}
         secureTextEntry
         autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="next"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar palavra-passe"
+      <TextField
+        label="Confirmar palavra-passe"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
+        error={fieldErrors.confirmPassword}
         secureTextEntry
         autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="go"
+        onSubmitEditing={handleSubmit}
       />
 
-      {displayError && <Text style={styles.error}>{displayError}</Text>}
+      {formError ? (
+        <>
+          <InlineAlert tone="error" message={formError} />
+          <TextLink
+            variant="meta"
+            label="Pedir novo link de redefinição"
+            onPress={requestNewLink}
+          />
+        </>
+      ) : null}
 
-      {apiError && (
-        <TouchableOpacity onPress={() => router.replace('/(auth)/forgot-password')}>
-          <Text style={styles.link}>Pedir novo link de redefinição</Text>
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Redefinir palavra-passe</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+      <Button label="Redefinir palavra-passe" loading={loading} onPress={handleSubmit} fullWidth />
+    </AuthScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 40 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#0a7ea4',
-    marginTop: 8,
-  },
-  buttonOutlineText: { color: '#0a7ea4', fontSize: 16, fontWeight: '600' },
-  error: { color: '#d32f2f', marginBottom: 8, textAlign: 'center' },
-  successMessage: { fontSize: 16, textAlign: 'center', color: '#333', marginBottom: 24 },
-  link: {
-    color: '#0a7ea4',
-    textAlign: 'center',
-    marginBottom: 12,
-    textDecorationLine: 'underline',
-    fontSize: 14,
-  },
-});

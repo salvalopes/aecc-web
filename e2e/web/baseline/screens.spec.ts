@@ -6,6 +6,8 @@ import { ASSOCIADO_COMPANY_ID, ASSOCIADO_PRODUCT_ID, login, USERS } from '../hel
 // Screenshots "antes" do redesign (docs/redesign/00-inventario.md §1.3).
 // Só corre com `npm run baseline:web`. Nome: <rota>__<largura>__<tema>.png
 // Fora: /companies/category/:id — é só um <Redirect> para /companies, sem UI própria.
+// Fora: /favourites — placeholder escondido da tab bar (href: null); as 4 capturas "antes" ficam
+// versionadas em docs/redesign/baseline/web mas já não são regeneradas.
 
 // BASELINE_OUT (opcional, relativo à raiz do repo) desvia o output — ex. comparar após upgrades
 // sem sobrescrever o baseline versionado.
@@ -27,7 +29,6 @@ const SCREENS: { name: string; url: string; role: Role }[] = [
   { name: 'companies', url: '/companies', role: 'associado' },
   { name: 'companies-id', url: `/companies/${ASSOCIADO_COMPANY_ID}`, role: 'associado' },
   { name: 'products-id', url: `/products/${ASSOCIADO_PRODUCT_ID}`, role: 'associado' },
-  { name: 'favourites', url: '/favourites', role: 'associado' },
   { name: 'profile', url: '/profile', role: 'associado' },
   { name: 'my-companies', url: '/my-companies', role: 'associado' },
   { name: 'users', url: '/users', role: 'admin' },
