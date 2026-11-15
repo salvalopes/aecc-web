@@ -3,10 +3,11 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
 import { Button } from '@/components/ui';
+import { Button as DsButton } from '@/components/ds';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const { colors, fontFamily, fontSize, fontWeight } = useTheme();
+  const { colors, fontFamily, fontSize, fontWeight, isDark, toggleTheme, spacing } = useTheme();
 
   async function handleLogout() {
     await logout();
@@ -54,6 +55,16 @@ export default function ProfileScreen() {
       >
         {user?.role ?? '—'}
       </Text>
+
+      {/* Provisório: o toggle saiu com o TopBar (B7); o T6 traz system/light/dark (B13). */}
+      <DsButton
+        testID="profile.theme-toggle"
+        variant="secondary"
+        size="sm"
+        onPress={toggleTheme}
+        style={{ marginBottom: spacing.lg }}
+        label={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+      />
 
       <Button testID="profile.logout" variant="destructive" onPress={handleLogout}>
         Terminar sessão

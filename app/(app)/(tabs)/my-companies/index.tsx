@@ -40,7 +40,7 @@ function MyCompanyCard({ company }: { company: Company }) {
       <View style={styles.rowHeader}>
         <Pressable
           testID="my-companies.card"
-          onPress={() => router.push(`/(app)/companies/${company.id}`)}
+          onPress={() => router.push(`/companies/${company.id}`)}
           style={[styles.nameArea, { padding: spacing[6] }]}
         >
           <Text
@@ -69,7 +69,7 @@ function MyCompanyCard({ company }: { company: Company }) {
         </Pressable>
         <Pressable
           testID="my-companies.edit"
-          onPress={() => router.push(`/(app)/companies/${company.id}?edit=1`)}
+          onPress={() => router.push(`/companies/${company.id}?edit=1`)}
           style={[styles.editBtn, { paddingHorizontal: spacing[6] }]}
           hitSlop={8}
         >

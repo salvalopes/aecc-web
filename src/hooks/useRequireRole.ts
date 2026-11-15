@@ -3,7 +3,7 @@ import { router, type Href } from 'expo-router';
 import { useAuth } from './useAuth';
 import type { UserRole } from '@/types/api';
 
-const DEFAULT_FALLBACK: Href = '/(app)';
+const DEFAULT_FALLBACK: Href = '/';
 
 // Role-based access check for routes already inside (app) — the auth guard
 // (logged in or not) lives one level up, in (app)/_layout.tsx. This hook only

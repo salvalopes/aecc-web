@@ -36,7 +36,7 @@ function CompanyDirectoryRow({
       <View style={styles.rowHeader}>
         <Pressable
           testID="directory.row"
-          onPress={() => router.push(`/(app)/companies/${item.id}`)}
+          onPress={() => router.push(`/companies/${item.id}`)}
           style={[styles.nameArea, { padding: spacing[6] }]}
         >
           <Text

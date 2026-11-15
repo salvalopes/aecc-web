@@ -30,7 +30,7 @@ export default function AuthCallbackScreen() {
     }
 
     completeOAuthLogin(code, state)
-      .then(() => router.replace('/(app)/companies'))
+      .then(() => router.replace('/companies'))
       .catch((e: unknown) => {
         startTransition(() =>
           setErrorMessage(e instanceof Error ? e.message : 'Erro ao completar login.'),

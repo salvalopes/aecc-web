@@ -89,7 +89,7 @@ export default function HomeScreen() {
   }, [load]);
 
   function goToCompanies(params?: { search?: string; categoryId?: string; name?: string }) {
-    router.push({ pathname: '/(app)/companies', params });
+    router.push({ pathname: '/companies', params });
   }
 
   const numColumns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
@@ -240,7 +240,7 @@ export default function HomeScreen() {
                 key={co.id}
                 interactive
                 padding={10}
-                onPress={() => router.push(`/(app)/companies/${co.id}`)}
+                onPress={() => router.push(`/companies/${co.id}`)}
                 style={styles.companyRow}
               >
                 {co.logoUrl ? (

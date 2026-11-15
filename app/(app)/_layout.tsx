@@ -1,38 +1,14 @@
-import { Tabs, router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/theme/ThemeContext';
-import { GlassSurface, Icon, TopBar } from '@/components/ui';
-import { BrandLockup } from '@/components/ds';
+import { useStackScreenOptions } from '@/navigation/stackOptions';
 
-function HeaderLogo() {
-  return <BrandLockup width={96} style={{ marginLeft: 16 }} />;
-}
-
-// Renderer partilhado por todos os separadores: em vez de cortar o texto quando
-// não cabe (ex. "As minhas empresas" em ecrãs estreitos), reduz o tamanho da
-// fonte consoante a largura da janela e permite quebra em 2 linhas. Aplica-se
-// por igual a todos os separadores — não é um ajuste específico de um label.
-function TabLabel({ label, color, width }: { label: string; color: string; width: number }) {
-  const { fontFamily } = useTheme();
-  const fontSize = width < 400 ? 10 : width < 600 ? 11 : 12;
-
-  return (
-    <Text
-      style={{ fontFamily: fontFamily.body, fontSize, color, textAlign: 'center', width: '100%' }}
-    >
-      {label}
-    </Text>
-  );
-}
-
+// Guarda de sessão + Stack por cima das tabs. As tabs (`(tabs)`) só montam
+// depois de a sessão (e o papel) estarem resolvidos: mudar a visibilidade de
+// uma NativeTabs.Trigger remonta o navegador (fase3-plano §2.2-2).
 export default function AppLayout() {
-  const { token, user, isLoading } = useAuth();
-  const theme = useTheme();
-  const { width } = useWindowDimensions();
-  const isAdmin = user?.role === 'Admin';
-  const isAssociateOrAdmin = user?.role === 'Admin' || user?.role === 'Associado';
+  const { token, isLoading } = useAuth();
+  const screenOptions = useStackScreenOptions();
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -43,109 +19,12 @@ export default function AppLayout() {
   if (isLoading) return null;
   if (!token) return null;
 
-  // Masterpage header — glass bar with the brand lockup, the light/dark
-  // toggle, and a profile chip. Only the visible tab roots get it; detail
-  // screens (companies/[id], products/[id]...) keep the plain HeaderLogo
-  // header below, since `header` would otherwise swallow their back arrow.
-  function renderTopBar() {
-    return (
-      <TopBar
-        authenticated
-        userName={user?.fullName}
-        onProfile={() => router.push('/(app)/profile')}
-      />
-    );
-  }
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: theme.colors.accentText,
-        tabBarInactiveTintColor: theme.colors.textTertiary,
-        tabBarStyle: {
-          backgroundColor: 'transparent',
-          height: 76,
-        },
-        tabBarBackground: () => (
-          <GlassSurface radius={0} edge="top" style={StyleSheet.absoluteFillObject} />
-        ),
-        tabBarItemStyle: { paddingVertical: 6 },
-        tabBarIconStyle: { marginBottom: 2 },
-        headerStyle: { backgroundColor: theme.colors.surfaceCard },
-        headerTintColor: theme.colors.textPrimary,
-        headerTitle: () => null,
-        headerShown: true,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Início',
-          tabBarLabel: ({ color }) => <TabLabel label="Início" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="house-line" size={20} color={color} />,
-          header: renderTopBar,
-        }}
-      />
-      <Tabs.Screen
-        name="companies/index"
-        options={{
-          title: 'Empresas',
-          tabBarLabel: ({ color }) => <TabLabel label="Empresas" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="storefront" size={20} color={color} />,
-          header: renderTopBar,
-        }}
-      />
-      {/* Placeholder sem entidade na API: a rota existe mas fica fora da tab bar (máx. 5 tabs) */}
-      <Tabs.Screen
-        name="favourites/index"
-        options={{
-          href: null,
-          title: 'Favoritos',
-          header: renderTopBar,
-        }}
-      />
-      <Tabs.Screen
-        name="profile/index"
-        options={{
-          title: 'Perfil',
-          tabBarLabel: ({ color }) => <TabLabel label="Perfil" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="user" size={20} color={color} />,
-          header: renderTopBar,
-        }}
-      />
-      <Tabs.Screen
-        name="my-companies/index"
-        options={{
-          href: isAssociateOrAdmin ? undefined : null,
-          title: 'Editar',
-          tabBarLabel: ({ color }) => <TabLabel label="Editar" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="pencil-simple" size={20} color={color} />,
-          header: renderTopBar,
-        }}
-      />
-      <Tabs.Screen
-        name="users/index"
-        options={{
-          href: isAdmin ? undefined : null,
-          title: 'Utilizadores',
-          tabBarLabel: ({ color }) => <TabLabel label="Utilizadores" color={color} width={width} />,
-          tabBarIcon: ({ color }) => <Icon name="shield-check" size={20} color={color} />,
-          header: renderTopBar,
-        }}
-      />
-      {/* Ecrãs de detalhe — ocultos da tab bar, header simples com o logótipo */}
-      <Tabs.Screen
-        name="companies/[id]"
-        options={{ href: null, title: 'Empresa', headerLeft: HeaderLogo }}
-      />
-      <Tabs.Screen
-        name="companies/category/[categoryId]"
-        options={{ href: null, title: 'Empresas', headerLeft: HeaderLogo }}
-      />
-      <Tabs.Screen
-        name="products/[id]"
-        options={{ href: null, title: 'Produto', headerLeft: HeaderLogo }}
-      />
-    </Tabs>
+    <Stack screenOptions={screenOptions}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="products/[id]" options={{ title: 'Produto' }} />
+      {/* Fora das tabs (U3): a rota continua a existir, sem entrada na navegação. */}
+      <Stack.Screen name="favourites/index" options={{ title: 'Favoritos' }} />
+    </Stack>
   );
 }

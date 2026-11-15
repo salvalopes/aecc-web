@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import { Appearance, Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, type ThemeColors } from './colors';
 import {
@@ -73,6 +73,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (value === 'light' || value === 'dark') setOverride(value);
     });
   }, []);
+
+  // Nativo: a tab bar das NativeTabs e o GlassView não seguem um esquema
+  // definido só em JS. Com override manual, o esquema da app inteira passa a
+  // ser esse (fase3-plano §2.2-3); sem override, volta ao do sistema.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    Appearance.setColorScheme(override ?? 'unspecified');
+  }, [override]);
 
   const mode: ThemeMode = override ?? (systemScheme === 'dark' ? 'dark' : 'light');
   const isDark = mode === 'dark';
