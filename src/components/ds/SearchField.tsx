@@ -3,7 +3,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { geist, inputMin } from '@/theme/typography';
 import { Icon } from '@/components/ui/Icon';
-import { glassStyle } from './glassStyle';
+import { glassStyle } from '../ui/GlassSurface';
 
 const factory = createStyles(({ colors, radii, size }) => ({
   wrap: {

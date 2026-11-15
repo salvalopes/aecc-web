@@ -1,10 +1,9 @@
 import { Tabs, router } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/theme/ThemeContext';
-import { Icon, TopBar } from '@/components/ui';
+import { GlassSurface, Icon, TopBar } from '@/components/ui';
 import { BrandLockup } from '@/components/ds';
 
 function HeaderLogo() {
@@ -31,7 +30,6 @@ function TabLabel({ label, color, width }: { label: string; color: string; width
 export default function AppLayout() {
   const { token, user, isLoading } = useAuth();
   const theme = useTheme();
-  const { glass } = theme;
   const { width } = useWindowDimensions();
   const isAdmin = user?.role === 'Admin';
   const isAssociateOrAdmin = user?.role === 'Admin' || user?.role === 'Associado';
@@ -66,19 +64,10 @@ export default function AppLayout() {
         tabBarInactiveTintColor: theme.colors.textTertiary,
         tabBarStyle: {
           backgroundColor: 'transparent',
-          borderTopWidth: 1,
-          borderTopColor: glass.panel.border,
           height: 76,
         },
         tabBarBackground: () => (
-          <View style={StyleSheet.absoluteFillObject}>
-            <BlurView
-              intensity={glass.panel.blurIntensity}
-              tint={glass.panel.blurTint}
-              style={StyleSheet.absoluteFillObject}
-            />
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: glass.panel.tint }]} />
-          </View>
+          <GlassSurface radius={0} edge="top" style={StyleSheet.absoluteFillObject} />
         ),
         tabBarItemStyle: { paddingVertical: 6 },
         tabBarIconStyle: { marginBottom: 2 },

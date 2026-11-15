@@ -10,13 +10,12 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useState, startTransition } from 'react';
 import { router } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
 import { categoriesApi } from '@/api/categories.api';
 import { companiesApi } from '@/api/companies.api';
 import { ApiError } from '@/api/client';
 import type { Category, CompanyDirectoryEntry } from '@/types/api';
-import { Button, Card, CategoryTile, Icon, LoadingSpinner } from '@/components/ui';
+import { Button, Card, CategoryTile, GlassSurface, Icon, LoadingSpinner } from '@/components/ui';
 import { BrandLockup } from '@/components/ds';
 
 const VALUE_PROPS = [
@@ -58,8 +57,7 @@ function SectionHeader({ title, onAction }: { title: string; onAction: () => voi
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight, lineHeight, spacing } =
-    theme;
+  const { colors, glassRadius, fontFamily, fontSize, fontWeight, lineHeight, spacing } = theme;
   const { width } = useWindowDimensions();
 
   const [search, setSearch] = useState('');
@@ -109,25 +107,7 @@ export default function HomeScreen() {
           { backgroundColor: colors.surfaceSunken, borderBottomColor: colors.borderSubtle },
         ]}
       >
-        <View
-          style={[
-            styles.heroPanel,
-            glass.heroPanel.shadow,
-            { borderRadius: glassRadius.panel, borderColor: glass.heroPanel.border },
-          ]}
-        >
-          <BlurView
-            intensity={glass.heroPanel.blurIntensity}
-            tint={glass.heroPanel.blurTint}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View
-            style={[
-              StyleSheet.absoluteFillObject,
-              { backgroundColor: glass.heroPanel.tint, borderRadius: glassRadius.panel },
-            ]}
-          />
-
+        <GlassSurface opaque elevated radius={glassRadius.panel} style={styles.heroPanel}>
           <BrandLockup width={200} style={styles.heroLogo} />
           <Text
             style={{
@@ -157,16 +137,7 @@ export default function HomeScreen() {
           </Text>
 
           <View style={styles.heroForm}>
-            <View
-              style={[
-                styles.searchBar,
-                {
-                  borderRadius: glassRadius.control,
-                  borderColor: glass.neutral.border,
-                  backgroundColor: glass.neutral.tint,
-                },
-              ]}
-            >
+            <GlassSurface radius={glassRadius.control} style={styles.searchBar}>
               <Icon name="magnifying-glass" size={18} color={colors.textTertiary} />
               <TextInput
                 // Anchors the scoped :focus-visible ring in public/index.html — that
@@ -190,7 +161,7 @@ export default function HomeScreen() {
                   color: colors.textPrimary,
                 }}
               />
-            </View>
+            </GlassSurface>
             <Button
               testID="home.search-submit"
               variant="gold"
@@ -200,7 +171,7 @@ export default function HomeScreen() {
               Ver empresas
             </Button>
           </View>
-        </View>
+        </GlassSurface>
       </View>
 
       {loading ? (
@@ -228,18 +199,9 @@ export default function HomeScreen() {
           <View style={styles.valueProps}>
             {VALUE_PROPS.map((v) => (
               <View key={v.icon} style={styles.valueProp}>
-                <View
-                  style={[
-                    styles.valuePropWell,
-                    {
-                      borderRadius: 999,
-                      borderColor: glass.neutral.border,
-                      backgroundColor: glass.neutral.tint,
-                    },
-                  ]}
-                >
+                <GlassSurface radius={999} style={styles.valuePropWell}>
                   <Icon name={v.icon} size={22} color={colors.accentPrimary} />
-                </View>
+                </GlassSurface>
                 <Text
                   style={{
                     fontFamily: fontFamily.body,
@@ -337,7 +299,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 24 },
   hero: { padding: 20, borderBottomWidth: 1 },
-  heroPanel: { alignItems: 'center', padding: 20, borderWidth: 1, overflow: 'hidden' },
+  heroPanel: { alignItems: 'center', padding: 20 },
   heroLogo: { marginBottom: 6 },
   heroForm: { width: '100%', maxWidth: 320, marginTop: 20, gap: 10 },
   searchBar: {
@@ -346,7 +308,6 @@ const styles = StyleSheet.create({
     gap: 8,
     minHeight: 48,
     paddingHorizontal: 14,
-    borderWidth: 1,
   },
   errorWrap: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 48 },
   valueProps: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingTop: 20 },
@@ -356,7 +317,6 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
   sectionHeader: {
     flexDirection: 'row',

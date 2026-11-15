@@ -8,9 +8,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '@/theme/ThemeContext';
-import type { GlassVariant } from '@/theme/glass';
+import { GlassSurface } from './GlassSurface';
 
 type ButtonVariant = 'primary' | 'gold' | 'secondary' | 'destructive' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -34,9 +33,8 @@ const SIZES: Record<ButtonSize, { padY: number; padX: number; minH: number }> = 
   lg: { padY: 16, padX: 28, minH: 52 },
 };
 
-// "Seamless" glass button — translucent tint over a BlurView backdrop, a lit
-// border, and an ambient shadow (tokens/glass.css in the AECC design
-// system). Hover doesn't exist on touch, so only idle/pressed tints are used.
+// Botão sobre o material único de vidro (`GlassSurface`); a ênfase vem do tint.
+// Hover não existe em toque, por isso só há estados idle/pressed.
 export function Button({
   children,
   variant = 'primary',
@@ -50,29 +48,34 @@ export function Button({
   testID,
 }: ButtonProps) {
   const theme = useTheme();
-  const { colors, glass, glassRadius, fontFamily, fontSize, fontWeight } = theme;
+  const { colors, glassRadius, fontFamily, fontSize, fontWeight } = theme;
   const s = SIZES[size];
 
-  const destructive: GlassVariant = {
-    tint: 'rgba(176, 34, 32, 0.88)',
-    tintActive: 'rgba(120, 22, 21, 0.97)',
-    border: 'rgba(255, 255, 255, 0.26)',
-    blurIntensity: glass.neutral.blurIntensity,
-    blurTint: glass.neutral.blurTint,
-    shadow: glass.neutral.shadow,
+  // `tint`/`tintPressed`: cor de ênfase sobre o vidro (sem tint = vidro neutro).
+  const config: Record<
+    ButtonVariant,
+    { tint: string | null; tintPressed: string | null; fg: string; glass: boolean }
+  > = {
+    primary: {
+      tint: colors.accentPrimary,
+      tintPressed: colors.accentPrimaryActive,
+      fg: colors.textOnPrimary,
+      glass: true,
+    },
+    gold: {
+      tint: colors.accentGold,
+      tintPressed: colors.accentGoldHover,
+      fg: colors.textOnGold,
+      glass: true,
+    },
+    secondary: { tint: null, tintPressed: null, fg: colors.accentPrimary, glass: true },
+    destructive: { tint: colors.error, tintPressed: colors.error, fg: '#ffffff', glass: true },
+    ghost: { tint: null, tintPressed: null, fg: colors.accentPrimary, glass: false },
   };
-
-  const config: Record<ButtonVariant, { glass: GlassVariant | null; fg: string }> = {
-    primary: { glass: glass.primary, fg: colors.textOnPrimary },
-    gold: { glass: glass.gold, fg: colors.textOnGold },
-    secondary: { glass: glass.neutral, fg: colors.accentPrimary },
-    destructive: { glass: destructive, fg: '#ffffff' },
-    ghost: { glass: null, fg: colors.accentPrimary },
-  };
-  const { glass: v, fg } = config[variant];
+  const { tint, tintPressed, fg, glass: hasGlass } = config[variant];
 
   return (
-    <View style={[fullWidth && { width: '100%' }, v ? v.shadow : null, style]}>
+    <View style={[fullWidth && { width: '100%' }, style]}>
       <Pressable
         testID={testID}
         onPress={onPress}
@@ -82,28 +85,20 @@ export function Button({
             minHeight: s.minH,
             borderRadius: glassRadius.control,
             overflow: 'hidden',
-            borderWidth: v ? 1 : 0,
-            borderColor: v?.border ?? 'transparent',
             opacity: disabled ? 0.45 : 1,
           },
-          pressed && !v ? { backgroundColor: glass.neutral.tintActive } : null,
         ]}
       >
         {({ pressed }) => (
           <>
-            {v && (
-              <BlurView
-                intensity={v.blurIntensity}
-                tint={v.blurTint}
+            {hasGlass && (
+              <GlassSurface
+                pointerEvents="none"
+                radius={glassRadius.control}
+                tintColor={(pressed ? tintPressed : tint) ?? undefined}
+                interactive
+                pressed={pressed && (!tint || variant === 'destructive')}
                 style={StyleSheet.absoluteFillObject}
-              />
-            )}
-            {v && (
-              <View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  { backgroundColor: pressed ? v.tintActive : v.tint },
-                ]}
               />
             )}
             <View
