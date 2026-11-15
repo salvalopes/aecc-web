@@ -140,6 +140,8 @@ export const size = {
   plate: { sm: 32, md: 48, lg: 96 },
   row: { mobile: 72, web: 64, table: 48 },
   search: 52,
+  /** Miniatura da galeria (T4). */
+  thumb: 64,
 } as const;
 
 export const border = {
