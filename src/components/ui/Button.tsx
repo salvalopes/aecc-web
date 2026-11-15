@@ -68,9 +68,9 @@ export function Button({
       fg: colors.textOnGold,
       glass: true,
     },
-    secondary: { tint: null, tintPressed: null, fg: colors.accentPrimary, glass: true },
+    secondary: { tint: null, tintPressed: null, fg: colors.accentText, glass: true },
     destructive: { tint: colors.error, tintPressed: colors.error, fg: '#ffffff', glass: true },
-    ghost: { tint: null, tintPressed: null, fg: colors.accentPrimary, glass: false },
+    ghost: { tint: null, tintPressed: null, fg: colors.accentText, glass: false },
   };
   const { tint, tintPressed, fg, glass: hasGlass } = config[variant];
 

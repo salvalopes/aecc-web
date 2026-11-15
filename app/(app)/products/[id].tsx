@@ -416,13 +416,13 @@ export default function ProductDetailScreen() {
               ]}
             >
               <View style={styles.benefitTitleRow}>
-                <Icon name="star" size={14} color={theme.colors.accentPrimary} />
+                <Icon name="star" size={14} color={theme.colors.accentText} />
                 <Text
                   style={{
                     fontFamily: theme.fontFamily.body,
                     fontSize: theme.fontSize.base,
                     fontWeight: theme.fontWeight.bold,
-                    color: theme.colors.accentPrimary,
+                    color: theme.colors.accentText,
                   }}
                 >
                   Benefício para membros
@@ -494,12 +494,12 @@ export default function ProductDetailScreen() {
                   fontFamily: theme.fontFamily.body,
                   fontSize: theme.fontSize.base,
                   fontWeight: selected ? theme.fontWeight.semibold : theme.fontWeight.regular,
-                  color: selected ? theme.colors.accentPrimary : theme.colors.textPrimary,
+                  color: selected ? theme.colors.accentText : theme.colors.textPrimary,
                 }}
               >
                 {cat.name}
               </Text>
-              {selected && <Icon name="check" size={16} color={theme.colors.accentPrimary} />}
+              {selected && <Icon name="check" size={16} color={theme.colors.accentText} />}
             </Pressable>
           );
         })}

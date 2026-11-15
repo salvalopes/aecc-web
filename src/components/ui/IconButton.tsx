@@ -25,11 +25,7 @@ export function IconButton({
 }: IconButtonProps) {
   const { colors, radius, hitTargetMin } = useTheme();
   const color =
-    tone === 'danger'
-      ? colors.error
-      : tone === 'accent'
-        ? colors.accentPrimary
-        : colors.textSecondary;
+    tone === 'danger' ? colors.error : tone === 'accent' ? colors.accentText : colors.textSecondary;
 
   return (
     <Pressable

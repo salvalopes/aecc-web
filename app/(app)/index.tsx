@@ -200,7 +200,7 @@ export default function HomeScreen() {
             {VALUE_PROPS.map((v) => (
               <View key={v.icon} style={styles.valueProp}>
                 <GlassSurface radius={999} style={styles.valuePropWell}>
-                  <Icon name={v.icon} size={22} color={colors.accentPrimary} />
+                  <Icon name={v.icon} size={22} color={colors.accentText} />
                 </GlassSurface>
                 <Text
                   style={{

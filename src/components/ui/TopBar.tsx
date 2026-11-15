@@ -73,7 +73,7 @@ export function TopBar({
                   interactive
                   style={StyleSheet.absoluteFillObject}
                 />
-                <Icon name={isDark ? 'sun' : 'moon'} size={20} color={colors.accentPrimary} />
+                <Icon name={isDark ? 'sun' : 'moon'} size={20} color={colors.accentText} />
               </>
             )}
           </Pressable>
@@ -96,7 +96,7 @@ export function TopBar({
                     interactive
                     style={StyleSheet.absoluteFillObject}
                   />
-                  <Icon name="user" size={18} color={colors.accentPrimary} />
+                  <Icon name="user" size={18} color={colors.accentText} />
                   {/* minWidth: 0 is load-bearing on web — RNW compiles flex to real
                       CSS flexbox, where a flex item's default min-width is `auto`
                       (its content size), not 0. Without it here and on profileChip/
@@ -111,7 +111,7 @@ export function TopBar({
                       fontFamily: fontFamily.body,
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.accentPrimary,
+                      color: colors.accentText,
                     }}
                     numberOfLines={1}
                   >
@@ -126,7 +126,7 @@ export function TopBar({
                 variant="secondary"
                 size="sm"
                 onPress={onLogin}
-                icon={<Icon name="sign-in" size={16} color={colors.accentPrimary} />}
+                icon={<Icon name="sign-in" size={16} color={colors.accentText} />}
               >
                 Entrar
               </Button>

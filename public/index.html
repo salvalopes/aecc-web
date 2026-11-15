@@ -21,8 +21,8 @@
          static value) so each matches surfaceApp from src/theme/colors.ts
          for the OS color scheme actually in effect — otherwise Safari falls
          back to white for whichever scheme isn't covered. -->
-    <meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b1a24" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#EEF2F5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#08161F" media="(prefers-color-scheme: dark)" />
 
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
@@ -44,13 +44,13 @@
          under the Safari status bar and bottom toolbar (and the
          pre-hydration paint) are never the browser's default white. */
       :root {
-        --aecc-surface-app: #fdf9f0;
-        --aecc-focus-ring: #7f580c;
+        --aecc-surface-app: #EEF2F5;
+        --aecc-focus-ring: #85600F;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --aecc-surface-app: #0b1a24;
-          --aecc-focus-ring: #f2c85a;
+          --aecc-surface-app: #08161F;
+          --aecc-focus-ring: #DCAA45;
         }
       }
       html,

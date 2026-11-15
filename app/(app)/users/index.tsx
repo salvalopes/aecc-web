@@ -115,7 +115,7 @@ function UserRow({
                 fontFamily: theme.fontFamily.body,
                 fontSize: theme.fontSize.xs,
                 fontWeight: theme.fontWeight.semibold,
-                color: theme.colors.accentPrimary,
+                color: theme.colors.accentText,
               }}
             >
               A tua conta
@@ -125,13 +125,13 @@ function UserRow({
       </View>
       <View style={styles.cardActions}>
         <Pressable onPress={() => onEdit(item)} style={styles.actionBtn}>
-          <Icon name="pencil-simple" size={14} color={theme.colors.accentPrimary} />
+          <Icon name="pencil-simple" size={14} color={theme.colors.accentText} />
           <Text
             style={{
               fontFamily: theme.fontFamily.body,
               fontSize: theme.fontSize.sm,
               fontWeight: theme.fontWeight.semibold,
-              color: theme.colors.accentPrimary,
+              color: theme.colors.accentText,
             }}
           >
             Editar

@@ -60,7 +60,7 @@ export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: theme.colors.accentPrimary,
+        tabBarActiveTintColor: theme.colors.accentText,
         tabBarInactiveTintColor: theme.colors.textTertiary,
         tabBarStyle: {
           backgroundColor: 'transparent',

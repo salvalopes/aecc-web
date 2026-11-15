@@ -1,6 +1,6 @@
 // Valores brutos da direção B · Maré (fase2 §4 B). Privados ao theme: o resto
 // da app só vê papéis (colors.ts), nunca estes valores.
-// Dark é a âncora. `warning` é PROVISÓRIO (falta na Maré): validar na B6.
+// Dark é a âncora. `warning` (laranja, fora da Maré) validado na B6.
 
 export const mareDark = {
   bg: '#08161F',

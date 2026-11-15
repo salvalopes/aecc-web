@@ -78,7 +78,7 @@ function MyCompanyCard({ company }: { company: Company }) {
               fontFamily: fontFamily.body,
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.accentPrimary,
+              color: colors.accentText,
             }}
           >
             Editar

@@ -105,13 +105,13 @@ function ProductItem({ product }: { product: Product }) {
       )}
       {product.hasMemberBenefit && (
         <View style={[styles.benefitTag, { marginTop: spacing[3], gap: spacing[2] }]}>
-          <Icon name="star" size={13} color={colors.accentPrimary} />
+          <Icon name="star" size={13} color={colors.accentText} />
           <Text
             style={{
               fontFamily: fontFamily.body,
               fontSize: fontSize.xs,
               fontWeight: fontWeight.semibold,
-              color: colors.accentPrimary,
+              color: colors.accentText,
             }}
           >
             Benefício membro
@@ -197,7 +197,7 @@ export default function CompanyDetailScreen() {
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.accentPrimary,
+                  color: colors.accentText,
                 }}
               >
                 Editar
@@ -611,7 +611,7 @@ export default function CompanyDetailScreen() {
               style={{
                 fontFamily: fontFamily.body,
                 fontSize: fontSize.sm,
-                color: colors.accentPrimary,
+                color: colors.accentText,
               }}
             >
               Alterar logo
@@ -715,12 +715,12 @@ export default function CompanyDetailScreen() {
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.base,
                   fontWeight: selected ? fontWeight.semibold : fontWeight.regular,
-                  color: selected ? colors.accentPrimary : colors.textPrimary,
+                  color: selected ? colors.accentText : colors.textPrimary,
                 }}
               >
                 {cat.name}
               </Text>
-              {selected && <Icon name="check" size={16} color={colors.accentPrimary} />}
+              {selected && <Icon name="check" size={16} color={colors.accentText} />}
             </Pressable>
           );
         })}
