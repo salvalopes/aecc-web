@@ -5,6 +5,7 @@ import { AuthPrompt, AuthScaffold } from '@/components/templates/AuthScaffold';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { required, emailFormat, combine } from '@/utils/validators';
+import { nativeLoginErrorMessage } from '@/utils/loginErrors';
 
 interface FormState {
   email: string;
@@ -16,7 +17,8 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { fieldErrors, formError, validate, applyApiError } = useFormValidation<FormState>();
+  const { fieldErrors, formError, setFormError, validate, applyApiError } =
+    useFormValidation<FormState>();
 
   async function handleLogin() {
     const isValid = validate(
@@ -32,9 +34,13 @@ export default function LoginScreen() {
     try {
       // login() does: POST /auth/login (cookie) → PKCE → window.location.href redirect
       // The browser navigates away on success; no router.replace() needed here.
+      // Nativo: grant password → /companies (AuthContext.native).
       await login({ email, password });
     } catch (e) {
-      applyApiError(e, { Email: 'email', Password: 'password' });
+      // Recusas do grant password (só nativo); o resto, como sempre.
+      const nativeMessage = nativeLoginErrorMessage(e);
+      if (nativeMessage) setFormError(nativeMessage);
+      else applyApiError(e, { Email: 'email', Password: 'password' });
       setLoading(false);
     }
     // On success the page navigates away — intentionally no finally setLoading(false)
