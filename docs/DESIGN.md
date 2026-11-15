@@ -139,7 +139,9 @@ Templates (`src/components/templates/`): `AuthScaffold` + `AuthPrompt` (T1, B8):
 
 Utilitários: `formatAddressLine` (`src/utils/address.ts`, D9), `splitByTerm` / `initials` (`src/utils/text.ts`), `useBreakpoint`.
 
-Por construir (passos visuais): `Screen`, `Horizon`, `GlassSurface`/`GlassGroup` (B4), `BrandLockup` (B3), `SegmentedControl`, `DataTable` (B10), `FormLayout` (B12).
+T3 (B10): `Horizon` (faixa `horizon` com título, `meta` e `aside`; lockup só onde não há outra marca), `SegmentedControl` (Lista \| Tabela, web `lg`), `DataTable` (cabeçalho `raised` _sticky_, linhas de 48) e o template `ListScaffold` (horizonte → elemento a −26 → conteúdo; `lg` com sidebar 1fr/3fr). Raízes T3 no nativo: sem header do `Stack` e `managesInsets` na tab (`src/navigation/tabs.ts`), porque as NativeTabs somam o inset automático ao horizonte no iOS.
+
+Por construir (passos visuais): `Screen`, `FormLayout` (B12).
 
 ### Regras de uso
 
