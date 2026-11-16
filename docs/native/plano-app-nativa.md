@@ -292,3 +292,92 @@ Fluxos: `login` (erro de credenciais, email por confirmar, sucesso), `logout`, `
 - **Android:** `hideKeyboard` sem teclado aberto é um "voltar" (sai do ecrã); os fluxos não o usam.
 - **Driver do Maestro:** num run completo o driver iOS caiu a meio de um toque (logout) e noutro o Android ficou pendurado; o `run.sh` tem agora um limite de 10 min por fluxo (`FLOW_TIMEOUT_S`).
 - Validação completa da matriz §5.2 e iOS < 26: Fase C.
+
+
+---
+
+## 9. Fase C — validação, correções e pendentes (branch `native/fase-c`)
+
+Data: 2026-11-16. Stack E2E local do aecc-api; builds de desenvolvimento (Expo SDK 55). Alvos: **iPhone 17 Pro (iOS 26.3)**, **iPhone 16 (iOS 18.6)** (simulador `iPhone 16 (iOS 18.6)`, runtime 22G86 instalado com `xcodebuild -downloadPlatform iOS -buildVersion 18.6`) e **Pixel_8_API_36** (Android 36).
+
+### 9.1 Como se corre
+
+`e2e/maestro/native/run.sh <ios|android> [fluxo…]` (credenciais só por `-e`, a partir do `.env.e2e` do aecc-api). Novidades: `RUN_TAG` (ex.: `RUN_TAG=ios-18.6 MAESTRO_DEVICE=<udid> run.sh ios`) separa saídas e capturas por alvo, que vão para `docs/native/fase-c/<alvo>/`. Os fluxos por omissão são 17 (os 10 da §8.3 e 7 da Fase C: `teclado-auth`, `teclado-formulario`, `sem-permissao-users`, `deeplink-users-admin`, `login-bloqueio`, `login-desativada`, `lightbox`). A matriz corre-se à parte: `validacao-<cliente|associado|admin>-<light|dark>` (papel × tema; o tema muda no Perfil → Aparência, ou seja `Appearance.setColorScheme`) e `validacao-auth-<light|dark>` (T1 antes do login, com a aparência do sistema mudada por `xcrun simctl ui` / `adb shell cmd uimode night`). As capturas estão em JPEG (reduzidas a ≤1300 px) para não pesar no repositório.
+
+Requisitos de ambiente que custaram tempo (não são do produto):
+- **Android:** o AVD tem de mostrar o teclado virtual (`adb shell settings put secure show_ime_with_hard_keyboard 1`; depois de um `-wipe-data`) e o Gboard abre o tutorial "Try out your stylus" no primeiro foco de texto (`adb shell settings put secure stylus_handwriting_enabled 0`). Um arranque a frio **sem** snapshot repõe o estado do disco do AVD: se o APK instalado for antigo, reinstalar (`adb install -r`).
+- **iOS 18.x:** `openLink` com esquema próprio mostra "Abrir com AECC?"; o subfluxo `_open-link.yaml` aceita-o. Desligar "Connect Hardware Keyboard" (§8.4).
+- **Dados:** o seed não tem imagens de produto. A galeria/lightbox valida-se carregando 2 imagens no produto pela API (`POST /products/{id}/images`, como o `associado@e2e.test`): "Pastel de Nata" para o iOS e "Bolo de Aniversário" para o Android (ver §9.4).
+- **Playwright** usa a porta 8081, a mesma do Metro: parar o Metro antes.
+
+### 9.2 Tabela de validação
+
+Legenda: **OK** = fluxo verde e captura revista; **corrigido** = problema encontrado, corrigido nesta fase (a captura "antes" está em `docs/native/fase-c/problemas/`). Capturas "normais" em `docs/native/fase-c/<alvo>/<papel>-<tema>-<ecrã>.jpg` (alvos `ios-26.3`, `ios-18.6`, `android`); a revisão visual foi feita por amostragem (todas as capturas existem; os fluxos falham se o ecrã não aparecer).
+
+| Item | iOS 26.3 | iOS 18.6 | Android 36 |
+|---|---|---|---|
+| **B4** vidro (`GlassSurface`/`GlassGroup`, tab bar) | OK: vidro real (`associado-light-detalhe`) | OK: fallback sólido legível (`cliente-light-inicio`) | OK: superfície sólida (`admin-light-inicio`) |
+| **B6** paleta light/dark (3 papéis × 2 temas × todos os templates) | OK | OK | OK |
+| **B9** `StateScreen` sem permissão | OK (`sem-permissao`, `sem-permissao-users`) | OK | OK |
+| **B9** `StateScreen` not-found | OK (`*-nao-encontrado`) | OK | OK |
+| **B9** `StateScreen` sessão a carregar | OK no arranque com sessão (estado transitório, sem captura própria) | OK (idem) | OK (idem) |
+| **B11** detalhe, galeria e lightbox | **corrigido**: a barra do lightbox ficava por baixo da barra de estado e o botão fechar não respondia (`problemas/ios-26.3-lightbox-antes`) | OK (já com a correção) | OK |
+| **B12** formulários T7: teclado | OK (`teclado-formulario`) | OK | **corrigido**: o rodapé Cancelar/Guardar ficava atrás do teclado (`problemas/android-teclado-formulario-antes`) |
+| **B12** formulários T1: teclado | OK (`teclado-auth`) | OK | **corrigido** (`problemas/android-teclado-auth-antes`) |
+| **B12** ImagePicker, guardar e cancelar | OK (`editar-empresa-imagem`, `*-form-empresa`) | OK | OK |
+| **B14** nada partido após a limpeza (os 17 fluxos + matriz) | OK | OK (1 repetição, ver §9.5) | OK |
+| Perfil e Aparência (Sistema/Claro/Escuro) | OK | OK | OK |
+| Tabs por papel (Cliente: Início/Empresas/Perfil; Associado: + Editar; Admin: + Utilizadores) | OK | OK | OK |
+| Status bar em claro e escuro | OK (texto claro no escuro) | OK | OK |
+| Arranque com sessão (`sessao-restaurada`, 2 rotações) | OK | OK | OK |
+| `aecc://users` sem ser Admin → "sem permissão" | **corrigido** | **corrigido** | **corrigido** |
+| Lockout e conta desativada (conta descartável) | OK | OK | OK |
+
+Web (mesma branch): `eslint` 0 erros (1 aviso antigo em `app/auth/callback.tsx`, `react-hooks/exhaustive-deps`; `expo-env.d.ts` é gerado e ignorado pelo Git), `tsc --noEmit` limpo, **Playwright 9/9**, `expo export --platform web` ok (o `+native-intent` não entra no bundle web).
+
+### 9.3 Correções (um commit cada, com o seu fluxo Maestro)
+
+- **(a) Teclado no Android 36** (`345af14`). Causa: desde o SDK 54 o Android é edge-to-edge e o `windowSoftInputMode=adjustResize` do manifesto já não redimensiona a janela; o `FormLayout` só tinha `KeyboardAvoidingView` no iOS e o `AuthScaffold` só `automaticallyAdjustKeyboardInsets` (iOS). O `KeyboardAvoidingView` do RN também não serve no Android edge-to-edge: o `top` medido (`measureInWindow`) vinha a 0 e a elevação ficava curta (log no dispositivo: teclado `screenY` 622, `height` 268 dp). Correção só com APIs do RN: `src/hooks/useKeyboardInset.ts` (altura do teclado por `Keyboard`, só Android) aplicada como `paddingBottom` no `FormLayout` e no `AuthScaffold`. Fluxos `teclado-auth` (confirm-email, 4 campos) e `teclado-formulario` (último campo da empresa → Cancelar): falham sem a correção e passam com ela no Android (reconfirmado repondo o código antigo). No iOS passam com o código final nos dois simuladores; não repeti a versão antiga no iOS (já tinha `KeyboardAvoidingView`), por isso não há RED do iOS.
+- **(b) `aecc://users` sem ser Admin** (`91adc93`). Causa: as `NativeTabs` filtram as tabs `hidden` e lançam erro se uma estiver em foco (`NativeBottomTabsNavigator.js`), por isso a ação de navegar falhava antes de qualquer ecrã. Correção: `app/+native-intent.tsx` leva os deep links para a raiz de uma tab com papéis à rota-guarda `app/(app)/guard/[tab].tsx`: quem tem o papel segue para a tab, os outros veem o `ForbiddenState`. Cobre também `aecc://my-companies` para o Cliente. Fluxos `sem-permissao-users` (Associado) e `deeplink-users-admin` (Admin continua a entrar). A web já mostrava o estado (guarda por ecrã) e tem o spec `states.spec.ts`.
+- **(c) Logótipos no emulador Android** (só documentação, sem tocar no aecc-api): ver §9.4.
+- **(d) Lockout e conta desativada** (`cbd27f4`). O `run.sh` cria um Cliente descartável pela API de admin (`POST /users`, palavra-passe aleatória só em memória), bloqueia-o com 5 tentativas falhadas ao `/connect/token` (Identity `MaxFailedAccessAttempts = 5`) ou desativa-o (`PUT /users/{id}` `isActive: false`), corre o fluxo (`login-bloqueio`, `login-desativada`: a mensagem aparece no T1), apaga a conta e confirma que a conta do seed continua a entrar. Nunca usa a conta do seed.
+- **(e) Problemas novos do passo 1.** Lightbox no iOS (`82f4145`): dentro do `Modal` o `SafeAreaView` fica sem insets (é outra janela no iOS) e a barra do lightbox caía por baixo da barra de estado; os insets passam a ser lidos fora do `Modal` (`useSafeAreaInsets`). Fluxo `lightbox` (falhava no iOS 26.3 antes).
+
+### 9.4 (c) Imagens do storage da stack E2E no emulador Android
+
+A API E2E devolve URLs `http://localhost:5080/e2e-files/…` (`LocalStorage:PublicBaseUrl`, `AECC.Api/appsettings.E2E.json`); no emulador `localhost` é o próprio dispositivo. Não é um bug do produto (em produção o URL é o domínio público). Para o emulador, o URL público tem de ser `http://10.0.2.2:5080/e2e-files`. Sem alterar o repo do aecc-api, por override do compose:
+
+```yaml
+# docker-compose.android-storage.yml (fora do repo do aecc-api)
+services:
+  api:
+    environment:
+      LocalStorage__PublicBaseUrl: "http://10.0.2.2:5080/e2e-files"
+```
+
+```bash
+cd ../aecc-api
+docker compose -p aecc-e2e --env-file .env.e2e -f docker-compose.e2e.yml -f /caminho/docker-compose.android-storage.yml up -d --no-deps --no-build api
+```
+
+(o mesmo sem o segundo `-f` repõe o `localhost`.) Duas notas: (1) o URL é gravado na base de dados **no momento do upload**, por isso só vale para imagens carregadas depois da mudança (as do seed e as já carregadas ficam com o URL antigo); (2) a stack tem um único URL público, por isso o iOS/web e o Android não veem imagens ao mesmo tempo: o iOS precisa do URL `localhost`. Nesta validação: logótipo da Pastelaria Conceição e imagens do "Pastel de Nata" carregados com `localhost` (iOS); imagens do "Bolo de Aniversário" carregadas com `10.0.2.2` (Android). Por isso as capturas do Android mostram a caixa do logótipo da Pastelaria vazia: é este caso, não um defeito.
+
+### 9.5 Resultados dos fluxos Maestro (corrida completa final)
+
+| Alvo | Fluxos | Resultado |
+|---|---|---|
+| iOS 26.3 | os 17 por omissão + `validacao-auth-light/dark` | 19/19 |
+| iOS 18.6 | idem | 18/19 à primeira; `perfil-aparencia` falhou e passou na repetição |
+| Android 36 | os 17 por omissão | 17/17 |
+| Matriz `validacao-*` (3 papéis × 2 temas) | iOS 26.3, iOS 18.6, Android | 18/18 (depois de acertar o próprio fluxo, ver abaixo) |
+
+Falhas por instabilidade/ambiente (não do app), todas repetidas e verdes: (1) `perfil-aparencia` no iOS 18.6: o toast de desenvolvimento do LogBox ("Open debugger to view warnings") cobriu a tab bar e interceptou o toque em "Perfil"; (2) corrida iOS 18.6 que ficou bloqueada no diálogo "Abrir com AECC?" (resolvido com `_open-link.yaml`); (3) Android: o tutorial do Gboard (stylus) a tapar o diretório (resolvido nas definições do AVD). Ajustes do próprio fluxo `validacao`: "Editar" é ambíguo no detalhe (botão e tab); o Admin não é dono de nenhuma empresa, por isso o formulário de empresa abre-se por "Nova empresa".
+
+### 9.6 Pendentes (sem correção)
+
+- **Teclado nos formulários em ecrã largo.** O ramo `isWide` do `AuthScaffold` (tablet/split) não trata o teclado, e o `useKeyboardInset` assume que o teclado chega ao fundo do ecrã (não vale para janelas flutuantes/dobráveis). Sem AVD de tablet para validar.
+- **Imagens do seed.** O seed E2E não tem imagens de produto; a galeria só se valida com uploads manuais (§9.1). Sugestão para o aecc-api: seed com 2 imagens num produto.
+- **Stack E2E com um único `PublicBaseUrl`** (§9.4): uma stack por plataforma, ou imagens de ficheiro estático, evitaria o vaivém.
+- **Aparência sem sessão.** Antes do login o tema segue o sistema (a preferência vive no Perfil). É o comportamento atual; só se muda se se quiser um seletor no T1 (decisão de design).
+- **Estabilidade do Maestro/LogBox em desenvolvimento:** o toast do LogBox pode tapar a tab bar; num build de release não existe. Um `LogBox.ignoreAllLogs` nos fluxos seria uma decisão de configuração à parte.
+- **Fora de âmbito desta fase** (inalterado): `assetlinks.json` em produção, certificado de release e `apple-app-site-association` (§8.2).
