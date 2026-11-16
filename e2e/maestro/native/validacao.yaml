@@ -1,0 +1,231 @@
+# Validação da matriz da Fase C (plano §8): um papel (ROLE: cliente|associado|admin) num tema
+# (THEME: light|dark, aplicado no Perfil → Aparência, ou seja Appearance.setColorScheme).
+# PRODUCT: produto do seed com imagens (as imagens do storage E2E só carregam no Android se o
+# URL público do storage apontar para 10.0.2.2; ver plano §8.5).
+# Percorre os templates e captura cada um: T1 já com a sessão aberta não se vê, por isso o T1 e
+# o restante pré-login vão no fluxo validacao-auth. Capturas: <ROLE>-<THEME>-<ecrã>.
+appId: com.aecc.app
+name: validacao ${ROLE} ${THEME} (nativo)
+---
+- runFlow: _login.yaml
+- takeScreenshot: ${ROLE}-${THEME}-inicio-sistema
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible:
+      id: "profile.theme"
+    timeout: 15000
+- tapOn:
+    id: "profile.theme-${THEME}"
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-perfil
+
+# Tabs por papel
+- assertVisible: "Início"
+- assertVisible: "Empresas"
+- runFlow:
+    when:
+      true: ${ROLE == 'cliente'}
+    commands:
+      - assertNotVisible: "Editar"
+      - assertNotVisible: "Utilizadores"
+- runFlow:
+    when:
+      true: ${ROLE == 'associado'}
+    commands:
+      - assertVisible: "Editar"
+      - assertNotVisible: "Utilizadores"
+- runFlow:
+    when:
+      true: ${ROLE == 'admin'}
+    commands:
+      - assertVisible: "Editar"
+      - assertVisible: "Utilizadores"
+
+# T3/T5: início e diretório
+- tapOn: "Início"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-inicio
+- tapOn: "Empresas"
+- extendedWaitUntil:
+    visible:
+      id: "companies.screen"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-diretorio
+
+# T4: detalhe de empresa, produto, galeria e lightbox (B11)
+- tapOn:
+    id: "companies.search"
+- inputText: "conceicao"
+- extendedWaitUntil:
+    visible:
+      id: "directory.row"
+    timeout: 15000
+- tapOn:
+    id: "directory.row"
+- extendedWaitUntil:
+    visible:
+      id: "company-detail.title"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-detalhe
+- scrollUntilVisible:
+    element:
+      text: "${PRODUCT}.*"
+- tapOn: "${PRODUCT}.*"
+- extendedWaitUntil:
+    visible:
+      id: "product-detail.title"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-produto
+- tapOn:
+    id: "product-detail.gallery-main"
+- extendedWaitUntil:
+    visible:
+      id: "lightbox"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-lightbox
+- tapOn:
+    id: "lightbox.close"
+- extendedWaitUntil:
+    visible:
+      id: "product-detail.title"
+    timeout: 15000
+# Voltar ao detalhe: no Android é o "voltar" do sistema; no iOS, o botão do header.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: "9%,9%"
+- extendedWaitUntil:
+    visible:
+      id: "company-detail.title"
+    timeout: 15000
+
+# T7 (B12): formulário de empresa. O Associado edita a sua (Editar → "As minhas empresas"); o Admin
+# não é dono de nenhuma (a lista "As minhas empresas" fica vazia), por isso abre o de "Nova empresa".
+- runFlow:
+    when:
+      true: ${ROLE == 'associado'}
+    commands:
+      # Pelo Início: o detalhe da empresa também tem um botão "Editar" (além da tab).
+      - tapOn: "Início"
+      - extendedWaitUntil:
+          visible:
+            id: "home.screen"
+          timeout: 15000
+      - tapOn: "Editar"
+      - extendedWaitUntil:
+          visible:
+            id: "my-companies.screen"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-minhas-empresas
+      - tapOn:
+          id: "my-companies.edit"
+      - extendedWaitUntil:
+          visible:
+            id: "company-edit.description"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-form-empresa
+      - tapOn:
+          id: "company-edit.cancel"
+      - extendedWaitUntil:
+          visible:
+            id: "my-companies.screen"
+          timeout: 15000
+- runFlow:
+    when:
+      true: ${ROLE == 'admin'}
+    commands:
+      - tapOn: "Início"
+      - extendedWaitUntil:
+          visible:
+            id: "home.screen"
+          timeout: 15000
+      - tapOn: "Editar"
+      - extendedWaitUntil:
+          visible:
+            id: "my-companies.screen"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-minhas-empresas
+      - tapOn:
+          id: "my-companies.create"
+      - extendedWaitUntil:
+          visible:
+            id: "company-create.screen"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-form-empresa
+      - tapOn:
+          id: "company-create.cancel"
+      - extendedWaitUntil:
+          visible:
+            id: "my-companies.screen"
+          timeout: 15000
+- runFlow:
+    when:
+      true: ${ROLE == 'admin'}
+    commands:
+      - tapOn: "Utilizadores"
+      - extendedWaitUntil:
+          visible:
+            id: "users.screen"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-utilizadores
+      - tapOn:
+          id: "users.create"
+      - extendedWaitUntil:
+          visible:
+            id: "user-create.email"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-form-utilizador
+      - tapOn:
+          id: "user-create.cancel"
+      - extendedWaitUntil:
+          visible:
+            id: "users.screen"
+          timeout: 15000
+
+# T2: estados
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://rota-que-nao-existe"
+- extendedWaitUntil:
+    visible:
+      id: "state.not-found"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: ${ROLE}-${THEME}-nao-encontrado
+- tapOn:
+    id: "state.not-found.action"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+
+# Perfil (sair da app deixa o tema em Sistema para o resto da corrida)
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible:
+      id: "profile.theme"
+    timeout: 15000
+- tapOn:
+    id: "profile.theme-system"

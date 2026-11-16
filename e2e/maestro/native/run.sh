@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fluxos Maestro autenticados (Fase B). Uso:
 #   e2e/maestro/native/run.sh <ios|android> [fluxo ...]
-# Sem fluxos, corre todos. Pré-requisitos:
+# Sem fluxos, corre todos (mais validacao-<cliente|associado|admin>-<light|dark>, só por pedido). Pré-requisitos:
 #   - stack E2E do aecc-api em 127.0.0.1:5080 (docker compose -f docker-compose.e2e.yml up -d --build);
 #   - build de desenvolvimento instalado e Metro a correr com a API da plataforma:
 #       iOS:     EXPO_PUBLIC_API_URL=http://127.0.0.1:5080/api npx expo start --dev-client
@@ -18,8 +18,9 @@ ENV_FILE=${E2E_ENV_FILE:-$MAIN_CHECKOUT/../aecc-api/.env.e2e}
 API=${E2E_HOST_API:-http://127.0.0.1:5080/api}
 API_CONTAINER=${E2E_API_CONTAINER:-aecc-e2e-api-1}
 FLOW_DIR="$REPO/e2e/maestro/native"
-OUT="$REPO/.artifacts/maestro/$PLATFORM"
-SHOTS="$REPO/docs/native/fase-b/$PLATFORM"
+TAG=${RUN_TAG:-$PLATFORM}
+OUT="$REPO/.artifacts/maestro/$TAG"
+SHOTS="$REPO/docs/native/fase-c/$TAG"
 LOGO="$REPO/e2e/web/fixtures/logo.png"
 
 set -a
@@ -55,11 +56,58 @@ company_logo() {
     | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).logoUrl??""))'
 }
 
+# Aparência do sistema (simulador iOS / emulador Android) para os ecrãs sem sessão (tema = sistema).
+set_appearance() {
+  case "$PLATFORM" in
+    ios) xcrun simctl ui "$DEVICE" appearance "$1" ;;
+    android) adb -s "$DEVICE" shell cmd uimode night "$([ "$1" = dark ] && echo yes || echo no)" > /dev/null ;;
+  esac
+}
+
+json_field() {
+  node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s)[process.argv[1]]??"")}catch{console.log("")}})' "$1"
+}
+
+# Pedido ao /connect/token (grant password do cliente aecc-native), resposta em JSON.
+token_request() {
+  curl -sS -X POST "$API/connect/token" -d grant_type=password -d client_id=aecc-native \
+    --data-urlencode "username=$1" --data-urlencode "password=$2" \
+    --data-urlencode 'scope=openid profile email offline_access roles aecc_api'
+}
+
+# Conta descartável (Cliente) criada pelo admin do seed: os fluxos de lockout e de conta
+# desativada nunca tocam na conta do seed. Define THROW_ID, THROW_EMAIL e THROW_PASSWORD
+# (palavra-passe aleatória, só em memória); apagada com drop_throwaway.
+create_throwaway() {
+  ADMIN_TOKEN=$(token_request admin@e2e.test "$E2E_SEED_PASSWORD" | json_field access_token)
+  [ -n "$ADMIN_TOKEN" ] || return 1
+  THROW_EMAIL="descartavel-$1-$TAG-$(date +%s)@e2e.test"
+  THROW_PASSWORD="Aa1!$(openssl rand -hex 8)"
+  THROW_ID=$(curl -fsS -X POST "$API/users" -H "authorization: Bearer $ADMIN_TOKEN" \
+    -H 'content-type: application/json' \
+    -d "{\"email\":\"$THROW_EMAIL\",\"password\":\"$THROW_PASSWORD\",\"fullName\":\"Descartavel\",\"role\":\"Cliente\"}" \
+    | json_field id)
+  [ -n "$THROW_ID" ]
+}
+
+drop_throwaway() {
+  if [ -n "${THROW_ID:-}" ]; then
+    curl -sS -o /dev/null -X DELETE "$API/users/$THROW_ID" -H "authorization: Bearer $ADMIN_TOKEN" || true
+  fi
+  THROW_ID=
+}
+
+# A conta do seed (associado) continua a entrar: prova de que não ficou bloqueada.
+seed_login_works() {
+  [ -n "$(token_request associado@e2e.test "$E2E_SEED_PASSWORD" | json_field access_token)" ]
+}
+
 if [ $# -gt 0 ]; then
   FLOWS=("$@")
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
-    sem-permissao deeplink-reset-password deeplink-confirm-email)
+    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin
+    login-bloqueio login-desativada lightbox)
 fi
 
 rm -rf "$OUT"
@@ -69,7 +117,11 @@ SUMMARY="$OUT/summary.txt"
 STATUS=0
 
 for flow in "${FLOWS[@]}"; do
-  EXTRA=()
+  # Produto do seed com imagens carregadas pela API (plano §8.5). No Android, o 2.º, carregado
+  # com o URL público do storage a apontar para 10.0.2.2.
+  PRODUCT="Pastel de Nata"
+  [ "$PLATFORM" = android ] && PRODUCT="Bolo de Aniversário"
+  EXTRA=(-e "PRODUCT=$PRODUCT")
   EMAIL=associado@e2e.test
   case "$flow" in
     login)
@@ -77,6 +129,26 @@ for flow in "${FLOWS[@]}"; do
       curl -fsS -o /dev/null -X POST "$API/auth/register" \
         -H 'content-type: application/json' -d "{\"email\":\"$UNCONFIRMED_EMAIL\"}"
       EXTRA+=(-e "UNCONFIRMED_EMAIL=$UNCONFIRMED_EMAIL")
+      ;;
+    login-bloqueio|login-desativada)
+      if ! create_throwaway "$flow"; then
+        echo "$flow: não foi possível criar a conta descartável" >> "$SUMMARY"; STATUS=1; continue
+      fi
+      if [ "$flow" = login-bloqueio ]; then
+        # Identity: MaxFailedAccessAttempts = 5. Pausa entre pedidos para ficar abaixo do rate limit.
+        for n in 1 2 3 4 5; do
+          token_request "$THROW_EMAIL" "errada-$n" > /dev/null
+          sleep 1
+        done
+      else
+        curl -fsS -o /dev/null -X PUT "$API/users/$THROW_ID" -H "authorization: Bearer $ADMIN_TOKEN" \
+          -H 'content-type: application/json' \
+          -d '{"fullName":"Descartavel","role":"Cliente","isActive":false}'
+      fi
+      EXTRA+=(-e "THROWAWAY_EMAIL=$THROW_EMAIL" -e "THROWAWAY_PASSWORD=$THROW_PASSWORD")
+      ;;
+    deeplink-users-admin)
+      EMAIL=admin@e2e.test
       ;;
     deeplink-reset-password)
       EMAIL=cliente@e2e.test
@@ -100,6 +172,23 @@ for flow in "${FLOWS[@]}"; do
       ;;
   esac
 
+  # validacao-<papel>-<tema> (ex.: validacao-admin-dark) corre validacao.yaml com esse papel e tema.
+  FLOW_FILE=$flow
+  case "$flow" in
+    validacao-auth-*)
+      THEME=${flow#validacao-auth-}
+      FLOW_FILE=validacao-auth
+      EXTRA+=(-e "THEME=$THEME")
+      set_appearance "$THEME"
+      ;;
+    validacao-*)
+      IFS=- read -r _ ROLE THEME <<< "$flow"
+      FLOW_FILE=validacao
+      EMAIL=$ROLE@e2e.test
+      EXTRA+=(-e "ROLE=$ROLE" -e "THEME=$THEME")
+      ;;
+  esac
+
   [ "$flow" = editar-empresa-imagem ] && LOGO_BEFORE=$(company_logo)
 
   set +e
@@ -107,12 +196,23 @@ for flow in "${FLOWS[@]}"; do
   perl -e 'alarm shift; exec @ARGV' "${FLOW_TIMEOUT_S:-600}" \
     maestro --device "$DEVICE" test --test-output-dir "$OUT/$flow" --debug-output "$OUT/$flow/debug" \
     -e "EMAIL=$EMAIL" -e "PASSWORD=$E2E_SEED_PASSWORD" ${EXTRA[@]+"${EXTRA[@]}"} \
-    "$FLOW_DIR/$flow.yaml" > "$OUT/$flow.log" 2>&1
+    "$FLOW_DIR/$FLOW_FILE.yaml" > "$OUT/$flow.log" 2>&1
   code=$?
   set -e
   # O debug do Maestro (commands*.json, maestro.log) grava os valores de -e resolvidos:
   # fica só com as imagens (capturas e a da falha) e o log da consola.
   find "$OUT/$flow" -type f ! -name '*.png' -delete
+  case "$flow" in
+    login-bloqueio|login-desativada)
+      drop_throwaway
+      if seed_login_works; then
+        echo "$flow: a conta do seed continua a entrar" >> "$SUMMARY"
+      else
+        echo "$flow: a conta do seed NÃO entra" >> "$SUMMARY"; STATUS=1
+      fi
+      ;;
+  esac
+  case "$flow" in validacao-auth-*) set_appearance light ;; esac
   steps=$(grep -cE 'COMPLETED' "$OUT/$flow.log" || true)
   echo "$flow: exit $code, passos COMPLETED $steps" >> "$SUMMARY"
   [ $code -eq 0 ] || STATUS=1

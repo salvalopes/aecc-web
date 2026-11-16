@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import { BrandLockup, Surface, Text, TextLink, type TextLinkProps } from '@/components/ui';
 
 // T1 Autenticação (fase3-plano §4.1), direção Maré.
@@ -77,6 +78,7 @@ export function AuthScaffold({ title, subtitle, children, footer, testID }: Auth
   const { isWide } = useBreakpoint();
   const insets = useSafeAreaInsets();
   const { layout } = useTheme();
+  const keyboard = useKeyboardInset();
 
   const heading = (
     <View style={s.heading}>
@@ -121,22 +123,24 @@ export function AuthScaffold({ title, subtitle, children, footer, testID }: Auth
   }
 
   return (
-    <ScrollView
-      testID={testID}
-      style={s.screen}
-      contentContainerStyle={s.scroll}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-    >
-      <View style={[s.horizon, { paddingTop: insets.top + layout.gutter }]}>
-        <BrandLockup width={132} />
-        {heading}
-      </View>
-      <View style={s.body}>
-        <Surface style={s.panel}>{children}</Surface>
-        {footer ? <View style={s.footer}>{footer}</View> : null}
-      </View>
-    </ScrollView>
+    <View style={[s.screen, { paddingBottom: keyboard }]}>
+      <ScrollView
+        testID={testID}
+        style={s.screen}
+        contentContainerStyle={s.scroll}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
+        <View style={[s.horizon, { paddingTop: insets.top + layout.gutter }]}>
+          <BrandLockup width={132} />
+          {heading}
+        </View>
+        <View style={s.body}>
+          <Surface style={s.panel}>{children}</Surface>
+          {footer ? <View style={s.footer}>{footer}</View> : null}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 

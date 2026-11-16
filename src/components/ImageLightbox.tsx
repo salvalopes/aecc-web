@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image, Modal, Platform, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { IconButton, Text } from '@/components/ui';
 
@@ -43,6 +43,9 @@ const factory = createStyles(({ colors, spacing, layout, size }) => ({
 
 export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageLightboxProps) {
   const s = useStyles(factory);
+  // Lidos aqui, fora do `Modal`: dentro dele (outra janela no iOS) o `SafeAreaView` fica sem insets
+  // e a barra cai por baixo da barra de estado.
+  const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(initialIndex);
   const count = images.length;
 
@@ -70,7 +73,10 @@ export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageL
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <SafeAreaView style={s.root} testID="lightbox">
+      <View
+        style={[s.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+        testID="lightbox"
+      >
         <View style={s.bar}>
           <Text variant="meta" tabular accessibilityLiveRegion="polite">
             {count > 1 ? `${index + 1} de ${count}` : ''}
@@ -105,7 +111,7 @@ export function ImageLightbox({ visible, images, initialIndex, onClose }: ImageL
             </>
           ) : null}
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

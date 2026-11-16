@@ -1,0 +1,12 @@
+# Subfluxo: abre um deep link (LINK). No iOS 18.x o sistema pergunta "Abrir com AECC?" para
+# esquemas próprios; no iOS 26.3 e no Android não pergunta. Aceita o diálogo se aparecer.
+appId: com.aecc.app
+---
+- openLink: ${LINK}
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Abrir|Open"
+          optional: true

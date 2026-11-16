@@ -1,0 +1,30 @@
+# Conta desativada (T1): a conta descartável criada pelo run.sh foi desativada pela API de admin.
+# Entrar com a palavra-passe certa mostra a mensagem de conta desativada. NUNCA usa a conta do seed.
+appId: com.aecc.app
+name: login-desativada (nativo)
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 120000
+- tapOn:
+    id: "login.email"
+- inputText:
+    text: ${THROWAWAY_EMAIL}
+    label: "Escrever o email descartável"
+- tapOn:
+    id: "login.password"
+- inputText:
+    text: ${THROWAWAY_PASSWORD}
+    label: "Escrever a palavra-passe descartável"
+- pressKey: Enter
+- runFlow: _dismiss-save-password.yaml
+- extendedWaitUntil:
+    visible:
+      id: "login.form-error"
+    timeout: 15000
+- assertVisible: ".*desativada.*"
+- waitForAnimationToEnd
+- takeScreenshot: login-desativada

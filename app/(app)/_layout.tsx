@@ -33,6 +33,8 @@ export default function AppLayout() {
       <Stack.Screen name="users/[id]/edit" options={{ title: 'Editar utilizador' }} />
       {/* Fora das tabs (U3): a rota continua a existir, sem entrada na navegação. */}
       <Stack.Screen name="favourites/index" options={{ title: 'Favoritos' }} />
+      {/* Guarda dos deep links para tabs com papéis (T2 "sem permissão"). */}
+      <Stack.Screen name="guard/[tab]" options={{ title: 'Sem permissão' }} />
     </Stack>
   );
 }
