@@ -13,6 +13,13 @@ name: deeplink-confirm-email (nativo)
 - openLink:
     link: ${CONFIRM_LINK}
     label: "Abrir o link de confirm-email"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Abrir|Open"
+          optional: true
 - extendedWaitUntil:
     visible:
       id: "confirm-email.email"

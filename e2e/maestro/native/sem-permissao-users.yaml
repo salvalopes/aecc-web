@@ -4,7 +4,10 @@ appId: com.aecc.app
 name: sem-permissao-users (nativo)
 ---
 - runFlow: _login.yaml
-- openLink: "aecc://users"
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://users"
 - extendedWaitUntil:
     visible:
       id: "state.forbidden"

@@ -97,17 +97,35 @@ name: validacao ${ROLE} ${THEME} (nativo)
     visible:
       id: "product-detail.title"
     timeout: 15000
-- back
+# Voltar ao detalhe: no Android é o "voltar" do sistema; no iOS, o botão do header.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: "9%,9%"
 - extendedWaitUntil:
     visible:
       id: "company-detail.title"
     timeout: 15000
 
-# T7 (B12): formulários de empresa (Associado e Admin) e de utilizador (Admin)
+# T7 (B12): formulário de empresa. O Associado edita a sua (Editar → "As minhas empresas"); o Admin
+# não é dono de nenhuma (a lista "As minhas empresas" fica vazia), por isso abre o de "Nova empresa".
 - runFlow:
     when:
-      true: ${ROLE != 'cliente'}
+      true: ${ROLE == 'associado'}
     commands:
+      # Pelo Início: o detalhe da empresa também tem um botão "Editar" (além da tab).
+      - tapOn: "Início"
+      - extendedWaitUntil:
+          visible:
+            id: "home.screen"
+          timeout: 15000
       - tapOn: "Editar"
       - extendedWaitUntil:
           visible:
@@ -125,6 +143,36 @@ name: validacao ${ROLE} ${THEME} (nativo)
       - takeScreenshot: ${ROLE}-${THEME}-form-empresa
       - tapOn:
           id: "company-edit.cancel"
+      - extendedWaitUntil:
+          visible:
+            id: "my-companies.screen"
+          timeout: 15000
+- runFlow:
+    when:
+      true: ${ROLE == 'admin'}
+    commands:
+      - tapOn: "Início"
+      - extendedWaitUntil:
+          visible:
+            id: "home.screen"
+          timeout: 15000
+      - tapOn: "Editar"
+      - extendedWaitUntil:
+          visible:
+            id: "my-companies.screen"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-minhas-empresas
+      - tapOn:
+          id: "my-companies.create"
+      - extendedWaitUntil:
+          visible:
+            id: "company-create.screen"
+          timeout: 15000
+      - waitForAnimationToEnd
+      - takeScreenshot: ${ROLE}-${THEME}-form-empresa
+      - tapOn:
+          id: "company-create.cancel"
       - extendedWaitUntil:
           visible:
             id: "my-companies.screen"
@@ -156,7 +204,10 @@ name: validacao ${ROLE} ${THEME} (nativo)
           timeout: 15000
 
 # T2: estados
-- openLink: "aecc://rota-que-nao-existe"
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://rota-que-nao-existe"
 - extendedWaitUntil:
     visible:
       id: "state.not-found"

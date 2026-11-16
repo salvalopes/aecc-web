@@ -1,0 +1,33 @@
+# Validação da matriz da Fase C: ecrãs T1 (antes do login) no tema do sistema (THEME: light|dark;
+# o run.sh muda a aparência do simulador/emulador). Sem sessão, o tema da app segue o sistema.
+appId: com.aecc.app
+name: validacao-auth ${THEME} (nativo)
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login.screen"
+    timeout: 120000
+- waitForAnimationToEnd
+- takeScreenshot: auth-${THEME}-entrar
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://register"
+- extendedWaitUntil:
+    visible:
+      id: "register.email"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: auth-${THEME}-registar
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://forgot-password"
+- extendedWaitUntil:
+    visible:
+      id: "forgot-password.email"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: auth-${THEME}-recuperar

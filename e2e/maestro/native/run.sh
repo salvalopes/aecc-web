@@ -56,6 +56,14 @@ company_logo() {
     | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).logoUrl??""))'
 }
 
+# Aparência do sistema (simulador iOS / emulador Android) para os ecrãs sem sessão (tema = sistema).
+set_appearance() {
+  case "$PLATFORM" in
+    ios) xcrun simctl ui "$DEVICE" appearance "$1" ;;
+    android) adb -s "$DEVICE" shell cmd uimode night "$([ "$1" = dark ] && echo yes || echo no)" > /dev/null ;;
+  esac
+}
+
 json_field() {
   node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s)[process.argv[1]]??"")}catch{console.log("")}})' "$1"
 }
@@ -167,6 +175,12 @@ for flow in "${FLOWS[@]}"; do
   # validacao-<papel>-<tema> (ex.: validacao-admin-dark) corre validacao.yaml com esse papel e tema.
   FLOW_FILE=$flow
   case "$flow" in
+    validacao-auth-*)
+      THEME=${flow#validacao-auth-}
+      FLOW_FILE=validacao-auth
+      EXTRA+=(-e "THEME=$THEME")
+      set_appearance "$THEME"
+      ;;
     validacao-*)
       IFS=- read -r _ ROLE THEME <<< "$flow"
       FLOW_FILE=validacao
@@ -198,6 +212,7 @@ for flow in "${FLOWS[@]}"; do
       fi
       ;;
   esac
+  case "$flow" in validacao-auth-*) set_appearance light ;; esac
   steps=$(grep -cE 'COMPLETED' "$OUT/$flow.log" || true)
   echo "$flow: exit $code, passos COMPLETED $steps" >> "$SUMMARY"
   [ $code -eq 0 ] || STATUS=1
