@@ -55,7 +55,7 @@ export interface Company {
   postalCodeLocality: string | null;
 }
 
-// Diretório público de empresas (GET /companies/directory) — sem TaxId/ownerUserId (RGPD).
+// Diretório de empresas (GET /companies/directory, exige sessão) — sem TaxId/ownerUserId (RGPD).
 export interface CompanyDirectoryEntry {
   id: string;
   name: string;
