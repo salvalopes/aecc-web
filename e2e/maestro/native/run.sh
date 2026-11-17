@@ -51,8 +51,11 @@ latest_link() {
     | grep -oE "$path\?userId=[A-Za-z0-9-]+&token=[A-Za-z0-9_-]+" | tail -1
 }
 
+# As leituras de empresas exigem sessão: token do associado (grant password do aecc-native).
 company_logo() {
-  curl -fsS "$API/companies/e2e00000-0000-0000-0000-00000000c001" \
+  local token
+  token=$(token_request associado@e2e.test "$E2E_SEED_PASSWORD" | json_field access_token)
+  curl -fsS -H "Authorization: Bearer $token" "$API/companies/e2e00000-0000-0000-0000-00000000c001" \
     | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).logoUrl??""))'
 }
 

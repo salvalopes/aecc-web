@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { API_URL, ASSOCIADO_COMPANY_ID, login, USERS } from '../helpers';
+import { API_URL, apiAuthHeaders, ASSOCIADO_COMPANY_ID, login, USERS } from '../helpers';
 
 const LOGO = path.join(__dirname, '..', 'fixtures', 'logo.png');
 
@@ -59,7 +59,9 @@ test('associado faz upload do logo e passa a ser servido pelo storage local E2E'
 
   await saveAndWaitClose(page);
 
-  const response = await request.get(`${API_URL}/companies/${ASSOCIADO_COMPANY_ID}`);
+  const response = await request.get(`${API_URL}/companies/${ASSOCIADO_COMPANY_ID}`, {
+    headers: await apiAuthHeaders(request, USERS.associado),
+  });
   expect(response.ok()).toBeTruthy();
   const { logoUrl } = (await response.json()) as { logoUrl: string | null };
   expect(logoUrl).toContain('/e2e-files/');
