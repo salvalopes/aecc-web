@@ -38,22 +38,39 @@ Ordem, quando um PR do aecc-api muda um contrato:
    leva as adaptações do web ao novo contrato, se houver, e o gate valida-as contra a API
    nova antes do merge.
 
-Obter o digest novo (qualquer um serve; devem coincidir):
+Obter o digest novo de **duas** fontes, que têm de coincidir:
 
-- No log do run do aecc-api (job `build-and-deploy`, step "Build e Push API"):
-  `"containerimage.digest": "sha256:…"`.
-- No servidor, o que está em produção:
+1. **O que o deploy publicou.** No log do último run de "Deploy aecc-api" (job
+   `build-and-deploy`, step "Build e Push API"), a linha `containerimage.digest`:
 
-  ```bash
-  TERM=xterm-256color ssh deploy@178.105.35.70 \
-    "docker image inspect --format '{{index .RepoDigests 0}}' ghcr.io/salvalopes/aecc-api:latest"
-  ```
+   ```bash
+   gh run list -R salvalopes/aecc-api -w "Deploy aecc-api" -L 1 \
+     --json databaseId,headSha,displayTitle,conclusion
+   gh run view <databaseId> -R salvalopes/aecc-api --log | grep '"containerimage.digest"'
+   ```
 
-- No log do run do gate, o step "Levantar a stack E2E" imprime `aecc-api: <imagem> @ <digest>`.
+   Usa só essa linha. O mesmo log tem outras linhas `Digest: sha256:…` de outras imagens
+   (por exemplo, as que os testes descarregam) que não são a da API.
+
+2. **O que está em produção.** A imagem do contentor que está a correr, não a tag
+   `:latest` do servidor. Um `pull` sem `up` (ou um `up` que falhou) muda a `:latest` sem
+   mudar a produção:
+
+   ```bash
+   TERM=xterm-256color ssh deploy@178.105.35.70 \
+     'docker image inspect --format "{{index .RepoDigests 0}}" "$(docker inspect --format "{{.Image}}" aecc-api-1)"'
+   ```
+
+Se não coincidirem, o deploy não chegou ao fim: não atualizes o digest e vê primeiro o run
+do aecc-api.
 
 Depois, no `deploy.yml`, troca o valor de `AECC_API_IMAGE` (formato
 `ghcr.io/salvalopes/aecc-api@sha256:<64 hex>`) e a linha `# Atual:` do comentário
-(commit e data do deploy da API). Abre o PR. O gate corre contra o digest novo.
+(commit e data do deploy da API). Abre o PR.
+
+Confirmar no PR: no log do gate, o step "Levantar a stack E2E (Postgres + API + seed-e2e)"
+imprime `aecc-api: <imagem> @ <digest>`, e ambos têm de ser o digest novo. Isto é só uma
+verificação: imprime o valor que já está fixado, por isso não é fonte do digest novo.
 
 O aecc-api publica hoje só `:latest` (sem tags imutáveis `sha-…`), por isso o pin é por
 digest. Se um dia publicar `sha-<commit>`, esta tag pode substituir o digest.

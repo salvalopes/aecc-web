@@ -35,11 +35,10 @@ jobs:
       packages: read
     env:
       # Imagem da API usada pelo gate. Fonte ÚNICA deste valor.
-      # Atualizar só DEPOIS de o deploy da API ter corrido (procedimento em docs/CI.md):
-      #   ssh deploy@<servidor> "docker image inspect --format '{{index .RepoDigests 0}}' ghcr.io/salvalopes/aecc-api:latest"
-      # ou o "containerimage.digest" do job build-and-deploy do aecc-api.
-      # Atual: aecc-api@2744597 (#9), deploy de 2026-11-18, o mesmo digest que está em produção.
-      AECC_API_IMAGE: ghcr.io/salvalopes/aecc-api@sha256:5c830e8092f0e9ecad7c0d77872c522c8c311387172cabfe3293443a74c1e88f
+      # Atualizar só DEPOIS de o deploy da API ter corrido. Procedimento e comandos
+      # (log do deploy do aecc-api + contentor em produção) em docs/CI.md.
+      # Atual: aecc-api@ccd928a (#10), deploy de 2026-11-18, o mesmo digest que está em produção.
+      AECC_API_IMAGE: ghcr.io/salvalopes/aecc-api@sha256:e0a481681043b26e7f0b3778a08d70c42e79594e64f28d431af5b07e24ca12be
     steps:
       - name: Checkout
         uses: actions/checkout@v6
