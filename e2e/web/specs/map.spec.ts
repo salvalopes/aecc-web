@@ -16,6 +16,17 @@ async function openMap(page: Page, path = '/map') {
   await expect(page.locator('.maplibregl-canvas')).toBeVisible({ timeout: 20_000 });
 }
 
+test('regra 7: sem sessão, /map vai para o login (e não pede o mapa)', async ({ page }) => {
+  const mapRequests: string[] = [];
+  page.on('request', (r) => {
+    const url = r.url();
+    if (url.includes('/companies/map') || url.includes('/tiles/')) mapRequests.push(url);
+  });
+  await page.goto('/map');
+  await expect(page.getByTestId('login.screen')).toBeVisible();
+  expect(mapRequests).toEqual([]);
+});
+
 test.describe('mapa: componente', () => {
   test('mostra o mapa, pede o PMTiles por Range e a atribuição está sempre visível', async ({
     page,
@@ -74,6 +85,103 @@ test.describe('mapa: componente', () => {
 
     console.log(`origens pedidas no ecrã do mapa: ${[...origins].sort().join(', ')}`);
     expect([...origins].sort()).toEqual([...new Set([APP_ORIGIN, API_ORIGIN])].sort());
+  });
+});
+
+// W5. Posição simulada com casas decimais distintivas (sem falsos positivos nas pesquisas).
+const SIM = { latitude: 38.7123456, longitude: -9.4198765 };
+const SIM_TRACES = ['38.7123', '9.41987', '38,7123', '9,41987'];
+
+// Conta as chamadas à API de geolocalização do browser (regra 1: só depois do toque no botão).
+async function instrumentGeolocation(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __geo: { get: number; watch: number } };
+    w.__geo = { get: 0, watch: 0 };
+    const geo = navigator.geolocation;
+    if (!geo) return;
+    const get = geo.getCurrentPosition.bind(geo);
+    const watch = geo.watchPosition.bind(geo);
+    geo.getCurrentPosition = (...args: Parameters<Geolocation['getCurrentPosition']>) => {
+      w.__geo.get += 1;
+      return get(...args);
+    };
+    geo.watchPosition = (...args: Parameters<Geolocation['watchPosition']>) => {
+      w.__geo.watch += 1;
+      return watch(...args);
+    };
+  });
+}
+const geoCalls = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __geo: { get: number; watch: number } }).__geo);
+
+test.describe('mapa: a minha posição (regras 1 e 2)', () => {
+  test('a posição só é lida ao tocar no botão e nunca sai do dispositivo', async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(['geolocation']);
+    await context.setGeolocation(SIM);
+    await instrumentGeolocation(page);
+
+    // Regra 2: nenhum pedido (API, tiles, glyphs, sprites, chunks) leva as coordenadas.
+    const leaks: string[] = [];
+    page.on('request', (r) => {
+      const blob = [r.url(), r.postData() ?? '', JSON.stringify(r.headers())].join('\n');
+      if (SIM_TRACES.some((t) => blob.includes(t))) leaks.push(`${r.method()} ${r.url()}`);
+    });
+    const consoleLines: string[] = [];
+    page.on('console', (m) => consoleLines.push(m.text()));
+
+    await login(page, USERS.cliente);
+    await openMap(page);
+    await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+
+    // Regra 1: nada de geolocalização no arranque do ecrã.
+    expect(await geoCalls(page)).toEqual({ get: 0, watch: 0 });
+    await expect(page.getByTestId('map.me')).toHaveCount(0);
+
+    await page.getByTestId('map.locate').click();
+    await expect(page.getByTestId('map.me')).toBeAttached();
+    await expect(page.getByTestId('map.me')).toHaveAttribute(
+      'aria-label',
+      'A sua posição está no mapa',
+    );
+    expect(await geoCalls(page)).toEqual({ get: 1, watch: 0 });
+
+    // Mexer no mapa depois (filtro → novo GET /companies/map) também não leva a posição.
+    await page.getByTestId('companies.category-chip-e2e-restauracao').click();
+    await expect(page.getByTestId('map.count')).toHaveText('2 empresas');
+    await page.waitForLoadState('networkidle');
+
+    expect(leaks).toEqual([]);
+    // Nem storage nem logs.
+    const stored = await page.evaluate(() =>
+      JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }),
+    );
+    expect(SIM_TRACES.some((t) => stored.includes(t))).toBe(false);
+    expect(consoleLines.filter((l) => SIM_TRACES.some((t) => l.includes(t)))).toEqual([]);
+
+    // Voltar a tocar esconde a posição (fica só em memória e é descartada).
+    await page.getByTestId('map.locate').click();
+    await expect(page.getByTestId('map.me')).toHaveCount(0);
+  });
+
+  test('sem permissão: aviso "sem acesso" e o mapa continua utilizável', async ({
+    page,
+    context,
+  }) => {
+    await context.clearPermissions();
+    await instrumentGeolocation(page);
+    await login(page, USERS.cliente);
+    await openMap(page);
+
+    await page.getByTestId('map.locate').click();
+    await expect(page.getByTestId('map.locate.denied')).toBeVisible();
+    await expect(page.getByTestId('map.locate.denied')).toContainText('Sem acesso à localização');
+    await expect(page.getByTestId('map.me')).toHaveCount(0);
+
+    await page.getByTestId('companies.category-chip-e2e-comercio').click();
+    await expect(page.getByTestId('map.count')).toHaveText('2 empresas');
   });
 });
 

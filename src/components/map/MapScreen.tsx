@@ -15,8 +15,18 @@ import { categoriesApi } from '@/api/categories.api';
 import { ApiError } from '@/api/client';
 import { CategoryChips } from '@/components/directory/CategoryChips';
 import { categoryName } from '@/components/directory/categories';
-import { ErrorState, Horizon, Skeleton, StateScreen, Text } from '@/components/ui';
+import {
+  ErrorState,
+  GlassSurface,
+  Horizon,
+  IconButton,
+  InlineAlert,
+  Skeleton,
+  StateScreen,
+  Text,
+} from '@/components/ui';
 import { useMapCompanies } from '@/hooks/useMapCompanies';
+import { useUserPosition } from '@/hooks/useUserPosition';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
@@ -36,6 +46,16 @@ const factory = createStyles(({ colors, layout, spacing }) => ({
   bodyWide: { flexDirection: 'row', paddingRight: layout.gutterWide },
   side: { width: layout.formMaxWidth },
   map: { flex: 1 },
+  locate: { position: 'absolute', top: spacing.md, right: spacing.md },
+  alert: { paddingHorizontal: layout.gutter, paddingTop: spacing.md },
+  alertWide: { paddingHorizontal: layout.gutterWide },
+  // Só para leitores de ecrã (o ponto "me" é desenhado no canvas).
+  srOnly: {
+    position: 'absolute',
+    width: spacing['2xs'],
+    height: spacing['2xs'],
+    overflow: 'hidden',
+  },
   panel: { paddingHorizontal: layout.gutter },
   panelWide: { paddingHorizontal: layout.gutterWide },
 }));
@@ -50,7 +70,7 @@ function countText(n: number) {
 // estados, ficha ao tocar num pino, lista quando o cluster não se desfaz e `?company=<id>`.
 export default function MapScreen() {
   const s = useStyles(factory);
-  const { scheme, spacing } = useTheme();
+  const { scheme, spacing, radius } = useTheme();
   const { isWide } = useBreakpoint();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ company?: string }>();
@@ -60,6 +80,8 @@ export default function MapScreen() {
   const [selection, setSelection] = useState<Selection>(null);
   const [focus, setFocus] = useState<LatLng | null>(null);
   const { points, loaded, loading, error, reload } = useMapCompanies({ categoryId });
+  // Regras 1 e 2: a posição só é pedida no toque e fica só em memória (nunca vai na rede).
+  const me = useUserPosition();
 
   // Como no ListScaffold: as NativeTabs (iOS) flutuam por cima do conteúdo.
   const bottom = insets.bottom + (Platform.OS === 'ios' ? spacing['6xl'] * 2 : spacing['5xl']);
@@ -87,6 +109,15 @@ export default function MapScreen() {
     setSelection({ kind: 'company', id });
     setFocus({ lat: company.lat, lng: company.lng });
   }, [params.company, loaded, byId]);
+
+  useEffect(() => {
+    if (me.position) setFocus(me.position);
+  }, [me.position]);
+
+  const toggleLocate = useCallback(() => {
+    if (me.state === 'shown') me.clear();
+    else me.request();
+  }, [me]);
 
   const categoryOf = useCallback(
     (company: MapCompany) =>
@@ -153,15 +184,49 @@ export default function MapScreen() {
             testID="map.view"
             points={points}
             scheme={scheme}
-            userPosition={null}
+            userPosition={me.position}
             focus={focus}
             onSelectCompany={selectCompany}
             onSelectGroup={selectGroup}
           />
         </Suspense>
+        <GlassSurface style={s.locate} radius={radius.capsule} elevated>
+          <IconButton
+            testID="map.locate"
+            icon="crosshair"
+            label={me.state === 'shown' ? 'Esconder a minha posição' : 'Mostrar a minha posição'}
+            onPress={toggleLocate}
+            disabled={me.state === 'locating'}
+          />
+        </GlassSurface>
+        {me.position ? (
+          <View
+            testID="map.me"
+            accessible
+            accessibilityLabel="A sua posição está no mapa"
+            accessibilityLiveRegion="polite"
+            pointerEvents="none"
+            style={s.srOnly}
+          />
+        ) : null}
       </View>
     );
   }
+
+  const locateAlert =
+    me.state === 'denied' ? (
+      <InlineAlert
+        testID="map.locate.denied"
+        tone="error"
+        message="Sem acesso à localização. Pode ativá-lo nas definições do dispositivo."
+      />
+    ) : me.state === 'unavailable' ? (
+      <InlineAlert
+        testID="map.locate.unavailable"
+        tone="error"
+        message="Não foi possível obter a sua posição neste dispositivo."
+      />
+    ) : null;
 
   return (
     <View testID="map.screen" style={[s.screen, { paddingBottom: bottom }]}>
@@ -175,6 +240,9 @@ export default function MapScreen() {
             wide={isWide}
           />
         </View>
+      ) : null}
+      {locateAlert ? (
+        <View style={[s.alert, isWide ? s.alertWide : null]}>{locateAlert}</View>
       ) : null}
       <View style={[s.body, isWide ? s.bodyWide : null]}>
         {body}
