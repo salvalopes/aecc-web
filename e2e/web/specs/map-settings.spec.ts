@@ -137,7 +137,10 @@ test.describe('W6: efeito dos botões no mapa', () => {
     await expect(page.getByTestId(`map.pin.${C004}`)).toHaveCount(0);
   });
 
-  test('escondida pelo Admin: o dono vê a nota e não a consegue repor', async ({ page, request }) => {
+  test('escondida pelo Admin: o dono vê a nota e não a consegue repor', async ({
+    page,
+    request,
+  }) => {
     const admin = await apiAuthHeaders(request, USERS.admin);
     const res = await request.put(`${API_URL}/companies/${C001}/map-settings`, {
       headers: admin,
