@@ -39,6 +39,8 @@ export default function AppLayout() {
         options={{ title: 'Utilizadores', headerStyle: { backgroundColor: colors.horizon } }}
       />
       <Stack.Screen name="users/new" options={{ title: 'Novo utilizador' }} />
+      {/* Gestão → empresas sem localização (W7 do mapa, só Admin). */}
+      <Stack.Screen name="companies-unlocated" options={{ title: 'Empresas sem localização' }} />
       <Stack.Screen name="users/[id]/edit" options={{ title: 'Editar utilizador' }} />
       {/* Fora das tabs (U3): a rota continua a existir, sem entrada na navegação. */}
       <Stack.Screen name="favourites/index" options={{ title: 'Favoritos' }} />
