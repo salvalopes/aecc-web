@@ -49,7 +49,7 @@ export default function EditCompanyScreen() {
           name: co.name,
           description: co.description,
           leadCooldownMinutes: String(co.leadCooldownMinutes),
-          leadDestinationEmail: co.leadDestinationEmail,
+          leadDestinationEmail: co.leadDestinationEmail ?? '',
         });
       });
     } catch (e) {

@@ -336,7 +336,7 @@ export default function CompanyDetailScreen() {
                 {
                   key: 'lead-email',
                   label: 'Email de destino',
-                  value: company.leadDestinationEmail,
+                  value: company.leadDestinationEmail ?? '',
                 },
                 {
                   key: 'lead-cooldown',

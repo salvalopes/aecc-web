@@ -32,15 +32,18 @@ export interface Category {
   children: Category[];
 }
 
+// ownerUserId, leadCooldownMinutes e leadDestinationEmail só vêm para o dono e para o
+// Admin (aecc-api#8); para os restantes, as chaves não existem. /companies/mine (só do
+// dono) e as respostas de POST/PUT trazem sempre tudo.
 export interface Company {
   id: string;
-  ownerUserId: string | null;
+  ownerUserId?: string | null;
   name: string;
   description: string;
   logoUrl: string | null;
   coverUrl: string | null;
-  leadCooldownMinutes: number;
-  leadDestinationEmail: string;
+  leadCooldownMinutes?: number;
+  leadDestinationEmail?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
