@@ -223,3 +223,50 @@ export interface UpdateProductRequest {
   hasMemberBenefit: boolean;
   memberBenefitDescription?: string | null;
 }
+
+// Mapa de empresas (aecc-api docs/mapa.md @ feat/mapa-api 4d4fd15). Só o GET /companies/map tem
+// coordenadas; para um ENI sem opt-in são o centróide CP4 (`precision: 'area'`), decidido na API.
+export type MapPrecision = 'exact' | 'area';
+
+export interface MapCompany {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  lat: number;
+  lng: number;
+  precision: MapPrecision;
+}
+
+/** GET/PUT /companies/{id}/map-settings (dono ou Admin). Sem coordenadas. */
+export interface CompanyMapSettings {
+  isProtectedPerson: boolean;
+  showExactPin: boolean;
+  hiddenFromMapByOwner: boolean;
+  hiddenFromMapByAdmin: boolean;
+  precision: 'none' | 'cp4' | 'cp7' | 'manual';
+  onMap: boolean;
+}
+
+/** Campo ausente = não muda. Dono: showExactPin, hiddenFromMapByOwner; Admin: hiddenFromMapByAdmin. */
+export type UpdateCompanyMapSettingsRequest = Partial<
+  Pick<CompanyMapSettings, 'showExactPin' | 'hiddenFromMapByOwner' | 'hiddenFromMapByAdmin'>
+>;
+
+/**
+ * Motivo de uma empresa ativa e não escondida não aparecer no mapa (GET /companies/unlocated).
+ * Só "no-location" se resolve com PUT /location. Não existe "outside-bounds": o /map mostra as
+ * empresas localizadas fora da caixa.
+ */
+export type UnlocatedReason = 'no-location' | 'insufficient-area';
+
+export interface UnlocatedCompany {
+  id: string;
+  name: string;
+  reason: UnlocatedReason;
+}
+
+/** PUT /companies/{id}/location (Admin): ponto dentro da caixa do mapa → 204, sem eco. */
+export interface SetCompanyLocationRequest {
+  lat: number;
+  lng: number;
+}
