@@ -11,6 +11,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 // E2E_API_URL permite apontar a outra stack local (ex.: http://localhost:5081/api); o CI usa a 5080.
 const API_URL = process.env.E2E_API_URL ?? 'http://localhost:5080/api';
+const TILES_URL = 'http://localhost:8081/tiles';
 const ARTIFACTS = 'e2e/web/.artifacts';
 
 export default defineConfig({
@@ -26,10 +27,13 @@ export default defineConfig({
     video: 'retain-on-failure',
     screenshot: 'off',
   },
+  // Mapa: tiles, glyphs e sprites da fixture local (e2e/web/fixtures/tiles), na mesma origem que a
+  // app, como o Caddy em produção. Os testes não dependem do servidor nem da T1.
   webServer: {
     command:
-      `EXPO_PUBLIC_API_URL=${API_URL} npx expo export -p web --clear --output-dir e2e/web/.dist ` +
-      '&& node e2e/web/serve-static.mjs e2e/web/.dist 8081',
+      `EXPO_PUBLIC_API_URL=${API_URL} EXPO_PUBLIC_TILES_URL=${TILES_URL} ` +
+      'npx expo export -p web --clear --output-dir e2e/web/.dist ' +
+      '&& node e2e/web/serve-static.mjs e2e/web/.dist 8081 e2e/web/fixtures/tiles',
     url: 'http://localhost:8081',
     reuseExistingServer: false,
     timeout: 300_000,
