@@ -15,7 +15,8 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: ['node_modules/', '.expo/', 'dist/'],
+  // expo-env.d.ts: gerado pelo expo-cli (e no .gitignore); não segue o prettier.
+  ignorePatterns: ['node_modules/', '.expo/', 'dist/', 'expo-env.d.ts'],
   overrides: [
     {
       // O tema é o único sítio onde o StyleSheet.create corre.
