@@ -1,0 +1,39 @@
+# Regra 1 (mapa-plano W5/W8): a permissão de localização só é pedida ao tocar em "A minha
+# posição" ("só enquanto a app está em uso"), nunca no arranque.
+# O launchApp do Maestro concede todas as permissões por omissão: depois do login, a app é
+# relançada SEM clearState (a sessão mantém-se) e com a localização por decidir.
+appId: com.aecc.app
+name: mapa-posicao (nativo)
+---
+- runFlow: _login.yaml
+- stopApp
+- launchApp:
+    permissions:
+      location: unset
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 60000
+- tapOn: "Mapa"
+- extendedWaitUntil:
+    visible:
+      id: "map.view"
+    timeout: 30000
+# Abrir o mapa não pede a permissão.
+- assertNotVisible: ".*(Allow While Using App|While using the app|Permitir durante a utilização|Durante a utilização da app).*"
+- assertNotVisible:
+    id: "map.me"
+- tapOn:
+    id: "map.locate"
+# O sistema pede a permissão agora, "só enquanto a app está em uso".
+- extendedWaitUntil:
+    visible: ".*(Allow While Using App|While using the app|Permitir durante a utilização|Durante a utilização da app).*"
+    timeout: 15000
+- takeScreenshot: mapa-posicao-pedido
+- tapOn: ".*(Allow While Using App|While using the app|Permitir durante a utilização|Durante a utilização da app).*"
+- extendedWaitUntil:
+    visible:
+      id: "map.me"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: mapa-posicao

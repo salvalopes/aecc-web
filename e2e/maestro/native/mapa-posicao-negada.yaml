@@ -1,0 +1,33 @@
+# Permissão de localização negada (mapa-plano W5, Review Focus 3): aviso "sem acesso" e o mapa
+# continua utilizável. Relança sem clearState (sessão mantém-se) com a localização negada.
+appId: com.aecc.app
+name: mapa-posicao-negada (nativo)
+---
+- runFlow: _login.yaml
+- stopApp
+- launchApp:
+    permissions:
+      location: deny
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 60000
+- tapOn: "Mapa"
+- extendedWaitUntil:
+    visible:
+      id: "map.view"
+    timeout: 30000
+- tapOn:
+    id: "map.locate"
+- extendedWaitUntil:
+    visible:
+      id: "map.locate.denied"
+    timeout: 15000
+- assertNotVisible:
+    id: "map.me"
+- tapOn:
+    id: "companies.category-chip-e2e-comercio"
+- extendedWaitUntil:
+    visible: "2 empresas"
+    timeout: 15000
+- takeScreenshot: mapa-posicao-negada

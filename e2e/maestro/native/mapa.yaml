@@ -1,0 +1,69 @@
+# Smoke do mapa (mapa-plano W8): tab Mapa → pinos (contagem do seed), atribuição sempre visível,
+# filtro por categoria, deep link ?company= → ficha → detalhe, e capturas claro/escuro.
+# Pré-requisitos: dev build com o MapLibre e Metro com EXPO_PUBLIC_TILES_URL a apontar para a
+# fixture local (ver run.sh); seed E2E com 5 empresas no mapa (c006 escondida).
+appId: com.aecc.app
+name: mapa (nativo)
+---
+- runFlow: _login.yaml
+- tapOn: "Mapa"
+- extendedWaitUntil:
+    visible:
+      id: "map.view"
+    timeout: 30000
+- assertVisible:
+    id: "map.attribution"
+- assertVisible: "5 empresas"
+- assertVisible:
+    id: "map.locate"
+
+# Filtro por categoria (os chips do diretório).
+- tapOn:
+    id: "companies.category-chip-e2e-restauracao"
+- extendedWaitUntil:
+    visible: "2 empresas"
+    timeout: 15000
+- tapOn:
+    id: "companies.category-chip-all"
+- extendedWaitUntil:
+    visible: "5 empresas"
+    timeout: 15000
+
+# Deep link: foca a empresa e abre a ficha (ENI em zona → nota de zona aproximada).
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://map?company=e2e00000-0000-0000-0000-00000000c001"
+- extendedWaitUntil:
+    visible:
+      id: "map.card"
+    timeout: 20000
+- assertVisible: "Pastelaria Conceição"
+- assertVisible: "Localização aproximada.*"
+- waitForAnimationToEnd
+- takeScreenshot: mapa-claro
+- tapOn:
+    id: "map.card.open"
+- extendedWaitUntil:
+    visible:
+      id: "company-detail.screen"
+    timeout: 20000
+
+# Tema escuro (o estilo do mapa troca sem recarregar os tiles).
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible:
+      id: "profile.theme"
+    timeout: 15000
+- tapOn:
+    id: "profile.theme-dark"
+- tapOn: "Mapa"
+- extendedWaitUntil:
+    visible:
+      id: "map.view"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: mapa-escuro
+- tapOn: "Perfil"
+- tapOn:
+    id: "profile.theme-system"

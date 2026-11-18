@@ -110,7 +110,7 @@ if [ $# -gt 0 ]; then
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
     sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin gestao-utilizadores
-    login-bloqueio login-desativada lightbox)
+    login-bloqueio login-desativada lightbox mapa mapa-posicao mapa-posicao-negada)
 fi
 
 rm -rf "$OUT"
