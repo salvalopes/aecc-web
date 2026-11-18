@@ -11,6 +11,7 @@ import { ErrorState, StateScreen } from '@/components/ui';
 import { DetailScaffold } from '@/components/templates/DetailScaffold';
 import { FormLayout } from '@/components/templates/FormLayout';
 import { ForbiddenState } from '@/components/templates/StateTemplates';
+import { MapSettingsSection } from '@/components/forms/MapSettingsSection';
 import {
   CompanyFields,
   EMPTY_COMPANY_FORM,
@@ -136,6 +137,8 @@ export default function EditCompanyScreen() {
         errors={fieldErrors}
         logo={{ uri: logo?.uri ?? company?.logoUrl ?? null, onPick: pickLogo }}
       />
+      {/* W6: só o dono chega aqui (ver acima). Os interruptores aplicam-se logo, sem "Guardar". */}
+      {company ? <MapSettingsSection companyId={company.id} owner admin={false} /> : null}
     </FormLayout>
   );
 }

@@ -31,6 +31,7 @@ export default function AppLayout() {
       <Stack.Screen name="products/[id]/edit" options={{ title: 'Editar produto' }} />
       <Stack.Screen name="my-companies/new" options={{ title: 'Nova empresa' }} />
       <Stack.Screen name="my-companies/[id]/edit" options={{ title: 'Editar empresa' }} />
+      <Stack.Screen name="my-companies/[id]/map" options={{ title: 'Visibilidade no mapa' }} />
       {/* Gestão → Utilizadores (W1 do mapa): saiu das tabs; o URL /users mantém-se. O header dá o
           "voltar" e tem a cor do `Horizon` do ecrã. */}
       <Stack.Screen

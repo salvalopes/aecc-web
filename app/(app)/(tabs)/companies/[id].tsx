@@ -265,6 +265,18 @@ export default function CompanyDetailScreen() {
           />
         </View>
       ) : null}
+      {/* Mapa (W6): o Admin esconde a empresa do mapa; o dono usa a secção MAPA do "Editar". */}
+      {user?.role === 'Admin' ? (
+        <View style={s.actions}>
+          <Button
+            testID="company-detail.map-settings"
+            label="Mapa"
+            variant="secondary"
+            size="sm"
+            onPress={() => router.push(`/my-companies/${company.id}/map`)}
+          />
+        </View>
+      ) : null}
       {actionError ? (
         <InlineAlert tone="error" message={actionError} testID="company-detail.action-error" />
       ) : null}
