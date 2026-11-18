@@ -4,10 +4,11 @@
 #            Corre em PRs para main, em push para main e manualmente (workflow_dispatch).
 #   deploy → expo export + rsync para o servidor. Só em push para main e só se o e2e passar.
 #
-# ACOPLAMENTO: o gate usa a imagem ghcr.io/salvalopes/aecc-api:latest (ambiente E2E,
-# comando seed-e2e). Um push no aecc-api que publique uma `latest` incompatível pode
-# fazer falhar este gate sem nenhuma alteração no aecc-web — e vice-versa, o gate só
-# valida o web contra a API que está em `latest` nesse momento.
+# IMAGEM DA API: o gate corre contra uma imagem do aecc-api FIXADA POR DIGEST
+# (env AECC_API_IMAGE do job e2e, abaixo), não contra `:latest`. Assim um deploy da API
+# não parte este gate sem nenhuma alteração no web. Procedimento de atualização:
+# docs/CI.md. A stack (Postgres + API + seed-e2e) vive em scripts/ci/e2e-api.sh, que o
+# aecc-api também usa nos PRs dele.
 # Acesso: o repo aecc-web tem permissão de leitura ao pacote no GHCR; o login usa o
 # GITHUB_TOKEN (permissions: packages: read), sem PATs.
 
@@ -32,21 +33,13 @@ jobs:
     permissions:
       contents: read
       packages: read
-    services:
-      # BD descartável (mesmos valores do docker-compose.e2e.yml do aecc-api; não são segredos).
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: aecc_e2e
-          POSTGRES_USER: aecc
-          POSTGRES_PASSWORD: aecc_e2e
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U aecc -d aecc_e2e"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 15
+    env:
+      # Imagem da API usada pelo gate. Fonte ÚNICA deste valor.
+      # Atualizar só DEPOIS de o deploy da API ter corrido (procedimento em docs/CI.md):
+      #   ssh deploy@<servidor> "docker image inspect --format '{{index .RepoDigests 0}}' ghcr.io/salvalopes/aecc-api:latest"
+      # ou o "containerimage.digest" do job build-and-deploy do aecc-api.
+      # Atual: aecc-api@2744597 (#9), deploy de 2026-11-18, o mesmo digest que está em produção.
+      AECC_API_IMAGE: ghcr.io/salvalopes/aecc-api@sha256:5c830e8092f0e9ecad7c0d77872c522c8c311387172cabfe3293443a74c1e88f
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -71,38 +64,8 @@ jobs:
           echo "::add-mask::$pw"
           echo "E2E_SEED_PASSWORD=$pw" >> "$GITHUB_ENV"
 
-      - name: Levantar a API (ambiente E2E)
-        run: |
-          # A API corre como appuser (uid 1001): HOME (certificados OpenIddict, DataProtection)
-          # e uploads (storage local E2E) em tmpfs graváveis por esse uid.
-          docker run -d --name aecc-api \
-            -p 127.0.0.1:5080:8080 \
-            --add-host=host.docker.internal:host-gateway \
-            -e ASPNETCORE_ENVIRONMENT=E2E \
-            -e HOME=/data/home \
-            -e "ConnectionStrings__Postgres=Host=host.docker.internal;Port=5432;Database=aecc_e2e;Username=aecc;Password=aecc_e2e" \
-            --tmpfs /data/home:rw,uid=1001,gid=1001,mode=0700 \
-            --tmpfs /data/uploads:rw,uid=1001,gid=1001,mode=0755 \
-            ghcr.io/salvalopes/aecc-api:latest
-          docker inspect --format 'aecc-api: {{.Config.Image}} @ {{.Image}}' aecc-api
-
-      - name: Esperar pela API
-        run: |
-          # -fs (sem -S): as tentativas falhadas enquanto a API arranca não enchem o log.
-          # Tem de ser um endpoint anónimo que leia a BD: /api/categories. As empresas
-          # (incluindo o /directory) exigem sessão desde o aecc-api#7 e dariam sempre 401.
-          if ! curl -fs -o /dev/null \
-                 --retry 60 --retry-delay 2 --retry-all-errors --max-time 5 \
-                 http://localhost:5080/api/categories; then
-            echo "::error::A API não respondeu em http://localhost:5080"
-            docker logs aecc-api
-            exit 1
-          fi
-          echo "API pronta."
-
-      - name: Seed E2E
-        # -e sem valor: o docker herda E2E_SEED_PASSWORD do ambiente do step (não vai na linha de comando).
-        run: docker exec -e E2E_SEED_PASSWORD aecc-api dotnet AECC.Api.dll seed-e2e
+      - name: Levantar a stack E2E (Postgres + API + seed-e2e)
+        run: scripts/ci/e2e-api.sh up
 
       - name: Install deps
         run: npm ci
@@ -131,7 +94,7 @@ jobs:
 
       - name: Logs da API
         if: always()
-        run: docker logs aecc-api || true
+        run: scripts/ci/e2e-api.sh logs
 
   deploy:
     needs: e2e
