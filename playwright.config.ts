@@ -9,7 +9,8 @@ import { defineConfig, devices } from '@playwright/test';
 // A app é servida a partir do build estático (expo export) com fallback SPA, na porta
 // 8081 — a registada no OpenIddict (redirect_uri) e no CORS da stack E2E.
 
-const API_URL = 'http://localhost:5080/api';
+// E2E_API_URL permite apontar a outra stack local (ex.: http://localhost:5081/api); o CI usa a 5080.
+const API_URL = process.env.E2E_API_URL ?? 'http://localhost:5080/api';
 const ARTIFACTS = 'e2e/web/.artifacts';
 
 export default defineConfig({

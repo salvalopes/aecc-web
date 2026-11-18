@@ -1,5 +1,5 @@
-# Sem permissão (T2) na rota da tab escondida: quem não é Admin abre aecc://users e vê o estado
-# "sem permissão" (a tab Utilizadores não existe na barra para esse papel).
+# Sem permissão (T2): quem não é Admin abre aecc://users (rota do Stack, Gestão → Utilizadores
+# desde a W1 do mapa) e vê o estado "sem permissão" do próprio ecrã.
 appId: com.aecc.app
 name: sem-permissao-users (nativo)
 ---

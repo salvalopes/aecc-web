@@ -1,0 +1,20 @@
+# W1 do mapa: a gestão de utilizadores saiu das tabs. O Admin chega lá pela tab Gestão
+# (tab.profile, com o rótulo "Gestão" para o Admin) → "Gerir utilizadores" → Utilizadores.
+appId: com.aecc.app
+name: gestao-utilizadores (nativo)
+---
+- runFlow: _login.yaml
+- assertNotVisible:
+    id: "tab.users"
+- tapOn: "Gestão"
+- extendedWaitUntil:
+    visible:
+      id: "profile.users"
+    timeout: 15000
+- tapOn:
+    id: "profile.users"
+- extendedWaitUntil:
+    visible:
+      id: "users.screen"
+    timeout: 15000
+- takeScreenshot: gestao-utilizadores

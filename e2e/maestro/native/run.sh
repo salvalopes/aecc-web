@@ -109,7 +109,7 @@ if [ $# -gt 0 ]; then
   FLOWS=("$@")
 else
   FLOWS=(login logout sessao-restaurada diretorio detalhe editar-empresa-imagem perfil-aparencia
-    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin
+    sem-permissao deeplink-reset-password deeplink-confirm-email teclado-auth teclado-formulario sem-permissao-users deeplink-users-admin gestao-utilizadores
     login-bloqueio login-desativada lightbox)
 fi
 
@@ -150,7 +150,7 @@ for flow in "${FLOWS[@]}"; do
       fi
       EXTRA+=(-e "THROWAWAY_EMAIL=$THROW_EMAIL" -e "THROWAWAY_PASSWORD=$THROW_PASSWORD")
       ;;
-    deeplink-users-admin)
+    deeplink-users-admin|gestao-utilizadores)
       EMAIL=admin@e2e.test
       ;;
     deeplink-reset-password)

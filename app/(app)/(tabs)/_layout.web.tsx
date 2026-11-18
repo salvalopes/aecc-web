@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabSlot, useTabTrigger, useTabsWithTriggers } from 'expo-router/ui';
 import { useAuth } from '@/hooks/useAuth';
-import { TABS, isTabVisible, type TabConfig } from '@/navigation/tabs';
+import { TABS, isTabVisible, resolveTab, type TabConfig } from '@/navigation/tabs';
 import { BrandLockup, GlassSurface, Icon, Text } from '@/components/ui';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useBreakpoint } from '@/theme/useBreakpoint';
@@ -27,7 +27,11 @@ export default function TabsWebLayout() {
   const insets = useSafeAreaInsets();
   const styles = useStyles(stylesFactory);
   const { NavigationContent } = useTabsWithTriggers({ triggers: TRIGGERS });
-  const visible = useMemo(() => TABS.filter((tab) => isTabVisible(tab, user?.role)), [user?.role]);
+  const visible = useMemo(
+    () =>
+      TABS.filter((tab) => isTabVisible(tab, user?.role)).map((tab) => resolveTab(tab, user?.role)),
+    [user?.role],
+  );
 
   return (
     <NavigationContent>

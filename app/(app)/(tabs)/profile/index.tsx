@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme, type ThemePreference } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { Button, SegmentedControl } from '@/components/ui';
+import { Button, Icon, ListGroup, ListRow, SegmentedControl, Text } from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { FormSection } from '@/components/templates/FormLayout';
 import { InfoGroup, type InfoItem } from '@/components/detail/InfoGroup';
@@ -19,6 +19,7 @@ const factory = createStyles(({ spacing, layout }) => ({
   page: { width: '100%', maxWidth: layout.formPageMax, gap: layout.sectionGap },
   pageWide: { gap: spacing['5xl'] },
   start: { alignSelf: 'flex-start' },
+  rowLabel: { flex: 1 },
 }));
 
 const THEME_OPTIONS = [
@@ -36,8 +37,9 @@ const THEME_HINT: Record<ThemePreference, string> = {
 export default function ProfileScreen() {
   const s = useStyles(factory);
   const { user, logout } = useAuth();
-  const { preference, setPreference } = useTheme();
+  const { preference, setPreference, colors, size } = useTheme();
   const { isWide } = useBreakpoint();
+  const isAdmin = user?.role === 'Admin';
   const [leaving, setLeaving] = useState(false);
 
   async function handleLogout() {
@@ -84,6 +86,27 @@ export default function ProfileScreen() {
         {user ? (
           <FormSection label="CONTA" description={ROLE_HINT[user.role]}>
             <InfoGroup testID="profile.account" items={account} />
+          </FormSection>
+        ) : null}
+
+        {/* Gestão (Admin): a gestão de utilizadores saiu das tabs (W1 do mapa). */}
+        {isAdmin ? (
+          <FormSection label="UTILIZADORES" description="Contas, papéis e acessos à app.">
+            <ListGroup>
+              <ListRow
+                testID="profile.users"
+                accessibilityLabel="Gerir utilizadores"
+                onPress={() => router.push('/users')}
+                chevron
+                inset="icon"
+                last
+              >
+                <Icon name="users-three" size={size.icon.md} color={colors.text2} />
+                <Text variant="name" style={s.rowLabel}>
+                  Gerir utilizadores
+                </Text>
+              </ListRow>
+            </ListGroup>
           </FormSection>
         ) : null}
 
