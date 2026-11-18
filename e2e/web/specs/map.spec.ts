@@ -76,3 +76,121 @@ test.describe('mapa: componente', () => {
     expect([...origins].sort()).toEqual([...new Set([APP_ORIGIN, API_ORIGIN])].sort());
   });
 });
+
+// W4. Seed E2E do aecc-api (feat/mapa-api): 6 empresas no CP7 3000-000. No mapa: c004 (coletiva) e
+// c005 (ENI com opt-in) exatas; c001, c002, c003 (ENI sem opt-in) em zona; c006 escondida pelo dono.
+const C001 = 'e2e00000-0000-0000-0000-00000000c001'; // Pastelaria Conceição (ENI, zona), do associado
+const C004 = 'e2e00000-0000-0000-0000-00000000c004'; // Livraria Atlântico (coletiva, exata)
+const C006 = 'e2e00000-0000-0000-0000-00000000c006'; // Metalúrgica Mondego (escondida pelo dono)
+
+test.describe('mapa: ecrã', () => {
+  test('contagem, pinos exato/zona e filtro por categoria (com estado vazio)', async ({ page }) => {
+    await login(page, USERS.cliente);
+    await openMap(page);
+    await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+
+    // Pinos (lista acessível do mapa: o canvas não é legível por leitores de ecrã).
+    await expect(page.getByTestId(`map.pin.${C001}`)).toHaveAttribute(
+      'aria-label',
+      /zona aproximada/,
+    );
+    await expect(page.getByTestId(`map.pin.${C004}`)).not.toHaveAttribute(
+      'aria-label',
+      /zona aproximada/,
+    );
+    await expect(page.getByTestId(`map.pin.${C006}`)).toHaveCount(0);
+
+    await page.getByTestId('companies.category-chip-e2e-restauracao').click();
+    await expect(page.getByTestId('map.count')).toHaveText('2 empresas');
+
+    // Indústria: a única empresa está escondida → estado vazio com "Limpar filtro".
+    await page.getByTestId('companies.category-chip-e2e-industria').click();
+    await expect(page.getByTestId('map.empty')).toBeVisible();
+    await page.getByTestId('map.empty.action').click();
+    await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+  });
+
+  test('?company=<id> foca a empresa e abre a ficha; "Ver empresa" abre o detalhe', async ({
+    page,
+  }) => {
+    await login(page, USERS.associado);
+    await openMap(page, `/map?company=${C001}`);
+    const card = page.getByTestId('map.card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('Pastelaria Conceição');
+    await expect(card).toContainText('Restauração');
+    await expect(card).toContainText('Localização aproximada');
+    await page.getByTestId('map.card.open').click();
+    await expect(page).toHaveURL(new RegExp(`/companies/${C001}$`));
+  });
+
+  test('empresa com pino exato não mostra a nota de zona aproximada', async ({ page }) => {
+    await login(page, USERS.cliente);
+    await openMap(page, `/map?company=${C004}`);
+    await expect(page.getByTestId('map.card')).toContainText('Livraria Atlântico');
+    await expect(page.getByTestId('map.card')).not.toContainText('Localização aproximada');
+  });
+
+  test('cluster com folhas no mesmo ponto: tocar abre a lista do grupo (Review Focus 1)', async ({
+    page,
+  }) => {
+    // c001, c002 e c003 (ENI sem opt-in) partilham o centróide CP4: o cluster nunca se desfaz.
+    // `?company=` centra o mapa nesse ponto; sem animação, o cluster fica no centro do canvas.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await login(page, USERS.cliente);
+    await openMap(page, `/map?company=${C001}`);
+    await expect(page.getByTestId('map.card')).toBeVisible();
+    const group = page.getByTestId('map.group');
+    // Clique real no canvas (o MapLibre pode ainda estar a desenhar os tiles: tenta de novo).
+    await expect(async () => {
+      await page.locator('.maplibregl-canvas').click();
+      await expect(group).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    await expect(group).toContainText('Pastelaria Conceição');
+    await expect(group).toContainText('Restaurante Horizonte');
+    await expect(group).toContainText('Óptica São João');
+    await page.getByTestId(`map.group.item.${C001}`).click();
+    await expect(page).toHaveURL(new RegExp(`/companies/${C001}$`));
+  });
+
+  test('erro da API mostra map.error e o retry recupera', async ({ page }) => {
+    await login(page, USERS.cliente);
+    await page.route('**/api/companies/map**', (r) => r.abort());
+    await page.goto('/map');
+    await expect(page.getByTestId('map.error')).toBeVisible();
+    await page.unroute('**/api/companies/map**');
+    await page.getByTestId('map.error').getByRole('button', { name: 'Tentar de novo' }).click();
+    await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+  });
+
+  test('a resposta do /companies/map não traz a empresa escondida nem dados a mais', async ({
+    page,
+  }) => {
+    await login(page, USERS.cliente);
+    const response = page.waitForResponse(
+      (r) => new URL(r.url()).pathname === '/api/companies/map',
+    );
+    await page.goto('/map');
+    const body = (await (await response).json()) as Record<string, unknown>[];
+    expect(body.length).toBe(5);
+    expect(body.map((c) => c.id)).not.toContain(C006);
+    for (const c of body) {
+      expect(Object.keys(c).sort()).toEqual([
+        'categoryId',
+        'id',
+        'lat',
+        'lng',
+        'name',
+        'precision',
+      ]);
+    }
+  });
+
+  test('"Ver no mapa" no detalhe abre /map?company=<id> (não o Google Maps)', async ({ page }) => {
+    await login(page, USERS.cliente);
+    await page.goto(`/companies/${C004}`);
+    await page.getByTestId('company-detail.address').click();
+    await expect(page).toHaveURL(new RegExp(`/map\\?company=${C004}$`));
+    await expect(page.getByTestId('map.card')).toContainText('Livraria Atlântico');
+  });
+});

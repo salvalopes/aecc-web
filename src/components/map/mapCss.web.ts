@@ -3,7 +3,8 @@
 // promove a uma folha global no index.html (≈ 10 KB gzip em todas as rotas; regra 4). Não usamos
 // controlos, popups nem marcadores do MapLibre, por isso o resto da folha não faz falta.
 const CSS = [
-  '.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent}',
+  // Sem position: o contentor já é absoluteFill (RNW); a regra do pacote (relative) anulava-o.
+  '.maplibregl-map{overflow:hidden;-webkit-tap-highlight-color:transparent}',
   '.maplibregl-canvas{position:absolute;inset:0 auto auto 0}',
   '.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;user-select:none}',
   '.maplibregl-canvas-container.maplibregl-interactive:active{cursor:grabbing}',

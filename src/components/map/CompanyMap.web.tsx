@@ -42,6 +42,13 @@ const factory = createStyles(({ colors, spacing }) => ({
   root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
   canvas: { ...StyleSheet.absoluteFillObject },
   attribution: { position: 'absolute', left: spacing.sm, bottom: spacing.sm, right: spacing.sm },
+  // Só para leitores de ecrã: o canvas do mapa não é legível (sem foco nem toque).
+  srOnly: {
+    position: 'absolute',
+    width: spacing['2xs'],
+    height: spacing['2xs'],
+    overflow: 'hidden',
+  },
 }));
 
 const MAX_LEAVES = 200;
@@ -181,6 +188,21 @@ export default function CompanyMap({
   return (
     <View testID={testID} style={s.root}>
       <View ref={containerRef} style={s.canvas} />
+      <View
+        accessibilityRole="list"
+        accessibilityLabel="Empresas no mapa"
+        pointerEvents="none"
+        style={s.srOnly}
+      >
+        {points.map((p) => (
+          <View
+            key={p.id}
+            role="listitem"
+            testID={`map.pin.${p.id}`}
+            accessibilityLabel={p.precision === 'area' ? `${p.name}, zona aproximada` : p.name}
+          />
+        ))}
+      </View>
       <MapAttribution style={[s.attribution, { bottom: s.attribution.bottom + insetBottom }]} />
     </View>
   );
