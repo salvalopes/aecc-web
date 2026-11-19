@@ -30,6 +30,10 @@ export default function TabsLayout() {
           name={tab.name}
           hidden={!isTabVisible(tab, user?.role)}
           disableAutomaticContentInsets={tab.managesInsets}
+          // Contorno de https://github.com/expo/expo/issues/53876 (ver `crossTabPushTarget`).
+          // A expo-router documenta-o como iOS, mas passa-o ao Android como
+          // specialEffects.repeatedTabSelection.popToRoot.
+          disablePopToTop={isAndroid && tab.crossTabPushTarget}
         >
           <NativeTabs.Trigger.Icon sf={tab.sf} md={tab.md} />
           <NativeTabs.Trigger.Label>{tab.label}</NativeTabs.Trigger.Label>

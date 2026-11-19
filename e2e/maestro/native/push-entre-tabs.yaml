@@ -1,0 +1,51 @@
+# router.push('/companies/<id>') a partir de outra tab (Mapa e Início) tem de ficar no detalhe.
+# Regressão do bug Android (fix/android-tab-push): depois do push, o TabsHost do
+# react-native-screens tratava a seleção programática da tab como um toque repetido e fazia
+# popToRoot, e aparecia a lista. O pop chega cerca de 250 ms depois do push, por isso o detalhe
+# volta a ser verificado depois de a animação acabar.
+appId: com.aecc.app
+name: push entre tabs (nativo)
+---
+- runFlow: _login.yaml
+
+# Origem: Mapa → ficha → "Ver empresa".
+- tapOn: "Mapa"
+- extendedWaitUntil:
+    visible:
+      id: "map.view"
+    timeout: 30000
+- runFlow:
+    file: _open-link.yaml
+    env:
+      LINK: "aecc://map?company=e2e00000-0000-0000-0000-00000000c001"
+- extendedWaitUntil:
+    visible:
+      id: "map.card"
+    timeout: 20000
+- tapOn:
+    id: "map.card.open"
+- extendedWaitUntil:
+    visible:
+      id: "company-detail.screen"
+    timeout: 20000
+- waitForAnimationToEnd
+- assertVisible:
+    id: "company-detail.screen"
+- assertVisible: "Pastelaria Conceição"
+
+# Origem: Início → empresa.
+- tapOn: "Início"
+- extendedWaitUntil:
+    visible:
+      id: "home.company"
+    timeout: 30000
+- tapOn:
+    id: "home.company"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "company-detail.screen"
+    timeout: 20000
+- waitForAnimationToEnd
+- assertVisible:
+    id: "company-detail.screen"
