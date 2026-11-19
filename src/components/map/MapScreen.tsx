@@ -28,6 +28,14 @@ import type { LatLng } from './CompanyMap.types';
 // Regra 4: o componente do mapa (maplibre-gl no web) é outro chunk, pedido só por este ecrã.
 const CompanyMap = lazy(() => import('@/components/map/CompanyMap'));
 
+// Protótipo do refinamento (docs/design/mapa-refino.md, Fase A): só com EXPO_PUBLIC_MAP_PROTOTYPE=1
+// no build (as capturas). Sem a variável, o Babel do Expo põe `undefined` no lugar e o Metro corta o
+// ramo, com o `import()` (nem o chunk nem o interruptor chegam à produção).
+const MapPrototype =
+  process.env.EXPO_PUBLIC_MAP_PROTOTYPE === '1'
+    ? lazy(() => import('@/components/map/prototype/MapPrototype'))
+    : null;
+
 const factory = createStyles(({ colors, layout, spacing }) => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   toolbar: { paddingHorizontal: layout.gutter, paddingTop: spacing.md },
@@ -60,6 +68,18 @@ function countText(n: number) {
 // Mapa das empresas (mapa-plano W4): contagem, filtro por categoria (os chips do diretório),
 // estados, ficha ao tocar num pino, lista quando o cluster não se desfaz e `?company=<id>`.
 export default function MapScreen() {
+  const params = useLocalSearchParams<{ dir?: string }>();
+  if (MapPrototype && (params.dir === 'a' || params.dir === 'b')) {
+    return (
+      <Suspense fallback={<StateScreen testID="map.loading" loading />}>
+        <MapPrototype key={params.dir} dir={params.dir} />
+      </Suspense>
+    );
+  }
+  return <CurrentMapScreen />;
+}
+
+function CurrentMapScreen() {
   const s = useStyles(factory);
   const { scheme, spacing, radius } = useTheme();
   const { isWide } = useBreakpoint();
