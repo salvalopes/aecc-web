@@ -85,6 +85,7 @@ export default function CompanyMap({
   onSelectCompany,
   onSelectGroup,
   onInteract,
+  onReady,
   testID,
 }: CompanyMapProps) {
   const s = useStyles(factory);
@@ -230,6 +231,7 @@ export default function CompanyMap({
         touchPitch={false}
         onRegionWillChange={handleRegionWillChange}
         onRegionDidChange={settleFocus}
+        onDidFinishLoadingMap={onReady}
       >
         <Camera ref={cameraRef} initialViewState={initialView} />
         <Images images={IMAGES} />

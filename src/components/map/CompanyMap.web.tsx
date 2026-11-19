@@ -99,6 +99,7 @@ export default function CompanyMap({
   onSelectCompany,
   onSelectGroup,
   onInteract,
+  onReady,
   testID,
 }: CompanyMapProps) {
   const s = useStyles(factory);
@@ -116,6 +117,7 @@ export default function CompanyMap({
     onSelectCompany,
     onSelectGroup,
     onInteract,
+    onReady,
   });
   latest.current = {
     points,
@@ -126,6 +128,7 @@ export default function CompanyMap({
     onSelectCompany,
     onSelectGroup,
     onInteract,
+    onReady,
   };
 
   // Criação do mapa (uma vez), enquadrado pelos dados (decisão 3: corte de 3 % dentro da caixa).
@@ -149,6 +152,7 @@ export default function CompanyMap({
     map.getCanvas().setAttribute('aria-label', 'Mapa das empresas');
     mapRef.current = map;
 
+    map.once('load', () => latest.current.onReady());
     map.on('style.load', () => {
       const l = latest.current;
       installOverlays(

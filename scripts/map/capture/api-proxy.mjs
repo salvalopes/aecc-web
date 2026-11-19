@@ -1,6 +1,7 @@
 // Proxy da API só para as capturas nativas do refinamento do mapa (docs/design/mapa-refino.md).
-// GET /api/companies/map e GET /api/categories saem do fixture sintético (build-fixture.mjs);
-// todo o resto (login, sessão, detalhe) vai para a stack E2E, com o Host dela, para que os tokens
+// GET /api/companies/map e GET /api/categories saem do fixture sintético (build-fixture.mjs), e o
+// GET /api/companies/{id} de uma empresa do fixture devolve um detalhe sintético (a ficha só lê a
+// localidade); todo o resto (login, sessão, detalhe do seed) vai para a stack E2E, com o Host dela, para que os tokens
 // e os redirects fiquem iguais aos de um pedido direto. Só módulos nativos do Node.
 // Uso: node scripts/map/capture/api-proxy.mjs <fixture-dir> <porta> [<upstream>]
 import { createServer, request } from 'node:http';
@@ -16,6 +17,7 @@ const port = Number(portArg ?? 5090);
 const upstream = new URL(upstreamArg ?? 'http://127.0.0.1:5080');
 const map = JSON.parse(readFileSync(join(fixtureDir, 'map.json'), 'utf8'));
 const categories = readFileSync(join(fixtureDir, 'categories.json'), 'utf8');
+const byId = new Map(map.map((p) => [p.id, p]));
 
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
@@ -29,6 +31,15 @@ createServer((req, res) => {
   if (req.method === 'GET' && url.pathname === '/api/categories') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(categories);
+    return;
+  }
+  const detail = url.pathname.match(/^\/api\/companies\/([0-9a-z-]{36})$/);
+  if (req.method === 'GET' && detail && byId.has(detail[1])) {
+    const p = byId.get(detail[1]);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({ id: p.id, name: p.name, locality: 'Cascais', postalCodeLocality: null }),
+    );
     return;
   }
   const proxied = request(

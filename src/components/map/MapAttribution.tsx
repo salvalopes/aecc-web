@@ -70,10 +70,13 @@ function Link({ url, children }: { url: string; children: string }) {
 export function MapAttribution({
   state,
   onChange,
+  paused = false,
   style,
 }: {
   state: AttributionState;
   onChange: (state: AttributionState) => void;
+  /** Enquanto o mapa não está desenhado, os 5 s ainda não contam. */
+  paused?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const s = useStyles(factory);
@@ -81,14 +84,19 @@ export function MapAttribution({
 
   // OSMF: pode recolher "automatically after five seconds".
   useEffect(() => {
-    if (state !== 'open') return;
+    if (state !== 'open' || paused) return;
     const t = setTimeout(() => onChange('collapsed'), COLLAPSE_AFTER_MS);
     return () => clearTimeout(t);
-  }, [state, onChange]);
+  }, [state, paused, onChange]);
 
   const gisco = (
-    <GlassSurface opaque radius={s.gisco.borderRadius} style={s.gisco}>
-      <Text testID="map.attribution.gisco" variant="label" color="text2">
+    <GlassSurface
+      testID="map.attribution.gisco"
+      opaque
+      radius={s.gisco.borderRadius}
+      style={s.gisco}
+    >
+      <Text variant="label" color="text2">
         {GISCO_SHORT}
       </Text>
     </GlassSurface>
@@ -139,7 +147,13 @@ export function MapAttribution({
           </View>
         </GlassSurface>
       ) : (
-        <GlassSurface opaque elevated radius={radius.capsule} style={s.osm}>
+        <GlassSurface
+          testID="map.attribution.osm"
+          opaque
+          elevated
+          radius={radius.capsule}
+          style={s.osm}
+        >
           <Text variant="meta" color="text" style={s.osmText}>
             © <Link url={OSM_COPYRIGHT_URL}>OpenStreetMap</Link>
             {' · '}

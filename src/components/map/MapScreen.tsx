@@ -1,4 +1,13 @@
-import { Suspense, lazy, startTransition, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Suspense,
+  lazy,
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   BackHandler,
   Platform,
@@ -139,6 +148,8 @@ export default function MapScreen() {
   const [selection, setSelection] = useState<Selection>(null);
   const [focus, setFocus] = useState<LatLng | null>(null);
   const [attribution, setAttribution] = useState<AttributionState>('open');
+  const [mapReady, setMapReady] = useState(false);
+  const onMapReady = useCallback(() => setMapReady(true), []);
   const [missingCompany, setMissingCompany] = useState(false);
   // Alturas medidas dos controlos de cima e de baixo (o enquadramento e o foco evitam-nas).
   const [box, setBox] = useState({ overlayH: 0, topEnd: 0, bottomStart: 0 });
@@ -209,6 +220,15 @@ export default function MapScreen() {
   useEffect(() => {
     if (hasCard) setAttribution('collapsed');
   }, [hasCard]);
+  // A OSM volta a estar visível sempre que o ecrã fica à vista (e os 5 s contam a partir daí): as
+  // NativeTabs montam o ecrã antes de a pessoa abrir a tab, e o tempo acabaria sem ela ver o mapa.
+  const hasCardRef = useRef(hasCard);
+  hasCardRef.current = hasCard;
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasCardRef.current) setAttribution('open');
+    }, []),
+  );
 
   const close = useCallback(() => setSelection(null), []);
   const collapse = useCallback(() => setAttribution((a) => (a === 'open' ? 'collapsed' : a)), []);
@@ -390,7 +410,9 @@ export default function MapScreen() {
     />
   ) : null;
 
-  const attributionView = <MapAttribution state={attribution} onChange={setAttribution} />;
+  const attributionView = (
+    <MapAttribution state={attribution} onChange={setAttribution} paused={!mapReady} />
+  );
 
   const emptyCategory =
     points.length === 0 ? (
@@ -495,7 +517,13 @@ export default function MapScreen() {
       >
         <View style={s.top} pointerEvents="box-none" onLayout={onTopLayout}>
           <View style={[s.row, s.inset]} pointerEvents="box-none">
-            <GlassSurface opaque elevated radius={radius.capsule} style={s.title}>
+            <GlassSurface
+              testID="map.title"
+              opaque
+              elevated
+              radius={radius.capsule}
+              style={s.title}
+            >
               <Text variant="name" accessibilityRole="header">
                 Mapa
               </Text>
@@ -506,6 +534,7 @@ export default function MapScreen() {
           </View>
           {categories.length ? (
             <ScrollView
+              testID="map.chips"
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.rail}
@@ -529,7 +558,7 @@ export default function MapScreen() {
         <View style={s.spacer} pointerEvents="none" />
         <View style={[s.bottom, s.inset]} pointerEvents="box-none" onLayout={onBottomLayout}>
           {hasCard ? null : (
-            <GlassSurface opaque elevated style={s.legend}>
+            <GlassSurface testID="map.legend-box" opaque elevated style={s.legend}>
               <MapLegend />
             </GlassSurface>
           )}
@@ -537,7 +566,7 @@ export default function MapScreen() {
             {attributionView}
           </View>
           {card ? (
-            <GlassSurface opaque elevated radius={radius.group} style={s.sheet}>
+            <GlassSurface testID="map.sheet" opaque elevated radius={radius.group} style={s.sheet}>
               {card}
             </GlassSurface>
           ) : null}
@@ -562,6 +591,7 @@ export default function MapScreen() {
             onSelectCompany={selectCompany}
             onSelectGroup={selectGroup}
             onInteract={collapse}
+            onReady={onMapReady}
           />
         </Suspense>
       </View>

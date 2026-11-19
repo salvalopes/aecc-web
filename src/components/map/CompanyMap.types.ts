@@ -37,5 +37,7 @@ export interface CompanyMapProps {
   onSelectGroup: (ids: string[]) => void;
   /** Primeiro gesto da pessoa no mapa (mover, zoom, toque): recolhe a atribuição da OSM. */
   onInteract: () => void;
+  /** O mapa acabou de carregar o estilo (só então começam os 5 s da atribuição da OSM). */
+  onReady: () => void;
   testID?: string;
 }

@@ -1,5 +1,7 @@
-# Smoke do mapa (mapa-plano W8): tab Mapa → pinos (contagem do seed), atribuição sempre visível,
-# filtro por categoria, deep link ?company= → ficha → detalhe, e capturas claro/escuro.
+# Smoke do mapa (mapa-plano W8 + refinamento Fase B): tab Mapa → contagem do seed, legenda,
+# atribuição (OSM à entrada, "Posições © EU GISCO" sempre), chips com contagem, deep link
+# ?company= → ficha (só ficha, GISCO e "(i)"), "voltar" do Android fecha a ficha → detalhe, e
+# capturas claro/escuro.
 # Pré-requisitos: dev build com o MapLibre e Metro com EXPO_PUBLIC_TILES_URL a apontar para a
 # fixture local (ver run.sh); seed E2E com 5 empresas no mapa (c006 escondida).
 appId: com.aecc.app
@@ -13,6 +15,11 @@ name: mapa (nativo)
     timeout: 30000
 - assertVisible:
     id: "map.attribution"
+- assertVisible:
+    id: "map.attribution.gisco"
+- assertVisible: "Posições © EU GISCO"
+- assertVisible:
+    id: "map.legend"
 - assertVisible: "5 empresas"
 - assertVisible:
     id: "map.locate"
@@ -40,8 +47,35 @@ name: mapa (nativo)
     timeout: 20000
 - assertVisible: "Pastelaria Conceição"
 - assertVisible: "Zona aproximada.*"
+# Com a ficha aberta: a legenda esconde-se e a OSM recolhe para o "(i)"; o GISCO curto fica.
+- assertNotVisible:
+    id: "map.legend"
+- assertVisible:
+    id: "map.attribution.info"
+- assertVisible:
+    id: "map.attribution.gisco"
 - waitForAnimationToEnd
 - takeScreenshot: mapa-claro
+# Android: o "voltar" fecha a ficha (e fica no mapa); volta-se a abri-la pelo deep link.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: back
+      - extendedWaitUntil:
+          notVisible:
+            id: "map.card"
+          timeout: 10000
+      - assertVisible:
+          id: "map.view"
+      - runFlow:
+          file: _open-link.yaml
+          env:
+            LINK: "aecc://map?company=e2e00000-0000-0000-0000-00000000c001"
+      - extendedWaitUntil:
+          visible:
+            id: "map.card"
+          timeout: 20000
 - tapOn:
     id: "map.card.open"
 - extendedWaitUntil:
