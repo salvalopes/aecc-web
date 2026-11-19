@@ -1,5 +1,6 @@
 // Fixture de tiles para os E2E do mapa (mapa-plano W2/W3): os testes não dependem do servidor de
 // produção nem da T1. Gera, só com módulos nativos do Node:
+//   empty-style.json         estilo vazio (o nativo reescreve para aqui o estilo por omissão do SDK)
 //   cascais.pmtiles          PMTiles v3 com 1 tile MVT z0 (camadas `earth` e `water`), sem compressão
 //   fonts/glyphs.pbf         PBF de glyphs válido mas vazio (o serve-static serve-o para qualquer stack/range)
 //   sprites/v4/{light,dark}{,@2x}.{json,png}   sprite vazio ({} + PNG 1×1 transparente)
@@ -134,6 +135,8 @@ const png = Buffer.concat([
 mkdirSync(join(out, 'fonts'), { recursive: true });
 mkdirSync(join(out, 'sprites', 'v4'), { recursive: true });
 writeFileSync(join(out, 'cascais.pmtiles'), pmtiles);
+// Estilo vazio: destino da reescrita do estilo por omissão do SDK nativo (CompanyMap.tsx, regra 3).
+writeFileSync(join(out, 'empty-style.json'), JSON.stringify({ version: 8, sources: {}, layers: [] }) + '\n');
 writeFileSync(join(out, 'fonts', 'glyphs.pbf'), glyphs);
 for (const scheme of ['light', 'dark']) {
   for (const suffix of ['', '@2x']) {

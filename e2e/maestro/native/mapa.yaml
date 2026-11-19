@@ -39,7 +39,7 @@ name: mapa (nativo)
       id: "map.card"
     timeout: 20000
 - assertVisible: "Pastelaria Conceição"
-- assertVisible: "Localização aproximada.*"
+- assertVisible: "Zona aproximada.*"
 - waitForAnimationToEnd
 - takeScreenshot: mapa-claro
 - tapOn:

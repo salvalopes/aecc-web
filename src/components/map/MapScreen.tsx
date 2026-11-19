@@ -1,13 +1,4 @@
-import {
-  Suspense,
-  lazy,
-  startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Suspense, lazy, startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -79,7 +70,7 @@ export default function MapScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selection, setSelection] = useState<Selection>(null);
   const [focus, setFocus] = useState<LatLng | null>(null);
-  const { points, loaded, loading, error, reload } = useMapCompanies({ categoryId });
+  const { points, loaded, loadedFor, loading, error, reload } = useMapCompanies({ categoryId });
   // Regras 1 e 2: a posição só é pedida no toque e fica só em memória (nunca vai na rede).
   const me = useUserPosition();
 
@@ -98,22 +89,32 @@ export default function MapScreen() {
 
   const byId = useMemo(() => new Map(points.map((p) => [p.id, p])), [points]);
 
-  // `?company=<id>` (ex.: "Ver no mapa" no detalhe): foca e abre a ficha, se estiver no payload.
-  const handledCompany = useRef<string | null>(null);
+  // `?company=<id>` (ex.: "Ver no mapa" no detalhe): limpa o filtro, foca e abre a ficha. Se a
+  // empresa não estiver no mapa (escondida, sem localização), avisa. O parâmetro é consumido no
+  // fim, para que um novo "Ver no mapa" da mesma empresa volte a focar.
+  const [missingCompany, setMissingCompany] = useState(false);
+  useEffect(() => {
+    if (!params.company) return;
+    setMissingCompany(false);
+    setCategoryId('');
+  }, [params.company]);
   useEffect(() => {
     const id = params.company;
-    if (!id || !loaded || handledCompany.current === id) return;
+    if (!id || loadedFor !== '') return;
     const company = byId.get(id);
-    if (!company) return;
-    handledCompany.current = id;
-    setSelection({ kind: 'company', id });
-    setFocus({ lat: company.lat, lng: company.lng });
-  }, [params.company, loaded, byId]);
+    if (company) {
+      setSelection({ kind: 'company', id });
+      setFocus({ lat: company.lat, lng: company.lng });
+    } else {
+      setSelection(null);
+      setMissingCompany(true);
+    }
+    router.setParams({ company: undefined });
+  }, [params.company, loadedFor, byId]);
 
-  useEffect(() => {
-    if (me.position) setFocus(me.position);
-  }, [me.position]);
-
+  // Regra 2: o mapa NÃO se move para a posição do utilizador (só desenha o ponto). Mover a câmara
+  // para lá pediria ao nosso servidor os tiles dessa zona, o que a localiza (≈ 2 km a z14).
+  // O `focus` só recebe posições de empresas.
   const toggleLocate = useCallback(() => {
     if (me.state === 'shown') me.clear();
     else me.request();
@@ -213,20 +214,25 @@ export default function MapScreen() {
     );
   }
 
-  const locateAlert =
-    me.state === 'denied' ? (
-      <InlineAlert
-        testID="map.locate.denied"
-        tone="error"
-        message="Sem acesso à localização. Pode ativá-lo nas definições do dispositivo."
-      />
-    ) : me.state === 'unavailable' ? (
-      <InlineAlert
-        testID="map.locate.unavailable"
-        tone="error"
-        message="Não foi possível obter a sua posição neste dispositivo."
-      />
-    ) : null;
+  const locateAlert = missingCompany ? (
+    <InlineAlert
+      testID="map.company-missing"
+      tone="error"
+      message="Esta empresa não aparece no mapa (sem localização ou escondida)."
+    />
+  ) : me.state === 'denied' ? (
+    <InlineAlert
+      testID="map.locate.denied"
+      tone="error"
+      message="Sem acesso à localização. Pode ativá-lo nas definições do dispositivo."
+    />
+  ) : me.state === 'unavailable' ? (
+    <InlineAlert
+      testID="map.locate.unavailable"
+      tone="error"
+      message="Não foi possível obter a sua posição neste dispositivo."
+    />
+  ) : null;
 
   return (
     <View testID="map.screen" style={[s.screen, { paddingBottom: bottom }]}>

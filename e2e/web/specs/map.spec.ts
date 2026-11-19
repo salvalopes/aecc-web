@@ -68,6 +68,20 @@ test.describe('mapa: componente', () => {
     expect(chunks.some((c) => c.startsWith('CompanyMap-'))).toBe(true);
   });
 
+  test('regra 4: os scripts que o index.html carrega não têm código do maplibre-gl nem do pmtiles', async ({
+    request,
+  }) => {
+    const html = await (await request.get(`${APP_ORIGIN}/`)).text();
+    const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
+    expect(scripts.length).toBeGreaterThan(0);
+    // Marcadores das duas bibliotecas (classe criada pelo maplibre-gl e erro do leitor PMTiles).
+    const markers = ['maplibregl-canvas-container', 'Wrong magic number for PMTiles'];
+    for (const src of scripts) {
+      const js = await (await request.get(`${APP_ORIGIN}${src}`)).text();
+      for (const marker of markers) expect(js, `${src} contém "${marker}"`).not.toContain(marker);
+    }
+  });
+
   test('regra 3: no ecrã do mapa só se pedem a nossa origem e a API (sem domínios externos)', async ({
     page,
   }) => {
@@ -227,7 +241,7 @@ test.describe('mapa: ecrã', () => {
     await expect(card).toBeVisible();
     await expect(card).toContainText('Pastelaria Conceição');
     await expect(card).toContainText('Restauração');
-    await expect(card).toContainText('Localização aproximada');
+    await expect(card).toContainText('Zona aproximada');
     await page.getByTestId('map.card.open').click();
     await expect(page).toHaveURL(new RegExp(`/companies/${C001}$`));
   });
@@ -236,7 +250,26 @@ test.describe('mapa: ecrã', () => {
     await login(page, USERS.cliente);
     await openMap(page, `/map?company=${C004}`);
     await expect(page.getByTestId('map.card')).toContainText('Livraria Atlântico');
-    await expect(page.getByTestId('map.card')).not.toContainText('Localização aproximada');
+    await expect(page.getByTestId('map.card')).not.toContainText('Zona aproximada');
+  });
+
+  test('?company= com um filtro ativo limpa o filtro e abre a ficha', async ({ page }) => {
+    await login(page, USERS.cliente);
+    await openMap(page);
+    await page.getByTestId('companies.category-chip-e2e-servicos').click();
+    await expect(page.getByTestId('map.count')).toHaveText('1 empresa');
+    // Livraria Atlântico é de Comércio: o filtro de Serviços tem de sair.
+    await page.goto(`/companies/${C004}`);
+    await page.getByTestId('company-detail.address').click();
+    await expect(page.getByTestId('map.card')).toContainText('Livraria Atlântico');
+    await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+  });
+
+  test('?company= de uma empresa fora do mapa avisa (e não abre ficha)', async ({ page }) => {
+    await login(page, USERS.cliente);
+    await page.goto(`/map?company=${C006}`);
+    await expect(page.getByTestId('map.company-missing')).toBeVisible();
+    await expect(page.getByTestId('map.card')).toHaveCount(0);
   });
 
   test('cluster com folhas no mesmo ponto: tocar abre a lista do grupo (Review Focus 1)', async ({
@@ -297,8 +330,18 @@ test.describe('mapa: ecrã', () => {
   test('"Ver no mapa" no detalhe abre /map?company=<id> (não o Google Maps)', async ({ page }) => {
     await login(page, USERS.cliente);
     await page.goto(`/companies/${C004}`);
+    // A rota passa por /map?company=<id> (o ecrã consome o parâmetro a seguir) e nada sai para a Google.
+    const urls: string[] = [];
+    page.on('framenavigated', (f) => {
+      if (f === page.mainFrame()) urls.push(f.url());
+    });
+    const external: string[] = [];
+    page.on('request', (r) => {
+      if (/google\./.test(new URL(r.url()).hostname)) external.push(r.url());
+    });
     await page.getByTestId('company-detail.address').click();
-    await expect(page).toHaveURL(new RegExp(`/map\\?company=${C004}$`));
     await expect(page.getByTestId('map.card')).toContainText('Livraria Atlântico');
+    expect(urls.some((u) => u.endsWith(`/map?company=${C004}`))).toBe(true);
+    expect(external).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import type { MapCompany } from '@/types/api';
 
-export const AREA_NOTE = 'Localização aproximada (zona do código postal)';
+export const AREA_NOTE = 'Zona aproximada: localização pela zona do código postal, não pela morada';
 
 const factory = createStyles(({ layout, size, spacing }) => ({
   card: {

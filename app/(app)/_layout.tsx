@@ -36,7 +36,12 @@ export default function AppLayout() {
           "voltar" e tem a cor do `Horizon` do ecrã. */}
       <Stack.Screen
         name="users/index"
-        options={{ title: 'Utilizadores', headerStyle: { backgroundColor: colors.horizon } }}
+        options={{
+          title: 'Utilizadores',
+          // O `Horizon` do ecrã já mostra o título; o header só dá o "voltar".
+          headerTitle: '',
+          headerStyle: { backgroundColor: colors.horizon },
+        }}
       />
       <Stack.Screen name="users/new" options={{ title: 'Novo utilizador' }} />
       {/* Gestão → empresas sem localização (W7 do mapa, só Admin). */}

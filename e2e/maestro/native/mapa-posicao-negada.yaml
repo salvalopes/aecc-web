@@ -5,9 +5,21 @@ name: mapa-posicao-negada (nativo)
 ---
 - runFlow: _login.yaml
 - stopApp
-- launchApp:
-    permissions:
-      location: deny
+# Valores de permissão do Maestro: iOS always|inuse|never|unset; Android allow|deny|unset.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - launchApp:
+          permissions:
+            location: never
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - launchApp:
+          permissions:
+            location: deny
 - extendedWaitUntil:
     visible:
       id: "home.screen"
@@ -26,8 +38,8 @@ name: mapa-posicao-negada (nativo)
 - assertNotVisible:
     id: "map.me"
 - tapOn:
-    id: "companies.category-chip-e2e-comercio"
+    id: "companies.category-chip-e2e-servicos"
 - extendedWaitUntil:
-    visible: "2 empresas"
+    visible: "1 empresa"
     timeout: 15000
 - takeScreenshot: mapa-posicao-negada

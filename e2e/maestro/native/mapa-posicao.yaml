@@ -14,23 +14,29 @@ name: mapa-posicao (nativo)
     visible:
       id: "home.screen"
     timeout: 60000
+# Posição simulada do dispositivo (sem ela, o estado é "unavailable").
+- setLocation:
+    latitude: 38.7
+    longitude: -9.42
 - tapOn: "Mapa"
 - extendedWaitUntil:
     visible:
       id: "map.view"
     timeout: 30000
 # Abrir o mapa não pede a permissão.
-- assertNotVisible: ".*(Allow While Using App|While using the app|Permitir durante a utilização|Durante a utilização da app).*"
+- assertNotVisible: ".*(Allow While Using App|While using the app|Permitir durante( a)? utilização|Durante a utilização da app).*"
 - assertNotVisible:
     id: "map.me"
+- waitForAnimationToEnd
+- assertNotVisible: ".*(Allow While Using App|While using the app|Permitir durante( a)? utilização|Durante a utilização da app).*"
 - tapOn:
     id: "map.locate"
 # O sistema pede a permissão agora, "só enquanto a app está em uso".
 - extendedWaitUntil:
-    visible: ".*(Allow While Using App|While using the app|Permitir durante a utilização|Durante a utilização da app).*"
+    visible: ".*(Allow While Using App|While using the app|Permitir durante( a)? utilização|Durante a utilização da app).*"
     timeout: 15000
 - takeScreenshot: mapa-posicao-pedido
-- tapOn: ".*(Allow While Using App|While using the app|Permitir durante a utilização|Durante a utilização da app).*"
+- tapOn: ".*(Allow While Using App|While using the app|Permitir durante( a)? utilização|Durante a utilização da app).*"
 - extendedWaitUntil:
     visible:
       id: "map.me"

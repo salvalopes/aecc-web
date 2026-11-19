@@ -10,6 +10,8 @@ import type { MapCompany } from '@/types/api';
 export function useMapCompanies({ categoryId }: { categoryId?: string }) {
   const [points, setPoints] = useState<MapCompany[]>([]);
   const [loaded, setLoaded] = useState(false);
+  /** Categoria ('' = todas) a que os `points` atuais correspondem; null antes da 1.ª resposta. */
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
@@ -24,6 +26,7 @@ export function useMapCompanies({ categoryId }: { categoryId?: string }) {
       startTransition(() => {
         setPoints(result);
         setLoaded(true);
+        setLoadedFor(categoryId ?? '');
       });
     } catch (e) {
       if (requestId !== requestIdRef.current) return;
@@ -39,5 +42,5 @@ export function useMapCompanies({ categoryId }: { categoryId?: string }) {
     load();
   }, [load]);
 
-  return { points, loaded, loading, error, reload: load };
+  return { points, loaded, loadedFor, loading, error, reload: load };
 }

@@ -10,6 +10,7 @@ import {
   type MapProps,
   type MapRef,
   type PressEventWithFeatures,
+  TransformRequestManager,
 } from '@maplibre/maplibre-react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
@@ -17,7 +18,7 @@ import type { CompanyMapProps } from './CompanyMap.types';
 import { COMPANIES_SOURCE, ME_SOURCE, companyLayers, meLayer } from './companyLayers';
 import { MapAttribution } from './MapAttribution';
 import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM, INITIAL_ZOOM, MAP_CENTER } from './mapBox';
-import { buildMapStyle } from './mapStyle';
+import { TILES_URL, buildMapStyle } from './mapStyle';
 import {
   featureIds,
   positionFeature,
@@ -29,6 +30,19 @@ import {
 // (`pmtiles://https://…`) e clusters na própria GeoJSONSource. Nada de `UserLocation`,
 // `NativeUserLocation`, `useCurrentPosition` nem `trackUserLocation`: a posição vem só do
 // expo-location, pelo botão "A minha posição" (regra 1), e é desenhada como uma fonte de 1 ponto.
+
+// Regra 3 (nativo): o MLNMapView (iOS) e o MapView (Android) do SDK arrancam com o estilo por
+// omissão (https://demotiles.maplibre.org/style.json) antes de receberem o nosso `mapStyle`, o que
+// faria um pedido a um domínio de terceiros (visto no iOS 26.3). Todo o pedido a esse domínio é
+// reescrito, antes de sair, para um estilo vazio no nosso servidor (/tiles/empty-style.json, T1).
+// Regista-se no carregamento do módulo, antes de qualquer <Map>.
+export const THIRD_PARTY_STYLE_HOST = /^https?:\/\/demotiles\.maplibre\.org\/.*$/;
+TransformRequestManager.addUrlTransform({
+  id: 'aecc-no-third-party-style',
+  match: THIRD_PARTY_STYLE_HOST,
+  find: THIRD_PARTY_STYLE_HOST,
+  replace: `${TILES_URL}/empty-style.json`,
+});
 
 const factory = createStyles(({ colors, spacing }) => ({
   root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },

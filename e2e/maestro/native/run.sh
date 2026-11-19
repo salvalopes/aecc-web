@@ -6,6 +6,13 @@
 #   - build de desenvolvimento instalado e Metro a correr com a API da plataforma:
 #       iOS:     EXPO_PUBLIC_API_URL=http://127.0.0.1:5080/api npx expo start --dev-client
 #       Android: EXPO_PUBLIC_API_URL=http://10.0.2.2:5080/api  npx expo start --dev-client
+#   - fluxos do mapa (mapa*.yaml): dev build com o MapLibre (npx expo run:ios|run:android) e tiles
+#     da fixture local, nunca os de produção (a T1 pode não estar no ar):
+#       node e2e/web/serve-static.mjs <pasta-vazia> 8090 e2e/web/fixtures/tiles
+#       iOS:     ... EXPO_PUBLIC_TILES_URL=http://127.0.0.1:8090/tiles npx expo start
+#       Android: o mesmo, com `adb reverse tcp:8090 tcp:8090` (e tcp:5080/tcp:8081), ou 10.0.2.2:8090.
+#   - outra stack E2E (ex.: a API na 5081): E2E_HOST_API=http://127.0.0.1:5081/api e
+#     E2E_API_CONTAINER=<contentor da API>.
 # As credenciais vêm do .env.e2e do aecc-api (E2E_SEED_PASSWORD) e só entram no Maestro
 # por -e; nunca são escritas em ficheiros nem impressas. Output em .artifacts/maestro/.
 set -euo pipefail

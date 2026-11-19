@@ -128,6 +128,8 @@ export default function CompanyMap({
       const leaves = await source.getClusterLeaves(clusterId, MAX_LEAVES, 0);
       const zoom = map.getZoom();
       const expansion = await source.getClusterExpansionZoom(clusterId);
+      // O ecrã pode ter saído entretanto (mapa removido).
+      if (mapRef.current !== map) return;
       // Folhas no mesmo ponto (vários ENI no mesmo CP4) ou zoom máximo: lista, não zoom.
       if (sameCoordinates(leaves) || zoom >= CLUSTER_MAX_ZOOM || expansion <= zoom) {
         latest.current.onSelectGroup(featureIds(leaves));

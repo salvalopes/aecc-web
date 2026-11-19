@@ -89,7 +89,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5000/api',
-    // Tiles, glyphs e sprites do mapa (servidos pelo nosso Caddy; T1). Ver src/config/map.ts.
+    // Tiles, glyphs e sprites do mapa (servidos pelo nosso Caddy; T1). O código lê
+    // EXPO_PUBLIC_TILES_URL diretamente (src/components/map/mapStyle.ts), como o apiUrl.
     tilesUrl: process.env.EXPO_PUBLIC_TILES_URL ?? 'https://aecc.salv4.com/tiles',
   },
 });

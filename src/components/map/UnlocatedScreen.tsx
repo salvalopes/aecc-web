@@ -101,6 +101,7 @@ function LocationForm({
         keyboardType="numbers-and-punctuation"
         value={lng}
         onChangeText={setLng}
+        error={fieldError}
       />
       {saveError ? (
         <InlineAlert tone="error" message={saveError} testID="unlocated.save-error" />

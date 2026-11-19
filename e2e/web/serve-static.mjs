@@ -80,8 +80,12 @@ async function serveTiles(req, res, urlPath) {
   res.end(body);
 }
 
+// SERVE_LOG=1: regista cada pedido (método, caminho, Range), para provar o que o mapa pede.
+const LOG = process.env.SERVE_LOG === '1';
+
 createServer(async (req, res) => {
   const urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
+  if (LOG) console.log(`${req.method} ${urlPath}${req.headers.range ? ` (${req.headers.range})` : ''}`);
   try {
     if (tilesRoot && (urlPath === '/tiles' || urlPath.startsWith('/tiles/'))) {
       await serveTiles(req, res, urlPath);
