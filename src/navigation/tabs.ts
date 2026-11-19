@@ -30,6 +30,14 @@ export interface TabConfig {
    * `paddingBottom` em baixo). Desliga o inset automático das NativeTabs no 1.º ScrollView.
    */
   managesInsets?: boolean;
+  /**
+   * Recebe `router.push` vindos de outras tabs (ex.: `/companies/<id>` a partir do Mapa ou do
+   * Início). No Android, o TabsHost do react-native-screens 4.23 marca a tab no
+   * BottomNavigationView depois de o JS a focar, trata essa seleção programática como um toque
+   * repetido e faz `popToRoot`, o que tira o detalhe acabado de abrir. Desliga esse efeito
+   * nesta tab, só no Android (fix/android-tab-push).
+   */
+  crossTabPushTarget?: boolean;
 }
 
 export const TABS: readonly TabConfig[] = [
@@ -52,6 +60,7 @@ export const TABS: readonly TabConfig[] = [
     icon: 'storefront',
     testID: 'tab.companies',
     managesInsets: true,
+    crossTabPushTarget: true,
   },
   {
     name: 'map',
