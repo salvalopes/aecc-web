@@ -13,6 +13,9 @@ import { defineConfig, devices } from '@playwright/test';
 const API_URL = process.env.E2E_API_URL ?? 'http://localhost:5080/api';
 const TILES_URL = 'http://localhost:8081/tiles';
 const ARTIFACTS = 'e2e/web/.artifacts';
+// Capturas do refinamento do mapa (CAPTURE=1): uma cópia local dos tiles, glyphs e sprites do nosso
+// servidor (scripts/map/capture/README.md), fora do repositório. Por omissão, a fixture vazia.
+const TILES_DIR = process.env.E2E_TILES_DIR ?? 'e2e/web/fixtures/tiles';
 
 export default defineConfig({
   testDir: 'e2e/web',
@@ -33,7 +36,7 @@ export default defineConfig({
     command:
       `EXPO_PUBLIC_API_URL=${API_URL} EXPO_PUBLIC_TILES_URL=${TILES_URL} ` +
       'npx expo export -p web --clear --output-dir e2e/web/.dist ' +
-      '&& node e2e/web/serve-static.mjs e2e/web/.dist 8081 e2e/web/fixtures/tiles',
+      `&& node e2e/web/serve-static.mjs e2e/web/.dist 8081 ${TILES_DIR}`,
     url: 'http://localhost:8081',
     reuseExistingServer: false,
     timeout: 300_000,
@@ -48,6 +51,10 @@ export default defineConfig({
     // para que `npx playwright test` não as regenere.
     ...(process.env.BASELINE
       ? [{ name: 'baseline', testDir: 'e2e/web/baseline', use: { ...devices['Desktop Chrome'] } }]
+      : []),
+    // Capturas e métricas do refinamento do mapa (docs/design/mapa-refino.md): só com CAPTURE=1.
+    ...(process.env.CAPTURE
+      ? [{ name: 'capture', testDir: 'e2e/web/capture', use: { ...devices['Desktop Chrome'] } }]
       : []),
   ],
 });

@@ -41,5 +41,8 @@ name: mapa-posicao (nativo)
     visible:
       id: "map.me"
     timeout: 20000
+# O aviso só para leitores de ecrã está na árvore de acessibilidade com o nome (content-desc no
+# Android/TalkBack, label no iOS/VoiceOver), dentro da área livre do mapa.
+- assertVisible: "A sua posição está no mapa"
 - waitForAnimationToEnd
 - takeScreenshot: mapa-posicao

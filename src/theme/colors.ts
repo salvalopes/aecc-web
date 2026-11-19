@@ -24,6 +24,8 @@ export interface ThemeColors {
   logoPlate: string;
   scrim: string;
   focusRing: string;
+  /** Contorno dos pinos e clusters do mapa (≥ 3:1 contra o basemap claro e o escuro). */
+  pinEdge: string;
 
   success: string;
   successBg: string;
@@ -54,6 +56,7 @@ function roles(p: MarePalette): ThemeColors {
     logoPlate: p.logoPlate,
     scrim: p.scrim,
     focusRing: p.focusRing,
+    pinEdge: p.pinEdge,
 
     success: p.success,
     successBg: p.successBg,

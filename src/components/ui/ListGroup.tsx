@@ -28,6 +28,8 @@ const factory = createStyles(({ colors, border, size, spacing }) => ({
     paddingVertical: spacing.md,
   },
   compact: { minHeight: size.row.web, paddingVertical: spacing.sm },
+  // Lista de escolha de uma linha (ex.: categorias do mapa): o mínimo do alvo de toque.
+  dense: { minHeight: size.hitTarget, paddingVertical: spacing.xs },
   // hairline indentada: começa depois do plate (16 + 48 + 12)
   rule: {
     position: 'absolute',
@@ -47,10 +49,18 @@ export interface ListRowProps extends ViewProps {
   /** Última linha do grupo: sem hairline. */
   last?: boolean;
   chevron?: boolean;
-  /** `compact`: linha de 64 (web `md+`); `regular`: 72 (mobile). */
-  density?: 'regular' | 'compact';
+  /**
+   * `regular`: 72 (mobile); `compact`: 64 (web `md+`); `dense`: 44 (= alvo de toque), para listas
+   * de escolha de uma linha só (ex.: as categorias no painel do mapa).
+   */
+  density?: 'regular' | 'compact' | 'dense';
   /** Onde começa a hairline: depois do `plate` (omissão), de um `icon` ou do início do `text`. */
   inset?: 'plate' | 'icon' | 'text';
+  /**
+   * Linha de uma escolha única (ex.: as categorias do mapa): papel `radio` com `aria-checked`, que o
+   * nativo e o react-native-web expõem aos leitores de ecrã. Sem isto, é um botão.
+   */
+  choice?: { checked: boolean };
 }
 
 // O RNW passa `hovered` ao callback de estilo; no nativo não existe (hover só no web).
@@ -63,6 +73,7 @@ export function ListRow({
   chevron,
   density = 'regular',
   inset = 'plate',
+  choice,
   children,
   style,
   ...rest
@@ -81,7 +92,7 @@ export function ListRow({
       )}
     </>
   );
-  const base = [s.row, density === 'compact' ? s.compact : null];
+  const base = [s.row, density === 'regular' ? null : s[density]];
   if (!onPress) {
     return (
       <View {...rest} style={[...base, style]}>
@@ -92,8 +103,9 @@ export function ListRow({
   return (
     <Pressable
       testID={rest.testID}
-      accessibilityRole="button"
+      accessibilityRole={choice ? 'radio' : 'button'}
       accessibilityLabel={rest.accessibilityLabel}
+      aria-checked={choice ? choice.checked : undefined}
       onPress={onPress}
       style={(state) => [
         ...base,

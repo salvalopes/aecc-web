@@ -45,8 +45,10 @@ async function fileIn(base, urlPath) {
 
 async function serveTiles(req, res, urlPath) {
   const rel = urlPath.slice('/tiles'.length);
+  // Uma cópia local com glyphs por fontstack (capturas, scripts/map/capture) serve o ficheiro
+  // real; a fixture só tem `fonts/glyphs.pbf`, que responde por todos.
   const file = rel.startsWith('/fonts/')
-    ? join(tilesRoot, 'fonts', 'glyphs.pbf')
+    ? ((await fileIn(tilesRoot, rel)) ?? join(tilesRoot, 'fonts', 'glyphs.pbf'))
     : await fileIn(tilesRoot, rel);
   if (!file) {
     res.writeHead(404);
@@ -85,7 +87,8 @@ const LOG = process.env.SERVE_LOG === '1';
 
 createServer(async (req, res) => {
   const urlPath = new URL(req.url ?? '/', 'http://localhost').pathname;
-  if (LOG) console.log(`${req.method} ${urlPath}${req.headers.range ? ` (${req.headers.range})` : ''}`);
+  if (LOG)
+    console.log(`${req.method} ${urlPath}${req.headers.range ? ` (${req.headers.range})` : ''}`);
   try {
     if (tilesRoot && (urlPath === '/tiles' || urlPath.startsWith('/tiles/'))) {
       await serveTiles(req, res, urlPath);
@@ -101,6 +104,7 @@ createServer(async (req, res) => {
   }
 }).listen(port, () =>
   console.log(
-    `serve-static: ${root} em http://localhost:${port}` + (tilesRoot ? ` (tiles: ${tilesRoot})` : ''),
+    `serve-static: ${root} em http://localhost:${port}` +
+      (tilesRoot ? ` (tiles: ${tilesRoot})` : ''),
   ),
 );

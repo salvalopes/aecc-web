@@ -1,0 +1,52 @@
+{
+  "b__android__dark__atribuicao-recolhida": {
+    "visible": 74.1,
+    "tabBarTop": 2126,
+    "screenHeight": 2400
+  },
+  "b__android__dark__card-aberto": {
+    "visible": 65.6,
+    "tabBarTop": 2126,
+    "screenHeight": 2400
+  },
+  "b__android__dark__card-fechado": {
+    "visible": 71.5,
+    "tabBarTop": 2126,
+    "screenHeight": 2400
+  },
+  "b__android__light__atribuicao-recolhida": {
+    "visible": 74.1,
+    "tabBarTop": 2126,
+    "screenHeight": 2400
+  },
+  "b__android__light__card-aberto": {
+    "visible": 65.6,
+    "tabBarTop": 2126,
+    "screenHeight": 2400
+  },
+  "b__android__light__card-fechado": {
+    "visible": 71.5,
+    "tabBarTop": 2126,
+    "screenHeight": 2400
+  },
+  "b__ios__dark__atribuicao-recolhida": {
+    "visible": 76.6,
+    "tabBarTop": 791,
+    "screenHeight": 874
+  },
+  "b__ios__dark__card-aberto": {
+    "visible": 67.8,
+    "tabBarTop": 791,
+    "screenHeight": 874
+  },
+  "b__ios__light__atribuicao-recolhida": {
+    "visible": 76.6,
+    "tabBarTop": 791,
+    "screenHeight": 874
+  },
+  "b__ios__light__card-aberto": {
+    "visible": 67.8,
+    "tabBarTop": 791,
+    "screenHeight": 874
+  }
+}

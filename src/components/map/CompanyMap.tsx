@@ -3,21 +3,33 @@ import { StyleSheet, View, type NativeSyntheticEvent } from 'react-native';
 import {
   Camera,
   GeoJSONSource,
+  Images,
   Layer,
   Map,
   type CameraRef,
   type GeoJSONSourceRef,
+  type LngLatBounds,
   type MapProps,
   type MapRef,
   type PressEventWithFeatures,
+  type ViewStateChangeEvent,
   TransformRequestManager,
 } from '@maplibre/maplibre-react-native';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import type { CompanyMapProps } from './CompanyMap.types';
-import { COMPANIES_SOURCE, ME_SOURCE, companyLayers, meLayer } from './companyLayers';
-import { MapAttribution } from './MapAttribution';
-import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM, INITIAL_ZOOM, MAP_CENTER } from './mapBox';
+import {
+  CLUSTER_RADIUS,
+  COMPANIES_SOURCE,
+  LAYER,
+  ME_SOURCE,
+  SELECTED_SOURCE,
+  companyLayers,
+  meLayer,
+  selectedLayers,
+} from './companyLayers';
+import { framingBounds, type Bounds } from './framing';
+import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM } from './mapBox';
 import { TILES_URL, buildMapStyle } from './mapStyle';
 import {
   featureIds,
@@ -25,11 +37,13 @@ import {
   sameCoordinates,
   toFeatureCollection,
 } from './toFeatureCollection';
+import { ZONE_IMAGE } from './zoneRing';
 
-// iOS/Android (mapa-plano W3): MapLibre RN 11 (New Architecture) com PMTiles nativo
-// (`pmtiles://https://…`) e clusters na própria GeoJSONSource. Nada de `UserLocation`,
+// iOS/Android: MapLibre RN 11 (New Architecture) com PMTiles nativo (`pmtiles://https://…`) e
+// clusters na própria GeoJSONSource; o único componente de mapa do nativo. Nada de `UserLocation`,
 // `NativeUserLocation`, `useCurrentPosition` nem `trackUserLocation`: a posição vem só do
 // expo-location, pelo botão "A minha posição" (regra 1), e é desenhada como uma fonte de 1 ponto.
+// A atribuição é do `MapScreen` (a do SDK fica desligada).
 
 // Regra 3 (nativo): o MLNMapView (iOS) e o MapView (Android) do SDK arrancam com o estilo por
 // omissão (https://demotiles.maplibre.org/style.json) antes de receberem o nosso `mapStyle`, o que
@@ -44,22 +58,35 @@ TransformRequestManager.addUrlTransform({
   replace: `${TILES_URL}/empty-style.json`,
 });
 
-const factory = createStyles(({ colors, spacing }) => ({
+// Símbolo da zona (SDF branca, pintada com `text2` pela camada): gerado por
+// scripts/map/build-zone-ring.mjs a partir de zoneRing.ts, a mesma função da web.
+const IMAGES = {
+  [ZONE_IMAGE]: { source: require('./assets/zone-ring.png'), sdf: true },
+};
+
+const factory = createStyles(({ colors }) => ({
   root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
   map: { ...StyleSheet.absoluteFillObject },
-  attribution: { position: 'absolute', left: spacing.sm, bottom: spacing.sm, right: spacing.sm },
 }));
 
 const MAX_LEAVES = 200;
+/** Tentativas de afastar um cluster que ainda tapa a empresa focada (`?company=`). */
+const FOCUS_STEPS = 3;
+
+const flat = ([[w, s], [e, n]]: Bounds): LngLatBounds => [w, s, e, n];
 
 export default function CompanyMap({
   points,
+  framingPoints,
   scheme,
   userPosition,
   focus,
+  selectedId,
+  padding,
   onSelectCompany,
   onSelectGroup,
-  insetBottom = 0,
+  onInteract,
+  onReady,
   testID,
 }: CompanyMapProps) {
   const s = useStyles(factory);
@@ -67,6 +94,8 @@ export default function CompanyMap({
   const mapRef = useRef<MapRef>(null);
   const cameraRef = useRef<CameraRef>(null);
   const sourceRef = useRef<GeoJSONSourceRef>(null);
+  const paddingRef = useRef(padding);
+  paddingRef.current = padding;
 
   // O mesmo JSON do web; os tipos do style-spec do MapLibre RN são de outra versão do pacote.
   const mapStyle = useMemo(
@@ -74,16 +103,85 @@ export default function CompanyMap({
     [scheme],
   );
   const layers = useMemo(() => companyLayers(colors), [colors]);
+  const selectedStyle = useMemo(() => selectedLayers(colors), [colors]);
+  const selectedData = useMemo(() => {
+    const p = selectedId ? points.find((c) => c.id === selectedId) : undefined;
+    return toFeatureCollection(p ? [p] : []);
+  }, [points, selectedId]);
   const me = useMemo(() => meLayer(colors), [colors]);
   const data = useMemo(() => toFeatureCollection(points), [points]);
   const mine = useMemo(() => positionFeature(userPosition), [userPosition]);
+  // Enquadramento inicial pelos dados (decisão 3), calculado uma vez: o filtro não move a câmara.
+  const [initialView] = useMemo(
+    () => [{ bounds: flat(framingBounds(framingPoints)), padding }],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
+  // Foco (?company=): o pino fica no centro da área livre. Se, a z14, a empresa ainda estiver
+  // dentro de um cluster, aproxima até ao zoom de expansão dele (até 3 vezes), para que o anel da
+  // seleção se veja. O passo seguinte corre no `onRegionDidChange` (fim do movimento).
+  const pendingFocus = useRef<{ steps: number } | null>(null);
   useEffect(() => {
     if (!focus) return;
-    cameraRef.current?.flyTo({ center: [focus.lng, focus.lat], zoom: FOCUS_ZOOM });
+    pendingFocus.current = { steps: 0 };
+    cameraRef.current?.flyTo({
+      center: [focus.lng, focus.lat],
+      zoom: FOCUS_ZOOM,
+      padding: paddingRef.current,
+    });
   }, [focus]);
 
+  async function settleFocus() {
+    const pending = pendingFocus.current;
+    const map = mapRef.current;
+    const source = sourceRef.current;
+    if (!pending || !focus || !map || !source || pending.steps++ >= FOCUS_STEPS) {
+      pendingFocus.current = null;
+      return;
+    }
+    // O cluster é desenhado no centróide das folhas, até `CLUSTER_RADIUS` px longe da empresa:
+    // procura-se à volta e fica o que a contém.
+    const [x, y] = await map.project([focus.lng, focus.lat]);
+    const r = CLUSTER_RADIUS;
+    const clusters = await map.queryRenderedFeatures(
+      [
+        [x - r, y - r],
+        [x + r, y + r],
+      ],
+      { layers: [LAYER.clusters] },
+    );
+    for (const cluster of clusters) {
+      const clusterId = cluster.properties?.cluster_id as number;
+      const count = cluster.properties?.point_count as number;
+      const leaves = await source.getClusterLeaves(clusterId, count, 0);
+      if (!selectedId || !featureIds(leaves).includes(selectedId)) continue;
+      const [expansion, zoom] = await Promise.all([
+        source.getClusterExpansionZoom(clusterId),
+        map.getZoom(),
+      ]);
+      // Vários no mesmo ponto (o cluster não se desfaz) ou já no zoom de expansão: fica.
+      if (sameCoordinates(leaves) || expansion <= zoom) break;
+      cameraRef.current?.easeTo({
+        center: [focus.lng, focus.lat],
+        zoom: expansion,
+        padding: paddingRef.current,
+      });
+      return;
+    }
+    pendingFocus.current = null;
+  }
+
+  function handleRegionWillChange(event: NativeSyntheticEvent<ViewStateChangeEvent>) {
+    // Regra da OSMF: só um gesto da pessoa recolhe a atribuição (não o fitBounds/flyTo).
+    if (event.nativeEvent.userInteraction) {
+      pendingFocus.current = null;
+      onInteract();
+    }
+  }
+
   async function handlePress(event: NativeSyntheticEvent<PressEventWithFeatures>) {
+    onInteract();
     const features = event.nativeEvent.features ?? [];
     const cluster = features.find((f) => f.properties?.cluster);
     if (cluster && cluster.geometry.type === 'Point') {
@@ -101,10 +199,22 @@ export default function CompanyMap({
         return;
       }
       const [lng, lat] = cluster.geometry.coordinates;
-      cameraRef.current?.easeTo({ center: [lng, lat], zoom: expansion });
+      cameraRef.current?.easeTo({
+        center: [lng, lat],
+        zoom: expansion,
+        padding: paddingRef.current,
+      });
       return;
     }
-    const ids = featureIds(features);
+    // O `hitbox` por omissão já é 44×44. Vários exatamente no mesmo sítio = grupo.
+    const points = features.filter((f) => f.geometry.type === 'Point' && !f.properties?.cluster);
+    if (!points.length) return;
+    const [lng, lat] = (points[0].geometry as GeoJSON.Point).coordinates;
+    const same = points.filter((f) => {
+      const [x, y] = (f.geometry as GeoJSON.Point).coordinates;
+      return Math.abs(x - lng) < 1e-9 && Math.abs(y - lat) < 1e-9;
+    });
+    const ids = [...new Set(featureIds(same))];
     if (ids.length > 1) onSelectGroup(ids);
     else if (ids.length === 1) onSelectCompany(ids[0]);
   }
@@ -120,17 +230,18 @@ export default function CompanyMap({
         compass={false}
         touchRotate={false}
         touchPitch={false}
+        onRegionWillChange={handleRegionWillChange}
+        onRegionDidChange={settleFocus}
+        onDidFinishLoadingMap={onReady}
       >
-        <Camera
-          ref={cameraRef}
-          initialViewState={{ center: [MAP_CENTER.lng, MAP_CENTER.lat], zoom: INITIAL_ZOOM }}
-        />
+        <Camera ref={cameraRef} initialViewState={initialView} />
+        <Images images={IMAGES} />
         <GeoJSONSource
           id={COMPANIES_SOURCE}
           ref={sourceRef}
           data={data}
           cluster
-          clusterRadius={50}
+          clusterRadius={CLUSTER_RADIUS}
           clusterMaxZoom={CLUSTER_MAX_ZOOM}
           onPress={handlePress}
         >
@@ -138,11 +249,16 @@ export default function CompanyMap({
             <Layer key={layer.id} {...layer} />
           ))}
         </GeoJSONSource>
+        {/* O pino da ficha aberta, sem clusters e por cima deles (vê-se mesmo agregado). */}
+        <GeoJSONSource id={SELECTED_SOURCE} data={selectedData}>
+          {selectedStyle.map((layer) => (
+            <Layer key={layer.id} {...layer} />
+          ))}
+        </GeoJSONSource>
         <GeoJSONSource id={ME_SOURCE} data={mine}>
           <Layer {...me} />
         </GeoJSONSource>
       </Map>
-      <MapAttribution style={[s.attribution, { bottom: s.attribution.bottom + insetBottom }]} />
     </View>
   );
 }

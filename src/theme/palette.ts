@@ -19,6 +19,9 @@ export const mareDark = {
   accentSoftText: '#DCAA45',
   logoPlate: '#F6F8FA',
   focusRing: '#DCAA45',
+  // Contorno dos pinos e clusters do mapa (WCAG 1.4.11): no escuro, o acento já tem ≥ 5,15:1 contra
+  // o basemap; o contorno só os separa uns dos outros.
+  pinEdge: '#08161F',
   error: '#EC8582',
   errorBg: '#3A1A19',
   success: '#46B983',
@@ -48,6 +51,9 @@ export const mareLight = {
   accentSoftText: '#85600F',
   logoPlate: '#FFFFFF',
   focusRing: '#85600F',
+  // Contorno dos pinos e clusters do mapa: o acento tem só 1,56–2,13:1 contra o basemap claro; este
+  // tem ≥ 4,19:1 contra todos os preenchimentos dele (docs/design/mapa-refino.md, Fase B).
+  pinEdge: '#85600F',
   error: '#C4302E',
   errorBg: '#FBEAE8',
   success: '#1D7A4C',
