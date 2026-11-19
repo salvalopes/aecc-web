@@ -33,6 +33,9 @@ const fixture = () =>
 // Empresa exata em Cascais (fixture) para o estado "card aberto" (via ?company=, como o detalhe).
 const pickCompany = () =>
   fixture().find((p) => p.precision === 'exact' && p.lng < -9.41 && p.lat < 38.71)!.id;
+// Empresa em zona (ENI sem opt-in) em Cascais, para mostrar o símbolo fixo da zona.
+const pickZone = () =>
+  fixture().find((p) => p.precision === 'area' && p.lng < -9.41 && p.lat < 38.71)!.id;
 
 async function routeFixture(page: Page) {
   const map = fixture();
@@ -84,7 +87,7 @@ async function mapArea(page: Page) {
 
 const metrics: Record<string, unknown> = {};
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'serial', timeout: 120_000 });
 
 for (const vp of VIEWPORTS) {
   for (const theme of THEMES) {
@@ -119,6 +122,14 @@ for (const vp of VIEWPORTS) {
       // flyTo + aproximação até o cluster se desfazer, e os tiles assentam.
       await page.waitForTimeout(5_000);
       await shot('card-aberto');
+
+      // Só no desktop: ficha de uma empresa em zona (anel tracejado de tamanho fixo, nunca ponto).
+      if (vp.name === 'desktop') {
+        await page.goto(`/map?company=${pickZone()}`);
+        await expect(page.getByTestId('map.card.area')).toBeVisible({ timeout: 30_000 });
+        await page.waitForTimeout(5_000);
+        await shot('card-aberto-zona');
+      }
       await context.close();
     });
   }

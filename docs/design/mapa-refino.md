@@ -1,9 +1,11 @@
-# Refinamento do ecrã do mapa — Fase A
+# Refinamento do ecrã do mapa — Fases A e B
 
-**Estado:** Fase A concluída (auditoria, duas direções e protótipo web). Paro aqui: falta o Salvador
-escolher a direção e aprovar a política de testes da Fase B (§7).
-**Branch:** `design/mapa-refino` (a partir do `origin/main` b30edde, com o #40). Não há alterações
-ao `aecc-api`.
+**Estado:** Fase B concluída: a direção B "Índice" (com os chips da A no telemóvel e no nativo)
+substitui o ecrã do mapa nas 3 plataformas. Resultado no §9. As secções 1–8 são a Fase A, tal como
+foi aprovada (o protótipo do §4 saiu do código).
+**Branches:** Fase A em `design/mapa-refino`; Fase B em `feat/mapa-refino` (a partir do
+`origin/main` b30edde, com as ferramentas de captura e este documento por cherry-pick). Não há
+alterações ao `aecc-api`.
 **Skill:** design-taste-frontend-v1 (valores por omissão 8/6/4). Em VISUAL_DENSITY 4, a skill pede o
 modo "daily app": controlos com espaço, sem caixas a mais e um único acento.
 
@@ -362,3 +364,140 @@ inferior no telemóvel.
 8. **Tab bar no nativo:** continuar com a constante de hoje (`insets.bottom` + 96), porque as
    NativeTabs não expõem a altura da tab bar.
 9. **Política de testes da Fase B** (§7).
+
+---
+
+## 9. Fase B — resultado
+
+### 9.1 Decisões do Salvador (19/11/2026) e como ficaram
+
+| #   | Decisão                                                    | No código                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | B "Índice" + chips com contagem no telemóvel e no nativo   | `MapScreen.tsx`: no desktop (web `md+`), painel à esquerda (título, contagem, "Todas" + 13 categorias com contagem, legenda); a ficha substitui a lista no mesmo painel ("‹ Categorias", `map.panel.back`). Telemóvel e nativo: cápsula do título, fila de chips com contagem (`Chip role="radio"`) e botão de posição em cima                                                                                                                                                          |
+| 2   | GISCO curto à vista; o oficial e a OSM completa no "(i)"   | `MapAttribution.tsx`: "Posições © EU GISCO" sempre; chip OSM · Protomaps à entrada, que recolhe no "x", no 1.º gesto ou aos 5 s **depois de o mapa carregar**; o "(i)" de 44 abre "Fontes e licenças" (OSM/ODbL, Protomaps, agradecimento oficial do GISCO)                                                                                                                                                                                                                             |
+| 3   | Corte de 3 % em cada ponta, dentro do bbox                 | `framing.ts` (`framingBounds`, `FRAMING_TRIM = 0.03`), com o `padding` dos controlos (medido com `onLayout`)                                                                                                                                                                                                                                                                                                                                                                            |
+| 4   | Zona = símbolo de tamanho fixo, anel oco tracejado, neutro | `zoneRing.ts`: imagem SDF branca (24 px, anel de 16, traço de 2, 8 traços), pintada com `text2` pela camada `point-area`; não muda com o zoom. Web: `map.addImage` em runtime; nativo: `assets/zone-ring@3x.png`, gerado pela mesma função (`scripts/map/build-zone-ring.mjs`). Legenda "Zona aproximada (código postal)". A `ZONE_RADIUS_M` não existe                                                                                                                                 |
+| 5   | Filtro no cliente                                          | `useMapCompanies()` faz um só `GET /companies/map`; `mapFilter.ts` filtra (a categoria de topo inclui as filhas) e conta                                                                                                                                                                                                                                                                                                                                                                |
+| 6   | Design system                                              | `info`; `ListRow density="dense"` (44) e `choice` (radio); `Chip role="radio"`; `CompanyCard`/`CompanyGroup` `variant="bare"`; papel `pinEdge` (§9.4)                                                                                                                                                                                                                                                                                                                                   |
+| 7   | Sem gesture-handler/reanimated                             | Ficha e painel estáticos, com "x". O Esc (web) e o "voltar" (Android, `BackHandler` só com o ecrã focado) fecham a ficha e o painel das fontes                                                                                                                                                                                                                                                                                                                                          |
+| 8   | Tab bar: `insets.bottom` + 96                              | Mantido. iOS 26: a tab bar de vidro começa a 791 pt (de 874) e a ficha acaba a 683 pt. Android: a tab bar começa a 2126 px (de 2400) e a ficha acaba a 2054 px. Nos dois, a ficha fica por cima ([iOS](mapa-refino/b/b__ios__light__card-aberto.jpg), [Android](mapa-refino/b/b__android__light__card-aberto.jpg)). Sobram 108 pt no iOS e 72 px (≈ 27 dp) no Android entre a ficha e a tab bar: a constante chega para a tab bar flutuante do iOS 26 com folga (proposta no relatório) |
+| 9   | Política de testes do §7                                   | §9.7                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+Correções vistas nas capturas da A3:
+
+- **Chip da OSM cortado a 390 px:** o chip encolhe (`flexShrink`) e a coluna da atribuição tem
+  `maxWidth: 100%`. Prova: `map-rules.spec.ts` ("o chip da OSM não sai do ecrã a 390 px") e a
+  [captura](mapa-refino/b/b__mobile__light__card-fechado.jpg).
+- **4 camadas em baixo com a ficha aberta:** a legenda esconde-se e a OSM recolhe; ficam a ficha, o
+  GISCO curto e o "(i)" (`map-rules.spec.ts`; Maestro `mapa.yaml`).
+- **Pino selecionado:** fonte própria `selected`, sem clusters, por cima de tudo: o símbolo do pino
+  (exato ou zona) dentro de um anel `text` de 3 px sobre `surface`. Vê-se mesmo quando a empresa
+  está num cluster que nunca se desfaz (várias empresas no mesmo CP7). Ao focar (`?company=`), o
+  mapa aproxima até ao zoom de expansão do cluster que a contém (procura num raio de
+  `CLUSTER_RADIUS`, porque o cluster é desenhado no centróide das folhas).
+- **Ficha:** nome, categoria e localidade (`GET /companies/{id}` ao abrir; só a `locality` fica em
+  estado; sem morada nem coordenadas). O `/map` não mudou.
+
+Encontrado e corrigido na Fase B: as NativeTabs montam o ecrã do mapa antes de a pessoa abrir a tab,
+e os 5 s da OSM acabavam sem ela ver o mapa (visto no iOS 26). Agora a OSM volta a aparecer quando o
+ecrã fica focado e os 5 s só contam depois de o mapa carregar.
+
+### 9.2 Inventário final
+
+| Peça                  | Ficheiro (`src/components/map/`)                                       |
+| --------------------- | ---------------------------------------------------------------------- |
+| Ecrã (layout, estado) | `MapScreen.tsx`                                                        |
+| Mapa web / nativo     | `CompanyMap.web.tsx` (maplibre-gl, chunk lazy) / `CompanyMap.tsx`      |
+| Props partilhadas     | `CompanyMap.types.ts`                                                  |
+| Camadas               | `companyLayers.ts` (halo, clusters √n, contagem, zona, exato, seleção) |
+| Símbolo da zona       | `zoneRing.ts`, `assets/zone-ring@3x.png`                               |
+| Enquadramento         | `framing.ts`                                                           |
+| Filtro e contagens    | `mapFilter.ts`                                                         |
+| Atribuição / legenda  | `MapAttribution.tsx` / `MapLegend.tsx`                                 |
+| Ficha                 | `CompanyCard.tsx` (`variant="bare"`)                                   |
+
+O protótipo saiu: `grep -r "EXPO_PUBLIC_MAP_PROTOTYPE\|prototype/" src app` não devolve nada.
+
+### 9.3 Capturas finais (`mapa-refino/b/`)
+
+Fixture sintético (1523 empresas) e tiles reais numa cópia local. Web: Playwright (`capture`).
+iOS 26.3 (iPhone 17 Pro) e Android 16 (Pixel 8): `native-shots.sh` (debug), sem Maestro.
+
+|              | Claro, fechado                                           | Claro, aberto                                           | Escuro, fechado                                         | Escuro, aberto                                         | Atribuição recolhida                                             |
+| ------------ | -------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------- |
+| Web 1440×900 | [jpg](mapa-refino/b/b__desktop__light__card-fechado.jpg) | [jpg](mapa-refino/b/b__desktop__light__card-aberto.jpg) | [jpg](mapa-refino/b/b__desktop__dark__card-fechado.jpg) | [jpg](mapa-refino/b/b__desktop__dark__card-aberto.jpg) | [jpg](mapa-refino/b/b__desktop__light__atribuicao-recolhida.jpg) |
+| Web 390×844  | [jpg](mapa-refino/b/b__mobile__light__card-fechado.jpg)  | [jpg](mapa-refino/b/b__mobile__light__card-aberto.jpg)  | [jpg](mapa-refino/b/b__mobile__dark__card-fechado.jpg)  | [jpg](mapa-refino/b/b__mobile__dark__card-aberto.jpg)  | [jpg](mapa-refino/b/b__mobile__light__atribuicao-recolhida.jpg)  |
+| iOS 26.3     | [jpg](mapa-refino/b/b__ios__light__card-fechado.jpg)     | [jpg](mapa-refino/b/b__ios__light__card-aberto.jpg)     | [jpg](mapa-refino/b/b__ios__dark__card-fechado.jpg)     | [jpg](mapa-refino/b/b__ios__dark__card-aberto.jpg)     | [jpg](mapa-refino/b/b__ios__light__atribuicao-recolhida.jpg)     |
+| Android 16   | [jpg](mapa-refino/b/b__android__light__card-fechado.jpg) | [jpg](mapa-refino/b/b__android__light__card-aberto.jpg) | [jpg](mapa-refino/b/b__android__dark__card-fechado.jpg) | [jpg](mapa-refino/b/b__android__dark__card-aberto.jpg) | [jpg](mapa-refino/b/b__android__light__atribuicao-recolhida.jpg) |
+
+Extra: [zona selecionada no desktop](mapa-refino/b/b__desktop__light__card-aberto-zona.jpg) (o
+símbolo fixo da zona dentro do anel da seleção).
+
+![B, desktop claro](mapa-refino/b/b__desktop__light__card-fechado.jpg)
+![B, desktop claro, ficha aberta](mapa-refino/b/b__desktop__light__card-aberto.jpg)
+
+### 9.4 Contraste dos pinos e clusters (WCAG 1.4.11, ≥ 3:1)
+
+Medido contra todos os preenchimentos do basemap Maré (`mare-{light,dark}.json`: fundo e terra,
+parques, estradas, água e contornos). O valor é o mínimo do conjunto (fórmula WCAG 2.x).
+
+| Elemento                              |                                      Claro |                   Escuro |
+| ------------------------------------- | -----------------------------------------: | -----------------------: |
+| Antes: acento, contorno `surface`     | **1,56** (água, contornos) a 2,13 (branco) |                     5,15 |
+| Contorno `pinEdge` (pinos, clusters)  |                       **4,19** (`#85600F`) | — (`#08161F`, só separa) |
+| Preenchimento `accent`                |                                          — |                 **5,15** |
+| Zona: anel `text2`                    |                                       5,03 |                     5,10 |
+| Seleção: anel `text`                  |                                      12,49 |                     9,80 |
+| Número do cluster (`onAccent/accent`) |                                       8,01 |                     8,33 |
+
+O "2,13:1" da Fase A era contra o branco; contra a água e os contornos das estradas, o acento tinha
+1,56:1.
+
+**Escolha: papel novo `pinEdge`, não o contorno `text`.** O `text` passaria (12,49:1), mas é a cor
+do anel da seleção: com os dois em `text`, o pino selecionado só se distinguiria pelo tamanho. O
+`pinEdge` claro é o castanho dourado do `accentText` (o pino continua a ler-se como acento); no
+escuro, o acento já passa sozinho e o contorno `bg` só separa pinos vizinhos.
+
+### 9.5 Área do mapa visível
+
+Web: grelha de 8 px com `elementFromPoint` (como na Fase A). Nativo: **medida** na hierarquia de
+cada captura, guardada no mesmo instante (`uiautomator dump` / `maestro hierarchy`;
+`native-area.mjs`): ecrã menos as superfícies que flutuam por cima e a tab bar
+(`b/native-area.json`). Entre parênteses, com a atribuição da OSM já recolhida.
+
+| Viewport             | Ficha   | A0 (antes) |   A3 (protótipo B) |            Final |
+| -------------------- | ------- | ---------: | -----------------: | ---------------: |
+| Web desktop 1440×900 | fechada |     60,2 % |    70,2 % (70,9 %) |  70,4 % (71,1 %) |
+|                      | aberta  |     42,4 % |             85,5 % |       **87,5 %** |
+| Web mobile 390×844   | fechada |     60,7 % |    80,2 % (80,7 %) |  74,6 % (76,3 %) |
+|                      | aberta  |     39,7 % |             65,2 % |       **68,5 %** |
+| iOS 26.3             | fechada |     ≈ 45 % | (estimado 75–80 %) | 73,9 %¹ (76,6 %) |
+|                      | aberta  |     ≈ 28 % | (estimado 60–65 %) |       **67,8 %** |
+| Android 16           | fechada |     ≈ 56 % | (estimado 75–80 %) |  71,6 % (74,1 %) |
+|                      | aberta  |     ≈ 39 % | (estimado 60–65 %) |       **65,6 %** |
+
+¹ No iOS o `maestro hierarchy` leva ≈ 17 s, mais do que os 5 s da OSM, por isso o estado com o chip
+da OSM aberto não tem hierarquia própria. 73,9 % = 76,6 % menos a diferença medida no Android entre
+os dois estados (2,5 pp de 1080×2400 px = 9 404 dp², que são 2,7 pp dos 402×874 pt do iPhone 17 Pro).
+
+No telemóvel, com a ficha fechada, fica abaixo do protótipo B (74,6 % contra 80,2 %): a decisão 1
+trocou a barra de uma linha da B pela fila de chips da A (mais uma linha de 44), e a legenda passou a
+estar sempre visível. Com a ficha aberta, que é o estado de uso, fica acima (68,5 % contra 65,2 %).
+
+### 9.6 Bundle web (regra 4)
+
+`scripts/map/capture/bundle-size.sh`, export de produção. O `maplibre-gl` só existe no chunk lazy
+`CompanyMap` (o script lista os ficheiros com o marcador `maplibregl-canvas-container`).
+
+| Ficheiro                         | Antes (bytes / gzip) | Depois (bytes / gzip) |        Diferença |
+| -------------------------------- | -------------------: | --------------------: | ---------------: |
+| `entry` (inicial)                |  1 431 374 / 390 799 |   1 431 852 / 390 953 |      +478 / +154 |
+| `__common` (inicial)             |            721 / 374 |             721 / 374 |                0 |
+| `MapScreen` (lazy)               |        9 819 / 3 744 |        22 164 / 6 951 | +12 345 / +3 207 |
+| `CompanyMap` (lazy, maplibre-gl) |  1 241 663 / 302 153 |   1 244 919 / 303 144 |    +3 256 / +991 |
+
+O `entry` cresce com o ícone `info`, o papel `pinEdge` e as opções novas do `ListRow` e do `Chip`.
+Numa primeira versão, o `zoneRing.ts` (importado pela legenda e pelo mapa) e o `framingBounds` (no
+`mapBox.ts`, que os ecrãs de definições também usam) foram parar ao `__common`, que o `index.html`
+carrega logo (+628 B gzip). A legenda passou a usar os tokens e o enquadramento foi para
+`framing.ts`; o `__common` voltou aos 721 B.

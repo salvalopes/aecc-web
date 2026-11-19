@@ -1,14 +1,15 @@
 import { View } from 'react-native';
 import { Text } from '@/components/ui';
 import { createStyles, useStyles } from '@/theme/createStyles';
-import { ZONE_RING } from './zoneRing';
 
 // Legenda dos pinos (A1 #4): o que é exato e o que é só a zona do código postal. As formas repetem
 // as camadas do mapa (companyLayers.ts) com os mesmos papéis: ponto `accent` com contorno `pinEdge`,
-// anel tracejado `text2` do tamanho do símbolo da zona.
+// anel tracejado `text2` do tamanho do símbolo da zona (ZONE_RING em zoneRing.ts: caixa 24, anel de
+// 16 com traço de 2). Não importa o zoneRing.ts: ficaria partilhado com o chunk do mapa e o Metro
+// punha-o no JS inicial.
 export const ZONE_LEGEND = 'Zona aproximada (código postal)';
 
-const factory = createStyles(({ border, colors, radius, spacing }) => ({
+const factory = createStyles(({ border, colors, radius, size, spacing }) => ({
   legend: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: spacing.lg },
   item: {
     flexDirection: 'row',
@@ -16,7 +17,7 @@ const factory = createStyles(({ border, colors, radius, spacing }) => ({
     gap: spacing.sm,
     minHeight: spacing['2xl'],
   },
-  mark: { width: ZONE_RING.box, alignItems: 'center' },
+  mark: { width: size.icon.lg, alignItems: 'center' },
   dot: {
     width: spacing.md + spacing['2xs'] * 2,
     height: spacing.md + spacing['2xs'] * 2,
@@ -26,10 +27,10 @@ const factory = createStyles(({ border, colors, radius, spacing }) => ({
     borderColor: colors.pinEdge,
   },
   zone: {
-    width: (ZONE_RING.radius + ZONE_RING.stroke / 2) * 2,
-    height: (ZONE_RING.radius + ZONE_RING.stroke / 2) * 2,
+    width: spacing.lg,
+    height: spacing.lg,
     borderRadius: radius.capsule,
-    borderWidth: ZONE_RING.stroke,
+    borderWidth: border.focus,
     borderStyle: 'dashed',
     borderColor: colors.text2,
   },

@@ -18,7 +18,8 @@ import {
   selectedLayers,
 } from './companyLayers';
 import { ensureMapCss } from './mapCss.web';
-import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM, framingBounds } from './mapBox';
+import { framingBounds } from './framing';
+import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM } from './mapBox';
 import { buildMapStyle } from './mapStyle';
 import {
   featureIds,

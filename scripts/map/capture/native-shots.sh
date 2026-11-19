@@ -3,7 +3,7 @@
 # `xcrun simctl io … screenshot` / `adb exec-out screencap`. Pré-requisitos: app com sessão
 # iniciada, Metro com EXPO_PUBLIC_API_URL → api-proxy.mjs e EXPO_PUBLIC_TILES_URL → cópia local.
 # Uso: scripts/map/capture/native-shots.sh <ios|android> <prefixo> <saída-dir> <company-id> [query]
-#   query: parâmetros extra do /map (ex.: dir=a), sem `?`.
+#   query: parâmetros extra do /map, sem `?`.
 set -euo pipefail
 PLATFORM=$1 PREFIX=$2 OUT=$3 COMPANY=$4 EXTRA=${5:-}
 mkdir -p "$OUT"

@@ -28,7 +28,8 @@ import {
   meLayer,
   selectedLayers,
 } from './companyLayers';
-import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM, framingBounds, type Bounds } from './mapBox';
+import { framingBounds, type Bounds } from './framing';
+import { CLUSTER_MAX_ZOOM, FOCUS_ZOOM } from './mapBox';
 import { TILES_URL, buildMapStyle } from './mapStyle';
 import {
   featureIds,
