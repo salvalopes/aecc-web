@@ -32,10 +32,17 @@ export interface TabConfig {
   managesInsets?: boolean;
   /**
    * Recebe `router.push` vindos de outras tabs (ex.: `/companies/<id>` a partir do Mapa ou do
-   * Início). No Android, o TabsHost do react-native-screens 4.23 marca a tab no
-   * BottomNavigationView depois de o JS a focar, trata essa seleção programática como um toque
-   * repetido e faz `popToRoot`, o que tira o detalhe acabado de abrir. Desliga esse efeito
-   * nesta tab, só no Android (fix/android-tab-push).
+   * Início).
+   *
+   * CONTORNO (Android): https://github.com/expo/expo/issues/53876
+   * Porquê: no react-native-screens 4.23 (o que o SDK 55 fixa), o TabsHost marca a tab no
+   * BottomNavigationView depois de o JS a focar. Trata essa seleção programática como um toque
+   * repetido e faz `popToRoot`, o que tira o detalhe acabado de abrir (`TabsHost.kt:262-273`,
+   * `98-106`, `372-373`). Com esta flag, o `_layout.tsx` liga `disablePopToTop` só no Android.
+   * Custo: no Android, voltar a tocar na tab já não volta à raiz.
+   * Quando sai: quando o SDK trouxer um react-native-screens sem este comportamento (o 4.25+
+   * reescreveu o contentor das tabs) ou quando o issue for corrigido. Para confirmar, tirar a flag
+   * e correr `e2e/maestro/native/run.sh android push-entre-tabs`, que tem de passar.
    */
   crossTabPushTarget?: boolean;
 }
