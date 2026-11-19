@@ -3,45 +3,57 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { login, USERS } from '../helpers';
 
-// Capturas e métricas do refinamento do mapa (docs/design/mapa-refino.md). Só com CAPTURE=1:
-//   CAPTURE=1 E2E_TILES_DIR=<cópia local dos tiles> CAPTURE_FIXTURE=<dir> CAPTURE_DIRS=base \
-//     CAPTURE_OUT=docs/design/mapa-refino/a0 npx playwright test --project=capture
+// Capturas e métricas do refinamento do mapa (docs/design/mapa-refino.md). Só com CAPTURE=1 e fora
+// do gate (as regras que estas capturas mostram estão provadas em e2e/web/specs/map-rules.spec.ts):
+//   CAPTURE=1 E2E_TILES_DIR=<cópia local dos tiles> CAPTURE_FIXTURE=<dir> \
+//     CAPTURE_OUT=docs/design/mapa-refino/b npx playwright test --project=capture
 // CAPTURE_FIXTURE: saída de scripts/map/capture/build-fixture.mjs (dados sintéticos, nenhum real).
-// CAPTURE_DIRS: `base` (estado atual) ou `a,b` (direções do protótipo, `?dir=`).
-// Escreve <out>/<dir>__<viewport>__<tema>__<card>.jpg e <out>/metrics.json.
+// Escreve <out>/web__<viewport>__<tema>__<estado>.jpg e <out>/metrics.json.
 
 const FIXTURE = path.resolve(process.env.CAPTURE_FIXTURE ?? '.artifacts/map-fixture');
 const OUT = path.resolve(process.env.CAPTURE_OUT ?? '.artifacts/map-capture');
-const DIRS = (process.env.CAPTURE_DIRS ?? 'base').split(',');
+const PREFIX = process.env.CAPTURE_PREFIX ?? 'web';
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
 ];
 const THEMES = ['light', 'dark'] as const;
-// Empresa exata em Cascais (fixture) para o estado "card aberto" (via ?company=, como o detalhe).
-const pickCompany = () => {
-  const points = JSON.parse(fs.readFileSync(path.join(FIXTURE, 'map.json'), 'utf8')) as {
-    id: string;
-    lat: number;
-    lng: number;
-    precision: string;
-  }[];
-  return points.find((p) => p.precision === 'exact' && p.lng < -9.41 && p.lat < 38.71)!.id;
+
+type FixturePoint = {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  lat: number;
+  lng: number;
+  precision: string;
 };
+const fixture = () =>
+  JSON.parse(fs.readFileSync(path.join(FIXTURE, 'map.json'), 'utf8')) as FixturePoint[];
+
+// Empresa exata em Cascais (fixture) para o estado "card aberto" (via ?company=, como o detalhe).
+const pickCompany = () =>
+  fixture().find((p) => p.precision === 'exact' && p.lng < -9.41 && p.lat < 38.71)!.id;
 
 async function routeFixture(page: Page) {
-  const map = JSON.parse(fs.readFileSync(path.join(FIXTURE, 'map.json'), 'utf8')) as {
-    categoryId: string | null;
-  }[];
+  const map = fixture();
+  const byId = new Map(map.map((p) => [p.id, p]));
   const categories = fs.readFileSync(path.join(FIXTURE, 'categories.json'), 'utf8');
-  await page.route('**/api/companies/map*', (route) => {
-    const categoryId = new URL(route.request().url()).searchParams.get('categoryId');
-    const body = categoryId ? map.filter((p) => p.categoryId === categoryId) : map;
-    return route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
-  });
+  await page.route('**/api/companies/map*', (route) =>
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify(map) }),
+  );
   await page.route('**/api/categories', (route) =>
     route.fulfill({ contentType: 'application/json', body: categories }),
   );
+  // Detalhe sintético (a ficha só lê a localidade): as empresas do fixture não existem na API.
+  await page.route(/\/api\/companies\/[0-9a-z-]{36}$/, (route) => {
+    const id = new URL(route.request().url()).pathname.split('/').pop()!;
+    const p = byId.get(id);
+    if (!p) return route.continue();
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ id, name: p.name, locality: 'Cascais', postalCodeLocality: null }),
+    });
+  });
 }
 
 /** % do viewport em que o elemento de topo é o canvas do mapa (grelha de 8 px). */
@@ -74,68 +86,41 @@ const metrics: Record<string, unknown> = {};
 
 test.describe.configure({ mode: 'serial' });
 
-for (const dir of DIRS) {
-  for (const vp of VIEWPORTS) {
-    for (const theme of THEMES) {
-      test(`${dir} ${vp.name} ${theme}`, async ({ browser }) => {
-        const context = await browser.newContext({
-          viewport: { width: vp.width, height: vp.height },
-          colorScheme: theme,
-        });
-        const page = await context.newPage();
-        // Regra 2: nenhum pedido fora da origem da app e da API (localhost faz de aecc.salv4.com).
-        const foreign = new Set<string>();
-        page.on('request', (r) => {
-          const host = new URL(r.url()).hostname;
-          if (!['localhost', '127.0.0.1'].includes(host) && !r.url().startsWith('data:')) {
-            foreign.add(host);
-          }
-        });
-        await routeFixture(page);
-        await login(page, USERS.associado);
-        const q = dir === 'base' ? '' : `dir=${dir}`;
-        fs.mkdirSync(OUT, { recursive: true });
-
-        for (const card of ['fechado', 'aberto'] as const) {
-          const params = [q, card === 'aberto' ? `company=${pickCompany()}` : '']
-            .filter(Boolean)
-            .join('&');
-          await page.goto(`/map${params ? `?${params}` : ''}`);
-          await expect(page.locator('.maplibregl-canvas')).toBeVisible({ timeout: 30_000 });
-          if (card === 'aberto') await expect(page.getByTestId('map.card')).toBeVisible();
-          // Tiles, glyphs e o flyTo do ?company= (≈ 2 s) assentam.
-          await page.waitForTimeout(4_000);
-          const name = `${dir}__${vp.name}__${theme}__card-${card}`;
-          await page.screenshot({ path: path.join(OUT, `${name}.jpg`), type: 'jpeg', quality: 78 });
-          metrics[name] = await mapArea(page);
-
-          if (dir !== 'base' && card === 'fechado') {
-            // Regra 3 (OSMF §1.5.2): recolhe ao fim de 5 s, fica o "(i)"; o GISCO não recolhe.
-            await expect(page.getByTestId('map.attribution.info')).toBeVisible({ timeout: 3_000 });
-            await expect(page.getByTestId('map.attribution.gisco')).toBeVisible();
-            const folded = `${dir}__${vp.name}__${theme}__atribuicao-recolhida`;
-            await page.screenshot({
-              path: path.join(OUT, `${folded}.jpg`),
-              type: 'jpeg',
-              quality: 78,
-            });
-            metrics[folded] = await mapArea(page);
-            // O "(i)" volta a abrir; o "x" recolhe logo (sem esperar).
-            await page.getByTestId('map.attribution.info').click();
-            await expect(page.getByTestId('map.attribution.close')).toBeVisible();
-            await page.getByTestId('map.attribution.close').click();
-            await expect(page.getByTestId('map.attribution.info')).toBeVisible();
-            // Teclado: Esc fecha a ficha.
-          }
-          if (dir !== 'base' && card === 'aberto') {
-            await page.keyboard.press('Escape');
-            await expect(page.getByTestId('map.card')).toBeHidden();
-          }
-        }
-        expect([...foreign]).toEqual([]);
-        await context.close();
+for (const vp of VIEWPORTS) {
+  for (const theme of THEMES) {
+    test(`${vp.name} ${theme}`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: vp.width, height: vp.height },
+        colorScheme: theme,
       });
-    }
+      const page = await context.newPage();
+      await routeFixture(page);
+      await login(page, USERS.associado);
+      fs.mkdirSync(OUT, { recursive: true });
+      const shot = async (state: string) => {
+        const name = `${PREFIX}__${vp.name}__${theme}__${state}`;
+        await page.screenshot({ path: path.join(OUT, `${name}.jpg`), type: 'jpeg', quality: 78 });
+        metrics[name] = await mapArea(page);
+      };
+
+      // Card fechado: atribuição da OSM aberta (captura aos 3,5 s, antes de recolher aos 5 s).
+      await page.goto('/map');
+      await expect(page.locator('.maplibregl-canvas')).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(3_500);
+      await shot('card-fechado');
+      // Atribuição recolhida: só o GISCO curto e o "(i)".
+      await expect(page.getByTestId('map.attribution.info')).toBeVisible({ timeout: 5_000 });
+      await shot('atribuicao-recolhida');
+
+      // Card aberto (?company=, como o "Ver no mapa" do detalhe): pino selecionado com o anel.
+      await page.goto(`/map?company=${pickCompany()}`);
+      await expect(page.getByTestId('map.card')).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByTestId('map.card.locality')).toHaveText('Cascais');
+      // flyTo + aproximação até o cluster se desfazer, e os tiles assentam.
+      await page.waitForTimeout(5_000);
+      await shot('card-aberto');
+      await context.close();
+    });
   }
 }
 

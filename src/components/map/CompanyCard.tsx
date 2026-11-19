@@ -1,5 +1,15 @@
+import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Button, Icon, IconButton, ListGroup, ListRow, Surface, Text } from '@/components/ui';
+import {
+  Button,
+  Icon,
+  IconButton,
+  ListGroup,
+  ListRow,
+  Skeleton,
+  Surface,
+  Text,
+} from '@/components/ui';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme } from '@/theme/ThemeContext';
 import type { MapCompany } from '@/types/api';
@@ -14,38 +24,83 @@ const factory = createStyles(({ layout, size, spacing }) => ({
     padding: spacing.lg,
     gap: spacing.md,
   },
+  // Sem superfície: a ficha vive dentro de outra (o painel do mapa no desktop, a folha flutuante no
+  // telemóvel), que já dá o fundo e o padding. Evita o cartão dentro de cartão (A1 #12).
+  bare: { gap: spacing.md },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   title: { flex: 1, gap: spacing['2xs'] },
+  meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.xs },
   note: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   rowText: { flex: 1, gap: spacing['2xs'] },
   // A lista de um grupo grande faz scroll em vez de empurrar o mapa (≈ 3,5 linhas visíveis).
   groupList: { maxHeight: size.row.web * 3.5 },
 }));
 
+export type CompanyCardVariant = 'surface' | 'bare';
+
 interface CardProps {
   categoryOf: (company: MapCompany) => string | null;
   onOpen: (id: string) => void;
   onClose: () => void;
+  /** `surface` (omissão): com a própria `Surface`. `bare`: sem fundo nem padding. */
+  variant?: CompanyCardVariant;
 }
 
-/** Ficha de um pino (`map.card`): nome, categoria, nota de zona aproximada e "Ver empresa". */
+function Shell({
+  variant,
+  testID,
+  children,
+}: {
+  variant: CompanyCardVariant;
+  testID: string;
+  children: ReactNode;
+}) {
+  const s = useStyles(factory);
+  return variant === 'bare' ? (
+    <View testID={testID} style={s.bare}>
+      {children}
+    </View>
+  ) : (
+    <Surface testID={testID} style={s.card}>
+      {children}
+    </Surface>
+  );
+}
+
+/**
+ * Ficha de um pino (`map.card`): nome, categoria, localidade, nota de zona aproximada e "Ver
+ * empresa". A localidade vem do detalhe (`GET /companies/{id}`), pedido pelo ecrã ao abrir a ficha:
+ * `undefined` = a carregar, `null` = sem localidade. Nunca morada nem coordenadas.
+ */
 export function CompanyCard({
   company,
+  locality,
   categoryOf,
   onOpen,
   onClose,
-}: CardProps & { company: MapCompany }) {
+  variant = 'surface',
+}: CardProps & { company: MapCompany; locality: string | null | undefined }) {
   const s = useStyles(factory);
-  const { colors, size } = useTheme();
+  const { colors, size, spacing } = useTheme();
   const category = categoryOf(company);
   return (
-    <Surface testID="map.card" style={s.card}>
+    <Shell variant={variant} testID="map.card">
       <View style={s.head}>
         <View style={s.title}>
           <Text variant="heading" accessibilityRole="header">
             {company.name}
           </Text>
-          {category ? <Text variant="meta">{category}</Text> : null}
+          <View style={s.meta}>
+            {category ? <Text variant="meta">{category}</Text> : null}
+            {category && locality !== null ? <Text variant="meta">·</Text> : null}
+            {locality === undefined ? (
+              <Skeleton width={spacing['6xl'] * 2} />
+            ) : locality ? (
+              <Text testID="map.card.locality" variant="meta">
+                {locality}
+              </Text>
+            ) : null}
+          </View>
         </View>
         <IconButton testID="map.card.close" icon="x" label="Fechar" onPress={onClose} />
       </View>
@@ -56,7 +111,7 @@ export function CompanyCard({
         </View>
       ) : null}
       <Button testID="map.card.open" label="Ver empresa" onPress={() => onOpen(company.id)} />
-    </Surface>
+    </Shell>
   );
 }
 
@@ -66,10 +121,11 @@ export function CompanyGroup({
   categoryOf,
   onOpen,
   onClose,
+  variant = 'surface',
 }: CardProps & { companies: readonly MapCompany[] }) {
   const s = useStyles(factory);
   return (
-    <Surface testID="map.group" style={s.card}>
+    <Shell variant={variant} testID="map.group">
       <View style={s.head}>
         <View style={s.title}>
           <Text variant="heading" accessibilityRole="header">
@@ -105,6 +161,6 @@ export function CompanyGroup({
           })}
         </ListGroup>
       </ScrollView>
-    </Surface>
+    </Shell>
   );
 }

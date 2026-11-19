@@ -35,8 +35,6 @@ export default defineConfig({
   webServer: {
     command:
       `EXPO_PUBLIC_API_URL=${API_URL} EXPO_PUBLIC_TILES_URL=${TILES_URL} ` +
-      // Só nas capturas: liga o interruptor de direções do protótipo (nunca no build de produção).
-      (process.env.CAPTURE ? 'EXPO_PUBLIC_MAP_PROTOTYPE=1 ' : '') +
       'npx expo export -p web --clear --output-dir e2e/web/.dist ' +
       `&& node e2e/web/serve-static.mjs e2e/web/.dist 8081 ${TILES_DIR}`,
     url: 'http://localhost:8081',

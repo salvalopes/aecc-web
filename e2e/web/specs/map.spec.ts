@@ -8,7 +8,24 @@ const APP_ORIGIN = 'http://localhost:8081';
 const API_ORIGIN = new URL(API_URL).origin;
 
 const OSM = '© OpenStreetMap · Protomaps';
-const GISCO = '© European Union - GISCO, 2024, postal code point dataset, Licence CC-BY-SA 4.0.';
+const GISCO_SHORT = 'Posições © EU GISCO';
+
+/**
+ * Centro da área livre do mapa no desktop (onde o `?company=` põe a empresa): à direita do painel,
+ * à esquerda do botão de posição e acima da atribuição, com as margens de 16 do `MapScreen`.
+ */
+async function focusPoint(page: Page): Promise<[number, number]> {
+  const box = async (id: string) => (await page.getByTestId(id).boundingBox())!;
+  const canvas = (await page.locator('.maplibregl-canvas').boundingBox())!;
+  const panel = await box('map.panel');
+  const locate = await box('map.locate');
+  const attribution = await box('map.attribution');
+  const left = panel.x + panel.width + 16;
+  const right = locate.x - 16;
+  const top = canvas.y + 16;
+  const bottom = attribution.y - 16;
+  return [(left + right) / 2, (top + bottom) / 2];
+}
 
 async function openMap(page: Page, path = '/map') {
   await page.goto(path);
@@ -28,7 +45,7 @@ test('regra 7: sem sessão, /map vai para o login (e não pede o mapa)', async (
 });
 
 test.describe('mapa: componente', () => {
-  test('mostra o mapa, pede o PMTiles por Range e a atribuição está sempre visível', async ({
+  test('mostra o mapa, pede o PMTiles por Range e a atribuição está visível à entrada', async ({
     page,
   }) => {
     await login(page, USERS.associado);
@@ -38,11 +55,12 @@ test.describe('mapa: componente', () => {
     await openMap(page);
     await pmtiles;
 
-    // Regra 5: OSM · Protomaps e o agradecimento oficial do GISCO (texto do NOTICE do aecc-api).
+    // Decisão 2 da Fase B: OSM · Protomaps à entrada (recolhe depois) e a forma curta do GISCO.
+    // As regras de recolher e o "(i)" estão em map-rules.spec.ts.
     const attribution = page.getByTestId('map.attribution');
     await expect(attribution).toBeVisible();
     await expect(attribution).toContainText(OSM);
-    await expect(attribution).toContainText(GISCO);
+    await expect(page.getByTestId('map.attribution.gisco')).toHaveText(GISCO_SHORT);
     // A atribuição própria do maplibre-gl fica desligada (não duplica).
     await expect(page.locator('.maplibregl-ctrl-attrib')).toHaveCount(0);
   });
@@ -262,7 +280,13 @@ test.describe('mapa: ecrã', () => {
     await page.goto(`/companies/${C004}`);
     await page.getByTestId('company-detail.address').click();
     await expect(page.getByTestId('map.card')).toContainText('Livraria Atlântico');
+    // Desktop: a ficha substitui a lista no painel; "‹ Categorias" volta a ela, já sem filtro.
+    await page.getByTestId('map.panel.back').click();
     await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+    // (O ecrã das Empresas também fica montado e tem o seu chip "Todas".)
+    await expect(
+      page.getByTestId('map.panel').getByTestId('companies.category-chip-all'),
+    ).toHaveAttribute('aria-checked', 'true');
   });
 
   test('?company= de uma empresa fora do mapa avisa (e não abre ficha)', async ({ page }) => {
@@ -276,7 +300,8 @@ test.describe('mapa: ecrã', () => {
     page,
   }) => {
     // c001, c002 e c003 (ENI sem opt-in) partilham o centróide CP4: o cluster nunca se desfaz.
-    // `?company=` centra o mapa nesse ponto; sem animação, o cluster fica no centro do canvas.
+    // `?company=` centra o mapa nesse ponto, no meio da área livre (fora do painel e dos controlos);
+    // sem animação, o cluster (por baixo do pino selecionado) fica lá.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await login(page, USERS.cliente);
     await openMap(page, `/map?company=${C001}`);
@@ -284,7 +309,7 @@ test.describe('mapa: ecrã', () => {
     const group = page.getByTestId('map.group');
     // Clique real no canvas (o MapLibre pode ainda estar a desenhar os tiles: tenta de novo).
     await expect(async () => {
-      await page.locator('.maplibregl-canvas').click();
+      await page.mouse.click(...(await focusPoint(page)));
       await expect(group).toBeVisible({ timeout: 1_000 });
     }).toPass({ timeout: 15_000 });
     await expect(group).toContainText('Pastelaria Conceição');

@@ -4,7 +4,8 @@ import { useTheme } from '@/theme/ThemeContext';
 
 export default function MapLayout() {
   const screenOptions = useStackScreenOptions();
-  // Raiz com horizonte (como as outras tabs): a faixa por trás da status bar tem a cor dele.
+  // O mapa vai de ponta a ponta (por baixo da status bar e, no iOS, da tab bar de vidro); o fundo
+  // só se vê enquanto o mapa carrega.
   const { colors } = useTheme();
   return (
     <Stack screenOptions={screenOptions}>
@@ -13,7 +14,7 @@ export default function MapLayout() {
         options={{
           title: 'Mapa',
           headerShown: false,
-          contentStyle: { backgroundColor: colors.horizon },
+          contentStyle: { backgroundColor: colors.bg },
         }}
       />
     </Stack>
