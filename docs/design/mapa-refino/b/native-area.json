@@ -10,7 +10,7 @@
     "screenHeight": 2400
   },
   "b__android__dark__card-fechado": {
-    "visible": 71.6,
+    "visible": 71.5,
     "tabBarTop": 2126,
     "screenHeight": 2400
   },
@@ -25,7 +25,7 @@
     "screenHeight": 2400
   },
   "b__android__light__card-fechado": {
-    "visible": 71.6,
+    "visible": 71.5,
     "tabBarTop": 2126,
     "screenHeight": 2400
   },

@@ -283,9 +283,20 @@ export default function MapScreen() {
   const selectGroup = useCallback((ids: string[]) => setSelection({ kind: 'group', ids }), []);
 
   // Nativo: o mapa passa por baixo da status bar e da tab bar; os controlos ficam nas safe areas.
-  // As NativeTabs não expõem a altura da tab bar: constante (`insets.bottom` + 96, decisão 8).
+  // As NativeTabs não expõem a altura da tab bar: constante por plataforma, medida nas capturas da
+  // Fase B (hierarquia de cada uma, docs/design/mapa-refino.md §9.1):
+  // - iOS 26 (iPhone 17 Pro): a tab bar de vidro começa 83 pt acima do fundo, e dentro das NativeTabs
+  //   o `insets.bottom` já é 83 (indicador 34 + tab bar 49) → 0;
+  // - Android 16 (Pixel 8): a barra começa 104 dp acima do fundo e o `insets.bottom` é só a barra de
+  //   navegação (≈ 24) → 80.
+  // (Antes, 96 nos dois: sobravam 108 pt no iOS e 27 dp no Android entre a ficha e a tab bar.)
+  const tabBar = Platform.select({
+    ios: spacing[0],
+    android: spacing['5xl'] * 2,
+    default: spacing[0],
+  });
   const topInset = native ? insets.top : spacing[0];
-  const bottomInset = native ? insets.bottom + spacing['6xl'] * 2 : spacing[0];
+  const bottomInset = native ? insets.bottom + tabBar : spacing[0];
   const edge = isWide ? spacing.lg : spacing.md;
   const panelWidth = layout.formMaxWidth - spacing['4xl'];
 
@@ -318,6 +329,14 @@ export default function MapScreen() {
         right: edge,
         bottom: (measuredBottom || bottomInset + edge + size.hitTarget) + spacing.sm,
       };
+
+  // O aviso "a sua posição está no mapa" (só para leitores de ecrã) fica dentro da área livre do
+  // mapa, por baixo dos controlos de cima. No canto (0, 0) ficava por baixo da status bar do Android
+  // e o UiAutomator/TalkBack não o encontravam.
+  const mePosition = {
+    top: isWide ? edge + size.hitTarget + spacing.sm : padding.top,
+    left: padding.left,
+  };
 
   const count = loaded ? (
     <Text testID="map.count" variant="meta" tabular>
@@ -604,7 +623,7 @@ export default function MapScreen() {
           accessibilityLabel="A sua posição está no mapa"
           accessibilityLiveRegion="polite"
           pointerEvents="none"
-          style={s.srOnly}
+          style={[s.srOnly, mePosition]}
         />
       ) : null}
     </View>
