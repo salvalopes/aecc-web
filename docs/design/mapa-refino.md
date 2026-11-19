@@ -501,3 +501,43 @@ Numa primeira versão, o `zoneRing.ts` (importado pela legenda e pelo mapa) e o 
 `mapBox.ts`, que os ecrãs de definições também usam) foram parar ao `__common`, que o `index.html`
 carrega logo (+628 B gzip). A legenda passou a usar os tokens e o enquadramento foi para
 `framing.ts`; o `__common` voltou aos 721 B.
+
+### 9.7 Testes (política do §7)
+
+| Camada                                                                | Quando               | Resultado                                                                                                                  |                Tempo |
+| --------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------: |
+| `npx tsc --noEmit`                                                    | cada alteração       | 0 erros                                                                                                                    |                ≈ 4 s |
+| `npx eslint .`                                                        | cada alteração       | 0 erros (1 aviso antigo em `app/auth/callback.tsx`)                                                                        |                ≈ 6 s |
+| Auditoria de literais                                                 | cada alteração       | **0 / 0 / 2**, igual à base                                                                                                |                < 1 s |
+| Playwright, só o mapa (`map*`, 5 ficheiros)                           | cada alteração       | 39/39                                                                                                                      |             2 min 37 |
+| Maestro iOS, debug (`mapa`, `mapa-posicao-negada`, `push-entre-tabs`) | fim de B2/B3 e de B4 | 3/3 e 3/3                                                                                                                  |  4 min 26 / 3 min 41 |
+| Maestro Android, debug (os mesmos 3)                                  | fim de B2/B3 e de B4 | 3/3 e 3/3 (a 1.ª tentativa de B2/B3 caiu num "System UI isn't responding" do emulador acabado de arrancar, antes do login) |  7 min 53 / 8 min 18 |
+| Maestro iOS 26.3, **Release**, completo                               | antes do PR          | **24/24**                                                                                                                  |            21 min 36 |
+| Maestro Android 16, **Release**, completo                             | antes do PR          | **23/24**: `mapa-posicao` falhou e voltou a falhar sozinho (§9.8)                                                          | 21 min 39 + 1 min 25 |
+| Playwright completo (`--project=e2e`)                                 | antes do PR          | **57/57**                                                                                                                  |             3 min 52 |
+
+Playwright completo, por ficheiro (testes / tempo dos testes): `map.spec` 16 / 58 s, `map-settings`
+8 / 36 s, `map-rules` 6 / 32 s, `navigation` 7 / 15 s, `map-unlocated` 3 / 8 s, `categories` 2 / 7 s,
+`edit-company` 2 / 6 s, `company-ownership` 2 / 4 s, `auth` 2 / 3 s, `directory` 1 / 2 s, `states` 1
+/ 2 s, `forgot-password` 1 / 1 s, `map-static` 6 / 0,1 s. **Total 57 em 13 ficheiros.** Os 11 dos
+registos antigos são os testes anteriores a 18/11 (auth 2, categories 2, company-ownership 2,
+directory 1, edit-company 2, forgot-password 1, states 1). O `navigation.spec.ts` (1326977, 18/11)
+juntou 7 (18); a Fase B do mapa juntou 33 (`map` 16, `map-settings` 8, `map-static` 6,
+`map-unlocated` 3), o que dava os 51; este trabalho junta os 6 do `map-rules.spec.ts` (57). As
+capturas (`capture`) e o `baseline` não entram (só com `CAPTURE=1` / `BASELINE=1`).
+
+Builds Release locais: `npx expo run:ios --configuration Release` e `npx expo run:android --variant
+release`, com `EXPO_PUBLIC_API_URL=http://127.0.0.1:5080/api` e `EXPO_PUBLIC_TILES_URL` na fixture
+(8090). No Android, o HTTP em claro para a stack local exigiu `usesCleartextTraffic` no
+`AndroidManifest.xml` gerado (pasta `android/`, ignorada pelo git; não entra no código).
+
+### 9.8 Em aberto: `mapa-posicao` no Android Release
+
+O fluxo falha duas vezes no mesmo passo: depois de "Permitir durante a utilização", `map.me` não
+aparece. A posição **foi** obtida e desenhada: na captura da falha vê-se o ponto azul (posição de
+teste do emulador, 38,70, −9,42). O que o Maestro não encontra é o elemento só para leitores de ecrã
+`map.me` (2×2, `position: absolute` sem `top/left`). No layout novo ele fica no canto superior
+esquerdo do ecrã, por baixo da status bar do Android (antes ficava dentro do corpo do mapa). Passa no
+iOS. Correção provável (não aplicada, à espera de decisão): pôr esse elemento dentro da área livre do
+mapa (por exemplo, abaixo dos controlos de cima) ou juntar o aviso à cápsula do título como região
+viva.
