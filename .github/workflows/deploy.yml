@@ -37,8 +37,8 @@ jobs:
       # Imagem da API usada pelo gate. Fonte ÚNICA deste valor.
       # Atualizar só DEPOIS de o deploy da API ter corrido. Procedimento e comandos
       # (log do deploy do aecc-api + contentor em produção) em docs/CI.md.
-      # Atual: aecc-api@ccd928a (#10), deploy de 2026-11-18, o mesmo digest que está em produção.
-      AECC_API_IMAGE: ghcr.io/salvalopes/aecc-api@sha256:e0a481681043b26e7f0b3778a08d70c42e79594e64f28d431af5b07e24ca12be
+      # Atual: aecc-api@0be3ab2 (#13, feat/mapa-api), deploy de 2026-11-19 (run 44457888857).
+      AECC_API_IMAGE: ghcr.io/salvalopes/aecc-api@sha256:8316e41bbfcb7ad1e0b574fabfe63ec30735d0ac963e7800bac0e01167485902
     steps:
       - name: Checkout
         uses: actions/checkout@v6
