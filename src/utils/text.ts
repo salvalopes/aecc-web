@@ -60,11 +60,6 @@ export function absoluteUrl(url: string): string {
   return /^https?:\/\//i.test(u) ? u : `https://${u}`;
 }
 
-/** Pesquisa da morada no mapa (abre a app de mapas ou o browser). */
-export function mapsUrl(address: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-}
-
 /** `tel:` sem espaços (os telefones vêm formatados, ex. `+351 214 862 317`). */
 export function telUrl(phone: string): string {
   return `tel:${phone.replace(/[^\d+]/g, '')}`;

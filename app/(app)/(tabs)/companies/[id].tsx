@@ -10,7 +10,7 @@ import { productsApi } from '@/api/products.api';
 import { ApiError } from '@/api/client';
 import { confirmDestructive } from '@/utils/confirm';
 import { formatAddressLine } from '@/utils/address';
-import { absoluteUrl, displayDomain, mapsUrl, telUrl } from '@/utils/text';
+import { absoluteUrl, displayDomain, telUrl } from '@/utils/text';
 import type { Company, Product } from '@/types/api';
 import {
   Button,
@@ -223,7 +223,8 @@ export default function CompanyDetailScreen() {
       icon: 'map-pin',
       label: 'Morada',
       value: address,
-      onPress: () => openExternal(mapsUrl(address)),
+      // Mapa da AECC (mapa-plano W4): a morada já não é enviada à Google.
+      onPress: () => router.push(`/map?company=${company.id}`),
       accessibilityLabel: `Ver no mapa: ${address}`,
       testID: 'company-detail.address',
     });
@@ -261,6 +262,18 @@ export default function CompanyDetailScreen() {
             size="sm"
             loading={deleting}
             onPress={handleDelete}
+          />
+        </View>
+      ) : null}
+      {/* Mapa (W6): o Admin esconde a empresa do mapa; o dono usa a secção MAPA do "Editar". */}
+      {user?.role === 'Admin' ? (
+        <View style={s.actions}>
+          <Button
+            testID="company-detail.map-settings"
+            label="Mapa"
+            variant="secondary"
+            size="sm"
+            onPress={() => router.push(`/my-companies/${company.id}/map`)}
           />
         </View>
       ) : null}

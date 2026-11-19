@@ -1,7 +1,7 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 // Dados do seed sintético do aecc-api (seed-e2e). Nenhum dado real.
-export const API_URL = 'http://localhost:5080/api';
+export const API_URL = process.env.E2E_API_URL ?? 'http://localhost:5080/api';
 export const USERS = {
   admin: 'admin@e2e.test',
   associado: 'associado@e2e.test',

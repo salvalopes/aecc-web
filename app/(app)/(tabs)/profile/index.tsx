@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { startTransition, useCallback, useState } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { mapApi } from '@/api/map.api';
 import { useAuth } from '@/hooks/useAuth';
 import { createStyles, useStyles } from '@/theme/createStyles';
 import { useTheme, type ThemePreference } from '@/theme/ThemeContext';
 import { useBreakpoint } from '@/theme/useBreakpoint';
-import { Button, SegmentedControl } from '@/components/ui';
+import { Button, Icon, ListGroup, ListRow, SegmentedControl, Text } from '@/components/ui';
 import { ListScaffold } from '@/components/templates/ListScaffold';
 import { FormSection } from '@/components/templates/FormLayout';
 import { InfoGroup, type InfoItem } from '@/components/detail/InfoGroup';
@@ -19,6 +20,7 @@ const factory = createStyles(({ spacing, layout }) => ({
   page: { width: '100%', maxWidth: layout.formPageMax, gap: layout.sectionGap },
   pageWide: { gap: spacing['5xl'] },
   start: { alignSelf: 'flex-start' },
+  rowLabel: { flex: 1 },
 }));
 
 const THEME_OPTIONS = [
@@ -36,9 +38,21 @@ const THEME_HINT: Record<ThemePreference, string> = {
 export default function ProfileScreen() {
   const s = useStyles(factory);
   const { user, logout } = useAuth();
-  const { preference, setPreference } = useTheme();
+  const { preference, setPreference, colors, size } = useTheme();
   const { isWide } = useBreakpoint();
+  const isAdmin = user?.role === 'Admin';
   const [leaving, setLeaving] = useState(false);
+  // W7: contagem das empresas sem localização (só Admin), atualizada sempre que a Gestão ganha foco.
+  const [unlocatedCount, setUnlocatedCount] = useState<number | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (!isAdmin) return;
+      mapApi
+        .unlocated()
+        .then((list) => startTransition(() => setUnlocatedCount(list.length)))
+        .catch(() => startTransition(() => setUnlocatedCount(null)));
+    }, [isAdmin]),
+  );
 
   async function handleLogout() {
     setLeaving(true);
@@ -84,6 +98,41 @@ export default function ProfileScreen() {
         {user ? (
           <FormSection label="CONTA" description={ROLE_HINT[user.role]}>
             <InfoGroup testID="profile.account" items={account} />
+          </FormSection>
+        ) : null}
+
+        {/* Gestão (Admin): a gestão de utilizadores saiu das tabs (W1 do mapa). */}
+        {isAdmin ? (
+          <FormSection label="GESTÃO" description="Contas e acessos; empresas fora do mapa.">
+            <ListGroup>
+              <ListRow
+                testID="profile.users"
+                accessibilityLabel="Gerir utilizadores"
+                onPress={() => router.push('/users')}
+                chevron
+                inset="icon"
+              >
+                <Icon name="users-three" size={size.icon.md} color={colors.text2} />
+                <Text variant="name" style={s.rowLabel}>
+                  Gerir utilizadores
+                </Text>
+              </ListRow>
+              <ListRow
+                testID="profile.unlocated"
+                accessibilityLabel="Empresas sem localização"
+                onPress={() => router.push('/companies-unlocated')}
+                chevron
+                inset="icon"
+                last
+              >
+                <Icon name="map-trifold" size={size.icon.md} color={colors.text2} />
+                <Text variant="name" style={s.rowLabel}>
+                  {unlocatedCount === null
+                    ? 'Empresas sem localização'
+                    : `Empresas sem localização (${unlocatedCount})`}
+                </Text>
+              </ListRow>
+            </ListGroup>
           </FormSection>
         ) : null}
 

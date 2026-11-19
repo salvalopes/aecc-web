@@ -56,6 +56,23 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         microphonePermission: false,
       },
     ],
+    // Mapa (mapa-plano W2). O MapLibre RN exige o plugin no iOS (Podfile post_install).
+    '@maplibre/maplibre-react-native',
+    // Posição só "enquanto a app está em uso", pedida ao tocar em "A minha posição"; sem
+    // background nem foreground service. A posição nunca é enviada nem guardada.
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'A AECC usa a sua posição só quando toca em "A minha posição", para a mostrar no mapa. A posição não é enviada nem guardada.',
+        // Sem isto o plugin escreve NSLocationAlways* no Info.plist (verificado com prebuild).
+        locationAlwaysAndWhenInUsePermission: false,
+        locationAlwaysPermission: false,
+        isIosBackgroundLocationEnabled: false,
+        isAndroidBackgroundLocationEnabled: false,
+        isAndroidForegroundServiceEnabled: false,
+      },
+    ],
     [
       'expo-splash-screen',
       {
@@ -72,5 +89,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5000/api',
+    // Tiles, glyphs e sprites do mapa (servidos pelo nosso Caddy; T1). O código lê
+    // EXPO_PUBLIC_TILES_URL diretamente (src/components/map/mapStyle.ts), como o apiUrl.
+    tilesUrl: process.env.EXPO_PUBLIC_TILES_URL ?? 'https://aecc.salv4.com/tiles',
   },
 });

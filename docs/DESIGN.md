@@ -138,7 +138,7 @@ Importar do barril `@/components/ui` (inclui `Icon` e `GlassSurface`). Criadas e
 
 Templates (`src/components/templates/`): `AuthScaffold` + `AuthPrompt` (T1, B8): `sm` com faixa `horizon` e formulário numa `Surface` a sobrepor a borda (−26); `md+` split 5fr/7fr com o painel da marca à esquerda e o formulário numa coluna de `layout.formMaxWidth` (400) alinhada à esquerda. `StateTemplates` (T2, B9): `SessionLoadingState`, `ForbiddenState` (rota sem papel, no sítio e sem redirect) e `NotFoundState`, sobre `StateScreen`; o `useRequireRole` não redireciona.
 
-Utilitários: `formatAddressLine` (`src/utils/address.ts`, D9), `splitByTerm` / `initials` / `displayDomain` / `absoluteUrl` / `telUrl` / `mapsUrl` (`src/utils/text.ts`), `confirmDestructive` (`src/utils/confirm.ts`), `useBreakpoint`.
+Utilitários: `formatAddressLine` (`src/utils/address.ts`, D9), `splitByTerm` / `initials` / `displayDomain` / `absoluteUrl` / `telUrl` (`src/utils/text.ts`; o "Ver no mapa" do detalhe abre `/map?company=<id>`), `confirmDestructive` (`src/utils/confirm.ts`), `useBreakpoint`.
 
 T3 (B10): `Horizon` (faixa `horizon` com título, `meta` e `aside`; lockup só onde não há outra marca), `SegmentedControl` (Lista \| Tabela, web `lg`), `DataTable` (cabeçalho `raised` _sticky_, linhas de 48) e o template `ListScaffold` (horizonte → elemento a −26 → conteúdo; `lg` com sidebar 1fr/3fr). Raízes T3 no nativo: sem header do `Stack` e `managesInsets` na tab (`src/navigation/tabs.ts`), porque as NativeTabs somam o inset automático ao horizonte no iOS.
 

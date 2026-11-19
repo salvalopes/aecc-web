@@ -22,6 +22,8 @@ export interface TabConfig {
   icon: IconName;
   /** Papéis que veem a tab; sem `roles`, todos. */
   roles?: readonly UserRole[];
+  /** Rótulo e ícones por papel (ex.: o Perfil do Admin é "Gestão"); o `testID` não muda. */
+  roleOverrides?: Partial<Record<UserRole, Pick<TabConfig, 'label' | 'sf' | 'md' | 'icon'>>>;
   testID: string;
   /**
    * Raiz com horizonte (`ListScaffold`: T3, T5, T6): o ecrã gere as próprias safe areas (o `Horizon` em cima, o
@@ -52,13 +54,13 @@ export const TABS: readonly TabConfig[] = [
     managesInsets: true,
   },
   {
-    name: 'profile',
-    href: '/profile',
-    label: 'Perfil',
-    sf: 'person.crop.circle',
-    md: 'account_circle',
-    icon: 'user',
-    testID: 'tab.profile',
+    name: 'map',
+    href: '/map',
+    label: 'Mapa',
+    sf: 'map',
+    md: 'map',
+    icon: 'map-trifold',
+    testID: 'tab.map',
     managesInsets: true,
   },
   {
@@ -73,17 +75,26 @@ export const TABS: readonly TabConfig[] = [
     managesInsets: true,
   },
   {
-    name: 'users',
-    href: '/users',
-    label: 'Utilizadores',
-    sf: 'person.2.badge.gearshape',
-    md: 'admin_panel_settings',
-    icon: 'shield-check',
-    roles: ['Admin'],
-    testID: 'tab.users',
+    name: 'profile',
+    href: '/profile',
+    label: 'Perfil',
+    sf: 'person.crop.circle',
+    md: 'account_circle',
+    icon: 'user',
+    // Gestão (Admin): os utilizadores passaram para dentro desta tab (máximo de 5 tabs no Android).
+    roleOverrides: {
+      Admin: { label: 'Gestão', sf: 'gearshape', md: 'settings', icon: 'gear-six' },
+    },
+    testID: 'tab.profile',
     managesInsets: true,
   },
 ];
+
+/** A tab com o rótulo e os ícones do papel (`roleOverrides`). */
+export function resolveTab(tab: TabConfig, role: UserRole | undefined): TabConfig {
+  const override = role ? tab.roleOverrides?.[role] : undefined;
+  return override ? { ...tab, ...override } : tab;
+}
 
 export function isTabVisible(tab: TabConfig, role: UserRole | undefined): boolean {
   return !tab.roles || (!!role && tab.roles.includes(role));

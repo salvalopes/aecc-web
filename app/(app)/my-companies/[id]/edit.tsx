@@ -1,4 +1,4 @@
-import { useEffect, useState, startTransition } from 'react';
+import { Suspense, lazy, useEffect, useState, startTransition } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { companiesApi } from '@/api/companies.api';
@@ -19,6 +19,11 @@ import {
   companyRules,
   type CompanyFormState,
 } from '@/components/forms/CompanyFields';
+
+// Secção MAPA (W6): chunk à parte, para não crescer o bundle inicial (regra 4).
+const MapSettingsSection = lazy(() =>
+  import('@/components/forms/MapSettingsSection').then((m) => ({ default: m.MapSettingsSection })),
+);
 
 // T7 (B12): "Editar empresa". Abre-se do detalhe da empresa e de "As minhas empresas"
 // (`/my-companies/:id/edit`); substitui o `Modal` e o antigo `?edit=1`. Só o dono edita.
@@ -136,6 +141,12 @@ export default function EditCompanyScreen() {
         errors={fieldErrors}
         logo={{ uri: logo?.uri ?? company?.logoUrl ?? null, onPick: pickLogo }}
       />
+      {/* W6: só o dono chega aqui (ver acima). Os interruptores aplicam-se logo, sem "Guardar". */}
+      {company ? (
+        <Suspense fallback={null}>
+          <MapSettingsSection companyId={company.id} owner admin={false} />
+        </Suspense>
+      ) : null}
     </FormLayout>
   );
 }

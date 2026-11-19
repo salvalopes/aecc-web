@@ -1,5 +1,5 @@
-# O Admin continua a chegar à tab Utilizadores por deep link (a guarda de `aecc://users`
-# redireciona-o). Contraponto do fluxo sem-permissao-users.
+# O Admin chega aos Utilizadores por deep link: desde a W1 do mapa já não é uma tab, mas a rota
+# do Stack /users (Gestão → Utilizadores). Contraponto do fluxo sem-permissao-users.
 appId: com.aecc.app
 name: deeplink-users-admin (nativo)
 ---

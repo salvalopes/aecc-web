@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useStackScreenOptions } from '@/navigation/stackOptions';
 import { SessionLoadingState } from '@/components/templates/StateTemplates';
+import { useTheme } from '@/theme/ThemeContext';
 
 // Guarda de sessão + Stack por cima das tabs. As tabs (`(tabs)`) só montam
 // depois de a sessão (e o papel) estarem resolvidos: mudar a visibilidade de
@@ -10,6 +11,7 @@ import { SessionLoadingState } from '@/components/templates/StateTemplates';
 export default function AppLayout() {
   const { token, isLoading } = useAuth();
   const screenOptions = useStackScreenOptions();
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -29,7 +31,21 @@ export default function AppLayout() {
       <Stack.Screen name="products/[id]/edit" options={{ title: 'Editar produto' }} />
       <Stack.Screen name="my-companies/new" options={{ title: 'Nova empresa' }} />
       <Stack.Screen name="my-companies/[id]/edit" options={{ title: 'Editar empresa' }} />
+      <Stack.Screen name="my-companies/[id]/map" options={{ title: 'Visibilidade no mapa' }} />
+      {/* Gestão → Utilizadores (W1 do mapa): saiu das tabs; o URL /users mantém-se. O header dá o
+          "voltar" e tem a cor do `Horizon` do ecrã. */}
+      <Stack.Screen
+        name="users/index"
+        options={{
+          title: 'Utilizadores',
+          // O `Horizon` do ecrã já mostra o título; o header só dá o "voltar".
+          headerTitle: '',
+          headerStyle: { backgroundColor: colors.horizon },
+        }}
+      />
       <Stack.Screen name="users/new" options={{ title: 'Novo utilizador' }} />
+      {/* Gestão → empresas sem localização (W7 do mapa, só Admin). */}
+      <Stack.Screen name="companies-unlocated" options={{ title: 'Empresas sem localização' }} />
       <Stack.Screen name="users/[id]/edit" options={{ title: 'Editar utilizador' }} />
       {/* Fora das tabs (U3): a rota continua a existir, sem entrada na navegação. */}
       <Stack.Screen name="favourites/index" options={{ title: 'Favoritos' }} />

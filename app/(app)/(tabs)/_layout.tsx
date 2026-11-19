@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { TABS, isTabVisible } from '@/navigation/tabs';
+import { TABS, isTabVisible, resolveTab } from '@/navigation/tabs';
 import { useTheme } from '@/theme/ThemeContext';
 
 // iOS/Android: tab bar do sistema (Liquid Glass no iOS 26, UITabBar antes, barra
@@ -23,7 +23,7 @@ export default function TabsLayout() {
       iconColor={isAndroid ? { default: colors.text2, selected: colors.accentSoftText } : undefined}
       labelVisibilityMode="labeled"
     >
-      {TABS.map((tab) => (
+      {TABS.map((config) => resolveTab(config, user?.role)).map((tab) => (
         // O papel já está resolvido quando este layout monta (ver (app)/_layout.tsx).
         <NativeTabs.Trigger
           key={tab.name}
