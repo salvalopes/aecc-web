@@ -1,0 +1,98 @@
+{
+  "a__desktop__light__card-fechado": {
+    "canvas": 93.3,
+    "visible": 86.2
+  },
+  "a__desktop__light__atribuicao-recolhida": {
+    "canvas": 93.3,
+    "visible": 87
+  },
+  "a__desktop__light__card-aberto": {
+    "canvas": 93.3,
+    "visible": 82.3
+  },
+  "a__desktop__dark__card-fechado": {
+    "canvas": 93.3,
+    "visible": 86.2
+  },
+  "a__desktop__dark__atribuicao-recolhida": {
+    "canvas": 93.3,
+    "visible": 87
+  },
+  "a__desktop__dark__card-aberto": {
+    "canvas": 93.3,
+    "visible": 82.3
+  },
+  "a__mobile__light__card-fechado": {
+    "canvas": 92.9,
+    "visible": 76.8
+  },
+  "a__mobile__light__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 77.2
+  },
+  "a__mobile__light__card-aberto": {
+    "canvas": 92.9,
+    "visible": 61.7
+  },
+  "a__mobile__dark__card-fechado": {
+    "canvas": 92.9,
+    "visible": 76.8
+  },
+  "a__mobile__dark__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 77.2
+  },
+  "a__mobile__dark__card-aberto": {
+    "canvas": 92.9,
+    "visible": 64.7
+  },
+  "b__desktop__light__card-fechado": {
+    "canvas": 93.3,
+    "visible": 70.2
+  },
+  "b__desktop__light__atribuicao-recolhida": {
+    "canvas": 93.3,
+    "visible": 70.9
+  },
+  "b__desktop__light__card-aberto": {
+    "canvas": 93.3,
+    "visible": 85.5
+  },
+  "b__desktop__dark__card-fechado": {
+    "canvas": 93.3,
+    "visible": 70.2
+  },
+  "b__desktop__dark__atribuicao-recolhida": {
+    "canvas": 93.3,
+    "visible": 70.9
+  },
+  "b__desktop__dark__card-aberto": {
+    "canvas": 93.3,
+    "visible": 84.8
+  },
+  "b__mobile__light__card-fechado": {
+    "canvas": 92.9,
+    "visible": 80.2
+  },
+  "b__mobile__light__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 80.7
+  },
+  "b__mobile__light__card-aberto": {
+    "canvas": 92.9,
+    "visible": 65.2
+  },
+  "b__mobile__dark__card-fechado": {
+    "canvas": 92.9,
+    "visible": 80.2
+  },
+  "b__mobile__dark__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 80.7
+  },
+  "b__mobile__dark__card-aberto": {
+    "canvas": 92.9,
+    "visible": 65.2
+  }
+}
