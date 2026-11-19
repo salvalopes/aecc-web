@@ -38,3 +38,6 @@ e2e/web/.auth/
 
 # Capturas de validação nativa (Fase C): as .png são de trabalho; as .jpg versionadas ficam
 docs/native/fase-c/**/*.png
+
+# IDE (JetBrains Rider)
+.idea/
