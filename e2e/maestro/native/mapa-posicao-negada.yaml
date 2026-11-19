@@ -31,6 +31,11 @@ name: mapa-posicao-negada (nativo)
     timeout: 30000
 - tapOn:
     id: "map.locate"
+# Android: `deny` não é definitivo e o sistema volta a perguntar no toque (é o pedido da regra 1);
+# recusa-se no diálogo. No iOS (`never`) não há diálogo.
+- tapOn:
+    text: "Don.t allow|Não permitir"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "map.locate.denied"

@@ -75,7 +75,9 @@ export default function MapScreen() {
   const me = useUserPosition();
 
   // Como no ListScaffold: as NativeTabs (iOS) flutuam por cima do conteúdo.
-  const bottom = insets.bottom + (Platform.OS === 'ios' ? spacing['6xl'] * 2 : spacing['5xl']);
+  // Ecrã fixo (sem scroll): no iOS e no Android a tab bar fica por cima do conteúdo e a ficha tem de
+  // ficar acima dela (no Android, os 40 do ListScaffold deixavam o "Ver empresa" tapado).
+  const bottom = insets.bottom + (Platform.OS === 'web' ? spacing['5xl'] : spacing['6xl'] * 2);
 
   useEffect(() => {
     categoriesApi
@@ -131,6 +133,8 @@ export default function MapScreen() {
     setCategoryId(id);
   }, []);
 
+  // Como no Início e em "As minhas empresas". No Android (NativeTabs) um push para o detalhe a partir
+  // de outra tab mostra a lista e não o detalhe — problema anterior ao mapa, reproduzido no Início.
   const open = useCallback((id: string) => router.push(`/companies/${id}`), []);
   const close = useCallback(() => setSelection(null), []);
   const selectCompany = useCallback((id: string) => setSelection({ kind: 'company', id }), []);
