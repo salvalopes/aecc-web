@@ -16,7 +16,10 @@ const factory = createStyles(({ border, colors, radius, size, spacing }) => ({
     alignItems: 'center',
     gap: spacing.sm,
     minHeight: spacing['2xl'],
+    flexShrink: 1,
   },
+  // Numa faixa estreita (telemóvel, ao lado da atribuição), o rótulo quebra em 2 linhas.
+  label: { flexShrink: 1 },
   mark: { width: size.icon.lg, alignItems: 'center' },
   dot: {
     width: spacing.md + spacing['2xs'] * 2,
@@ -44,7 +47,7 @@ export function MapLegend({ testID = 'map.legend' }: { testID?: string }) {
         <View style={s.mark}>
           <View style={s.dot} />
         </View>
-        <Text variant="meta" color="text">
+        <Text variant="meta" color="text" style={s.label}>
           Localização exata
         </Text>
       </View>
@@ -52,7 +55,7 @@ export function MapLegend({ testID = 'map.legend' }: { testID?: string }) {
         <View style={s.mark}>
           <View style={s.zone} />
         </View>
-        <Text variant="meta" color="text">
+        <Text variant="meta" color="text" style={s.label}>
           {ZONE_LEGEND}
         </Text>
       </View>

@@ -9,15 +9,25 @@ import { login, USERS } from '../helpers';
 //     CAPTURE_OUT=docs/design/mapa-refino/b npx playwright test --project=capture
 // CAPTURE_FIXTURE: saída de scripts/map/capture/build-fixture.mjs (dados sintéticos, nenhum real).
 // Escreve <out>/web__<viewport>__<tema>__<estado>.jpg e <out>/metrics.json.
+// CAPTURE_SET=ajuste-mobile (docs/design/mapa-refino.md, "Ajuste mobile"): só o telemóvel, 390 em
+// claro e escuro e 360 em escuro (pior caso: atribuição da OSM aberta, só "card-fechado").
 
 const FIXTURE = path.resolve(process.env.CAPTURE_FIXTURE ?? '.artifacts/map-fixture');
 const OUT = path.resolve(process.env.CAPTURE_OUT ?? '.artifacts/map-capture');
 const PREFIX = process.env.CAPTURE_PREFIX ?? 'web';
-const VIEWPORTS = [
-  { name: 'desktop', width: 1440, height: 900 },
-  { name: 'mobile', width: 390, height: 844 },
-];
-const THEMES = ['light', 'dark'] as const;
+type Theme = 'light' | 'dark';
+type Viewport = { name: string; width: number; height: number; themes: Theme[]; only?: string };
+const BOTH: Theme[] = ['light', 'dark'];
+const VIEWPORTS: Viewport[] =
+  process.env.CAPTURE_SET === 'ajuste-mobile'
+    ? [
+        { name: 'mobile', width: 390, height: 844, themes: BOTH },
+        { name: 'mobile360', width: 360, height: 800, themes: ['dark'], only: 'card-fechado' },
+      ]
+    : [
+        { name: 'desktop', width: 1440, height: 900, themes: BOTH },
+        { name: 'mobile', width: 390, height: 844, themes: BOTH },
+      ];
 
 type FixturePoint = {
   id: string;
@@ -90,7 +100,7 @@ const metrics: Record<string, unknown> = {};
 test.describe.configure({ mode: 'serial', timeout: 120_000 });
 
 for (const vp of VIEWPORTS) {
-  for (const theme of THEMES) {
+  for (const theme of vp.themes) {
     test(`${vp.name} ${theme}`, async ({ browser }) => {
       const context = await browser.newContext({
         viewport: { width: vp.width, height: vp.height },
@@ -111,6 +121,7 @@ for (const vp of VIEWPORTS) {
       await expect(page.locator('.maplibregl-canvas')).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(3_500);
       await shot('card-fechado');
+      if (vp.only) return context.close();
       // Atribuição recolhida: só o GISCO curto e o "(i)".
       await expect(page.getByTestId('map.attribution.info')).toBeVisible({ timeout: 5_000 });
       await shot('atribuicao-recolhida');

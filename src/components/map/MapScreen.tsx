@@ -50,10 +50,13 @@ import { countsByTopCategory, filterByCategory } from './mapFilter';
 // Regra 4: o componente do mapa (maplibre-gl no web) é outro chunk, pedido só por este ecrã.
 const CompanyMap = lazy(() => import('@/components/map/CompanyMap'));
 
-const factory = createStyles(({ colors, layout, radius, size, spacing }) => ({
+const factory = createStyles(({ colors, layout, radius, spacing }) => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   map: { ...StyleSheet.absoluteFillObject },
   overlay: { ...StyleSheet.absoluteFillObject, gap: spacing.sm },
+  // Telemóvel e nativo: a camada de cima vem antes do mapa na árvore (Tab e leitores de ecrã: chips
+  // → mapa → botão de posição → legenda → atribuição) e desenha-se por cima dele.
+  layerTop: { zIndex: 1 },
   overlayWide: { padding: spacing.lg, gap: spacing.md },
   inset: { paddingHorizontal: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -70,17 +73,9 @@ const factory = createStyles(({ colors, layout, radius, size, spacing }) => ({
     left: layout.formMaxWidth,
     alignItems: 'flex-end',
   },
-  // Título e contagem numa cápsula, não um horizonte de 200 (A1 #2).
-  title: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-    minHeight: size.hitTarget,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
   rail: { gap: spacing.sm, paddingHorizontal: spacing.md },
-  legend: { alignSelf: 'flex-start', paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  // Na faixa de baixo, ao lado da atribuição: encolhe e os rótulos quebram em 2 linhas.
+  legend: { flexShrink: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
   sheet: { padding: spacing.lg },
   // Desktop: painel à esquerda com o título, as categorias, a legenda e, ao tocar num pino, a ficha.
   panel: {
@@ -129,8 +124,9 @@ function countText(n: number) {
  * (no nativo, de ponta a ponta) e o resto flutua por cima:
  * - desktop (web `md+`): painel à esquerda com título, contagem, as 13 categorias com contagem e a
  *   legenda; ao tocar num pino, a ficha substitui a lista no mesmo painel ("‹ Categorias");
- * - telemóvel (web `sm`) e nativo: cápsula do título, chips com contagem e botão de posição em cima;
- *   legenda, atribuição e ficha em baixo.
+ * - telemóvel (web `sm`) e nativo: só os chips com contagem em cima (o título e a contagem ficam
+ *   para leitores de ecrã); em baixo, o botão de posição à direita, por cima da faixa com a legenda à
+ *   esquerda e a atribuição no canto inferior direito, e a ficha.
  * Com a ficha aberta, a legenda esconde-se e a atribuição da OSM recolhe para o "(i)".
  */
 export default function MapScreen() {
@@ -324,10 +320,12 @@ export default function MapScreen() {
         bottom: (measuredBottom || size.hitTarget) + edge,
       }
     : {
-        top: (box.topEnd || topInset + edge + size.hitTarget * 2 + spacing.sm) + spacing.sm,
+        // Antes da medição: os chips em cima; o botão de posição e o "(i)" em baixo.
+        top: (box.topEnd || topInset + edge + size.hitTarget) + spacing.sm,
         left: edge,
         right: edge,
-        bottom: (measuredBottom || bottomInset + edge + size.hitTarget) + spacing.sm,
+        bottom:
+          (measuredBottom || bottomInset + edge + size.hitTarget * 2 + spacing.sm) + spacing.sm,
       };
 
   // O aviso "a sua posição está no mapa" (só para leitores de ecrã) fica dentro da área livre do
@@ -451,6 +449,7 @@ export default function MapScreen() {
     ) : null;
 
   let overlay;
+  let overlayTop = null;
   if (isWide) {
     const categoryList = (
       <ScrollView style={s.list} accessibilityRole="radiogroup" accessibilityLabel="Categorias">
@@ -528,28 +527,17 @@ export default function MapScreen() {
       </View>
     );
   } else {
-    overlay = (
-      <View
-        style={[s.overlay, { paddingTop: topInset + edge, paddingBottom: bottomInset + edge }]}
-        pointerEvents="box-none"
-        onLayout={onOverlayLayout}
-      >
+    const pad = { paddingTop: topInset + edge, paddingBottom: bottomInset + edge };
+    // Cabeçalho e contagem só para leitores de ecrã: a tab já se chama "Mapa" e o chip "Todas · N"
+    // mostra o total.
+    overlayTop = (
+      <View style={[s.overlay, s.layerTop, pad]} pointerEvents="box-none">
         <View style={s.top} pointerEvents="box-none" onLayout={onTopLayout}>
-          <View style={[s.row, s.inset]} pointerEvents="box-none">
-            <GlassSurface
-              testID="map.title"
-              opaque
-              elevated
-              radius={radius.capsule}
-              style={s.title}
-            >
-              <Text variant="name" accessibilityRole="header">
-                Mapa
-              </Text>
-              {count}
-            </GlassSurface>
-            <View style={s.spacer} pointerEvents="none" />
-            {locate}
+          <View style={s.srOnly}>
+            <Text accessibilityRole="header">Mapa de empresas</Text>
+            <Text testID="map.count" accessibilityLiveRegion="polite">
+              {countText(points.length)}
+            </Text>
           </View>
           {categories.length ? (
             <ScrollView
@@ -574,21 +562,44 @@ export default function MapScreen() {
           ) : null}
         </View>
         {alert ? <View style={s.inset}>{alert}</View> : null}
+      </View>
+    );
+    // Em baixo: o botão de posição à direita, logo acima da faixa (legenda à esquerda, atribuição no
+    // canto inferior direito). Com a ficha, a legenda esconde-se e a atribuição fica por cima dela.
+    overlay = (
+      <View style={[s.overlay, pad]} pointerEvents="box-none" onLayout={onOverlayLayout}>
         <View style={s.spacer} pointerEvents="none" />
         <View style={[s.bottom, s.inset]} pointerEvents="box-none" onLayout={onBottomLayout}>
-          {hasCard ? null : (
-            <GlassSurface testID="map.legend-box" opaque elevated style={s.legend}>
-              <MapLegend />
-            </GlassSurface>
-          )}
           <View style={s.end} pointerEvents="box-none">
-            {attributionView}
+            {locate}
           </View>
           {card ? (
-            <GlassSurface testID="map.sheet" opaque elevated radius={radius.group} style={s.sheet}>
-              {card}
-            </GlassSurface>
-          ) : null}
+            <>
+              <View style={s.end} pointerEvents="box-none">
+                {attributionView}
+              </View>
+              <GlassSurface
+                testID="map.sheet"
+                opaque
+                elevated
+                radius={radius.group}
+                style={s.sheet}
+              >
+                {card}
+              </GlassSurface>
+            </>
+          ) : (
+            <MapAttribution
+              state={attribution}
+              onChange={setAttribution}
+              paused={!mapReady}
+              beside={
+                <GlassSurface testID="map.legend-box" opaque elevated style={s.legend}>
+                  <MapLegend />
+                </GlassSurface>
+              }
+            />
+          )}
         </View>
       </View>
     );
@@ -596,6 +607,7 @@ export default function MapScreen() {
 
   return (
     <View testID="map.screen" style={s.screen}>
+      {overlayTop}
       <View style={s.map}>
         <Suspense fallback={<StateScreen testID="map.loading" loading />}>
           <CompanyMap
