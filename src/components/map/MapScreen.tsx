@@ -47,15 +47,10 @@ import { MapAttribution, type AttributionState } from './MapAttribution';
 import { MapLegend } from './MapLegend';
 import { countsByTopCategory, filterByCategory } from './mapFilter';
 
-// Protótipo da faixa de baixo (P3, docs/design/mapa-refino.md §11), só web e só no build com
-// EXPO_PUBLIC_MAP_BAND: 'a' = legenda compacta à altura do botão; 'b' = legenda no painel do "(i)".
-const BAND =
-  Platform.OS === 'web' ? (process.env.EXPO_PUBLIC_MAP_BAND as 'a' | 'b' | undefined) : undefined;
-
 // Regra 4: o componente do mapa (maplibre-gl no web) é outro chunk, pedido só por este ecrã.
 const CompanyMap = lazy(() => import('@/components/map/CompanyMap'));
 
-const factory = createStyles(({ colors, layout, radius, size, spacing }) => ({
+const factory = createStyles(({ colors, layout, radius, spacing }) => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   map: { ...StyleSheet.absoluteFillObject },
   overlay: { ...StyleSheet.absoluteFillObject, gap: spacing.sm },
@@ -79,15 +74,6 @@ const factory = createStyles(({ colors, layout, radius, size, spacing }) => ({
     alignItems: 'flex-end',
   },
   rail: { gap: spacing.sm, paddingHorizontal: spacing.md },
-  // Na faixa de baixo, ao lado da atribuição: encolhe e os rótulos quebram em 2 linhas.
-  legend: { flexShrink: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  // Protótipo A: a legenda numa cápsula de 44, na linha do botão de posição.
-  legendCapsule: {
-    flexShrink: 1,
-    minHeight: size.hitTarget,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-  },
   sheet: { padding: spacing.lg },
   // Desktop: painel à esquerda com o título, as categorias, a legenda e, ao tocar num pino, a ficha.
   panel: {
@@ -143,9 +129,10 @@ function countText(n: number) {
  * - desktop (web `md+`): painel à esquerda com título, contagem, as 13 categorias com contagem e a
  *   legenda; ao tocar num pino, a ficha substitui a lista no mesmo painel ("‹ Categorias");
  * - telemóvel (web `sm`) e nativo: só os chips com contagem em cima (o título e a contagem ficam
- *   para leitores de ecrã); em baixo, o botão de posição à direita, por cima da faixa com a legenda à
- *   esquerda e a atribuição no canto inferior direito, e a ficha.
- * Com a ficha aberta, a legenda esconde-se e a atribuição da OSM recolhe para o "(i)".
+ *   para leitores de ecrã); em baixo, à direita, o botão de posição por cima da cápsula da
+ *   atribuição (canto inferior direito), e a ficha. A legenda está no painel do "(i)" ("Legenda e
+ *   fontes", direção B da faixa de baixo, docs/design/mapa-refino.md §11).
+ * Com a ficha aberta, a atribuição da OSM recolhe para o "(i)".
  */
 export default function MapScreen() {
   const s = useStyles(factory);
@@ -578,83 +565,31 @@ export default function MapScreen() {
         {alert ? <View style={s.inset}>{alert}</View> : null}
       </View>
     );
-    // Em baixo: o botão de posição à direita, logo acima da faixa (legenda à esquerda, atribuição no
-    // canto inferior direito). Com a ficha, a legenda esconde-se e a atribuição fica por cima dela.
+    // Em baixo, à direita: o botão de posição e, `spacing.sm` abaixo, a cápsula da atribuição no
+    // canto inferior direito (a mesma altura aberta ou recolhida: o botão não salta). A legenda está
+    // no painel do "(i)". Com a ficha, a ficha fica por baixo da atribuição.
     overlay = (
       <View style={[s.overlay, pad]} pointerEvents="box-none" onLayout={onOverlayLayout}>
         <View style={s.spacer} pointerEvents="none" />
-        {BAND ? (
-          <View style={[s.bottom, s.inset]} pointerEvents="box-none" onLayout={onBottomLayout}>
-            <View style={s.row} pointerEvents="box-none">
-              {BAND === 'a' && !card ? (
-                <GlassSurface
-                  testID="map.legend-box"
-                  opaque
-                  elevated
-                  radius={radius.capsule}
-                  style={s.legendCapsule}
-                >
-                  <MapLegend compact />
-                </GlassSurface>
-              ) : null}
-              <View style={s.spacer} pointerEvents="none" />
-              {locate}
-            </View>
-            <View style={s.end} pointerEvents="box-none">
-              <MapAttribution
-                state={attribution}
-                onChange={setAttribution}
-                paused={!mapReady}
-                compact
-                legend={BAND === 'b' ? <MapLegend /> : undefined}
-              />
-            </View>
-            {card ? (
-              <GlassSurface
-                testID="map.sheet"
-                opaque
-                elevated
-                radius={radius.group}
-                style={s.sheet}
-              >
-                {card}
-              </GlassSurface>
-            ) : null}
+        <View style={[s.bottom, s.inset]} pointerEvents="box-none" onLayout={onBottomLayout}>
+          <View style={s.end} pointerEvents="box-none">
+            {locate}
           </View>
-        ) : (
-          <View style={[s.bottom, s.inset]} pointerEvents="box-none" onLayout={onBottomLayout}>
-            <View style={s.end} pointerEvents="box-none">
-              {locate}
-            </View>
-            {card ? (
-              <>
-                <View style={s.end} pointerEvents="box-none">
-                  {attributionView}
-                </View>
-                <GlassSurface
-                  testID="map.sheet"
-                  opaque
-                  elevated
-                  radius={radius.group}
-                  style={s.sheet}
-                >
-                  {card}
-                </GlassSurface>
-              </>
-            ) : (
-              <MapAttribution
-                state={attribution}
-                onChange={setAttribution}
-                paused={!mapReady}
-                beside={
-                  <GlassSurface testID="map.legend-box" opaque elevated style={s.legend}>
-                    <MapLegend />
-                  </GlassSurface>
-                }
-              />
-            )}
+          <View style={s.end} pointerEvents="box-none">
+            <MapAttribution
+              state={attribution}
+              onChange={setAttribution}
+              paused={!mapReady}
+              compact
+              legend={<MapLegend />}
+            />
           </View>
-        )}
+          {card ? (
+            <GlassSurface testID="map.sheet" opaque elevated radius={radius.group} style={s.sheet}>
+              {card}
+            </GlassSurface>
+          ) : null}
+        </View>
       </View>
     );
   }

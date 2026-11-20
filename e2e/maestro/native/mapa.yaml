@@ -18,11 +18,27 @@ name: mapa (nativo)
 - assertVisible:
     id: "map.attribution.gisco"
 - assertVisible: "Posições © EU GISCO"
-- assertVisible:
-    id: "map.legend"
 - assertVisible: "5 empresas"
 - assertVisible:
     id: "map.locate"
+
+# Faixa de baixo (direção B): a legenda está no painel do "(i)" ("Legenda e fontes").
+# A OSM pode já ter recolhido sozinha (5 s; o Maestro no iOS é lento a ler a hierarquia).
+- tapOn:
+    id: "map.attribution.close"
+    optional: true
+- tapOn:
+    id: "map.attribution.info"
+- extendedWaitUntil:
+    visible:
+      id: "map.legend"
+    timeout: 10000
+- assertVisible: "Legenda e fontes"
+- assertVisible: "Zona aproximada \\(código postal\\)"
+- tapOn:
+    id: "map.attribution.details.close"
+- assertNotVisible:
+    id: "map.legend"
 
 # Filtro por categoria (os chips do diretório).
 - tapOn:
@@ -47,7 +63,7 @@ name: mapa (nativo)
     timeout: 20000
 - assertVisible: "Pastelaria Conceição"
 - assertVisible: "Zona aproximada.*"
-# Com a ficha aberta: a legenda esconde-se e a OSM recolhe para o "(i)"; o GISCO curto fica.
+# Com a ficha aberta: a OSM recolhe para o "(i)"; o GISCO curto fica (a legenda só no painel).
 - assertNotVisible:
     id: "map.legend"
 - assertVisible:

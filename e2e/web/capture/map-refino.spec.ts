@@ -145,6 +145,13 @@ for (const vp of VIEWPORTS) {
       // Atribuição recolhida: só o GISCO curto e o "(i)".
       await expect(page.getByTestId('map.attribution.info')).toBeVisible({ timeout: 5_000 });
       await shot('atribuicao-recolhida');
+      // Faixa de baixo (direção B): o painel do "(i)" com a legenda e as fontes.
+      if (process.env.CAPTURE_SET === 'faixa-baixo') {
+        await page.getByTestId('map.attribution.info').click();
+        await expect(page.getByTestId('map.attribution.details')).toBeVisible();
+        await shot('legenda');
+        await page.keyboard.press('Escape');
+      }
 
       // Card aberto (?company=, como o "Ver no mapa" do detalhe): pino selecionado com o anel.
       await page.goto(`/map?company=${pickCompany()}`);

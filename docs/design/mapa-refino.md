@@ -610,3 +610,88 @@ fechada/aberta e 360 escuro com a OSM aberta. Sem capturas nativas nesta ronda.
 `insets.bottom` + constante da tab bar (iOS 0, Android 80) e o de cima o `insets.top`; a contagem só para leitores de ecrã (o `mapa.yaml` faz
 `assertVisible: "5 empresas"` e espera "2 empresas"/"1 empresa"); o `map.me` abaixo dos chips. Os
 fluxos Maestro encontram o `map.locate` por id (continua a existir).
+
+## 11. Faixa de baixo (20/11/2026)
+
+Pedido do Salvador (20/11): "a distribuição dos blocos em baixo está terrível". Skill
+`design-taste-frontend-v1` (só layout, cor, tipografia e hierarquia). Branch
+`feat/mapa-faixa-baixo`, a partir do `origin/main` c4b7fce. O desktop não muda.
+
+**Auditoria (P1, `faixa-baixo/auditoria/`).** Três formas sem relação: o retângulo da legenda
+(200×70 a 390), a pílula do GISCO (150×22) e os círculos de 44. A coluna da direita não tinha uma
+largura comum (44, 150, 44). A legenda, que é informação secundária, era a maior superfície. O bloco
+de baixo media 173 px com a OSM aberta e 125 px recolhida, e o botão de posição saltava 48 px.
+
+**Direções (P2/P3, `faixa-baixo/prototipo/`).** As duas partilham a grelha de 2 linhas de 44 e a
+cápsula única da atribuição.
+
+- **A:** legenda compacta numa linha ("Ponto exato", "Zona aproximada"), à altura do botão de
+  posição. Na linha da atribuição não cabia a 360.
+- **B:** a legenda passa para o painel do "(i)".
+
+**Escolha do Salvador: B.**
+
+**Resultado (direção B)**
+
+- **Em baixo, à direita:** o botão de posição e, `spacing.sm` abaixo, a cápsula da atribuição (44,
+  `map.attribution.bar`), no canto inferior direito. As margens direitas coincidem (12).
+- **Cápsula da atribuição:**
+  - aberta: duas linhas, "© OpenStreetMap · Protomaps" (`meta`) por cima de "Posições © EU GISCO"
+    (`label`, `text2`), e o "x";
+  - recolhida: "Posições © EU GISCO" e o "(i)" na mesma cápsula;
+  - a altura é a mesma nos dois estados, por isso **o botão de posição não salta**;
+  - o temporizador de 5 s, o "x" e o gesto não mudam.
+- **O "(i)" abre "Legenda e fontes":** a legenda completa (os dois símbolos, com "Zona aproximada
+  (código postal)") e as fontes (OSM, Protomaps e o texto completo do GISCO). O botão chama-se
+  "Legenda, fontes e licenças do mapa".
+- **Zona `area` atrás de um toque:** o significado continua onde importa. A ficha de uma empresa em
+  zona diz "Zona aproximada", os pinos têm "zona aproximada" no nome acessível, e o anel tracejado
+  nunca é um ponto (o símbolo não mudou).
+- **Com a ficha:** atribuição recolhida no canto, por cima da ficha, e o botão por cima dela.
+- **Desktop:** igual; o `MapAttribution` sem `compact` mantém o chip e a pílula.
+- **Código:** o `beside` do §10 saiu (a legenda já não vai na faixa). O `compact` e o `legend` do
+  `MapAttribution` substituem-no. O `native-area.mjs` conta a `map.attribution.bar`.
+
+| Viewport | Estado                    | Bloco antes → depois | Mapa antes → depois |
+| -------- | ------------------------- | -------------------: | ------------------: |
+| 390×844  | ficha fechada, OSM aberta |      173 → **99** px |   79,0 → **84,1 %** |
+|          | OSM recolhida             |      125 → **99** px |   81,6 → **84,8 %** |
+|          | ficha aberta              |           99 → 99 px |       70,7 → 69,2 % |
+| 360×800  | ficha fechada, OSM aberta |      173 → **99** px |   76,0 → **81,5 %** |
+|          | OSM recolhida             |      125 → **99** px |   79,3 → **82,4 %** |
+|          | ficha aberta              |           99 → 99 px |       64,2 → 62,9 % |
+
+O bloco vai do topo do botão de posição (ou da legenda) ao fundo da atribuição, sem a ficha. Com a
+ficha aberta, o mapa perde ≈ 1,5 pp: a cápsula única tem mais área opaca do que a pílula mais o
+círculo. Os valores são iguais em claro e escuro. As capturas finais estão em
+`mapa-refino/faixa-baixo/final__*`, a 390 e 360, claro e escuro, nos estados OSM aberta, recolhida,
+legenda e ficha aberta.
+
+**Contagens dos chips nas capturas.** Os números das capturas ("Todas · 1523", "Construção · 135",
+"Vestuário · 100") vêm do **fixture sintético** (`scripts/map/capture/build-fixture.mjs`):
+
+- 1523 empresas inventadas, com o total escolhido para corresponder ao de produção;
+- as categorias são sorteadas por pesos fixos, com uma seed fixa;
+- não são as contagens reais de produção (lá, Construção 67 e Vestuário 29).
+
+A BD local da stack E2E só tem 6 empresas (Comércio 2, Restauração 2, Indústria 1, Serviços 1; 5 no
+mapa). A contagem por categoria (`countsByTopCategory`, `mapFilter.ts`) não muda desde 7b7da3c, e o
+`map.spec` e o `map-settings` verificam-na (5 / 2 / 1). Não é uma regressão.
+
+**Parte 1 — "A minha posição" na web.**
+
+- Produção (`curl -sI`) não tem `Permissions-Policy` nem CSP, e o código não define nenhuma.
+- O `getCurrentPosition` corre dentro do gesto. O `map.spec` regista
+  `navigator.userActivation.isActive` = `true`.
+- Sem causa no código: o `denied` vem das definições do Safari ou do iOS.
+- Na web, o aviso passou a "Sem acesso à localização. Permita a localização para este site nas
+  definições do browser."; o nativo fica igual.
+
+**Por verificar no nativo:**
+
+- a cápsula de duas linhas (`meta` 18 + `label` 16 em 44) com o tamanho de letra do sistema
+  aumentado: cresce e não corta;
+- o painel "Legenda e fontes" acima da cápsula, com o `insets.bottom` e a constante da tab bar de
+  hoje;
+- o `mapa.yaml` atualizado e não corrido: abre o "(i)", procura "Legenda e fontes" e
+  `map.legend`, e o "x" passou a opcional.
