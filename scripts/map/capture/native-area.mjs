@@ -18,7 +18,6 @@ if (!dir) {
 
 // Superfícies opacas por cima do mapa (testID). Os chips contam um a um (entre eles vê-se o mapa).
 const OVERLAY = [
-  /^map\.title$/,
   /^map\.locate$/,
   /^companies\.category-chip-/,
   /^map\.legend-box$/,

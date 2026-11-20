@@ -120,6 +120,117 @@ test.describe('mapa: componente', () => {
   });
 });
 
+// Ajuste mobile (docs/design/mapa-refino.md, "Ajuste mobile"): sem a cápsula do título, os chips são
+// a 1.ª linha; em baixo, o botão de posição à direita, logo acima da faixa com a legenda à esquerda e
+// a atribuição no canto inferior direito.
+test.describe('mapa: telemóvel', () => {
+  type Box = { x: number; y: number; width: number; height: number };
+  const bottom = (b: Box) => b.y + b.height;
+  const right = (b: Box) => b.x + b.width;
+  // A margem do vidro (1 px) e os arredondamentos do layout: ±2 px.
+  const near = (a: number, b: number) => Math.abs(a - b) <= 2;
+  const overlaps = (a: Box, b: Box) =>
+    a.x < right(b) && b.x < right(a) && a.y < bottom(b) && b.y < bottom(a);
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 360, height: 800 },
+  ]) {
+    test(`${viewport.width} px: chips em cima; botão de posição acima da faixa, sem a sobrepor nem à ficha`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport });
+      const page = await context.newPage();
+      const box = async (id: string) => (await page.getByTestId(id).boundingBox())!;
+      await login(page, USERS.cliente);
+      await openMap(page);
+
+      // Sem a cápsula do título; o cabeçalho e a contagem ficam para os leitores de ecrã.
+      await expect(page.getByTestId('map.title')).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Mapa de empresas' })).toBeAttached();
+      await expect(page.getByTestId('map.count')).toHaveText('5 empresas');
+      await expect(page.getByTestId('map.count')).toHaveAttribute('aria-live', 'polite');
+      const chips = await box('map.chips');
+      const canvas = (await page.locator('.maplibregl-canvas').boundingBox())!;
+      expect(chips.y - canvas.y).toBeLessThanOrEqual(16);
+
+      // O botão de posição: dentro do ecrã, encostado à direita (12), 8 acima da faixa e sem a
+      // sobrepor; a legenda à esquerda e a atribuição no canto, na mesma faixa.
+      const check = async (state: string, band: string[]) => {
+        const locate = await box('map.locate');
+        expect(locate.x, state).toBeGreaterThanOrEqual(0);
+        expect(locate.y, state).toBeGreaterThan(bottom(chips));
+        expect(near(right(locate), viewport.width - 12), `${state}: ${right(locate)}`).toBe(true);
+        expect(bottom(locate), state).toBeLessThanOrEqual(canvas.y + canvas.height);
+        const below = await Promise.all(band.map(box));
+        const top = Math.min(...below.map((b) => b.y));
+        expect(top - bottom(locate), state).toBeGreaterThanOrEqual(8);
+        expect(top - bottom(locate), state).toBeLessThan(10);
+        for (const [i, b] of below.entries()) expect(overlaps(locate, b), band[i]).toBe(false);
+        // A atribuição fica no canto inferior direito: é o elemento mais baixo da margem direita.
+        const attribution = await box('map.attribution');
+        const corner = await box(
+          state === 'aberta' ? 'map.attribution.gisco' : 'map.attribution.info',
+        );
+        expect(near(right(corner), viewport.width - 12), `${state}: ${right(corner)}`).toBe(true);
+        expect(near(bottom(corner), bottom(attribution)), state).toBe(true);
+        return { locate, attribution };
+      };
+
+      // Atribuição aberta (OSM visível à entrada): legenda à esquerda, sem cortes nem sobreposições.
+      await expect(page.getByTestId('map.attribution.osm')).toBeVisible();
+      await check('aberta', ['map.attribution.osm', 'map.legend-box', 'map.attribution.gisco']);
+      const legend = await box('map.legend-box');
+      const gisco = await box('map.attribution.gisco');
+      expect(near(legend.x, 12)).toBe(true);
+      expect(overlaps(legend, gisco)).toBe(false);
+      expect(overlaps(legend, await box('map.attribution.osm'))).toBe(false);
+      expect(near(bottom(legend), bottom(gisco))).toBe(true);
+
+      // Recolhida: o botão desce com a faixa.
+      await page.getByTestId('map.attribution.close').click();
+      await expect(page.getByTestId('map.attribution.info')).toBeVisible();
+      await check('recolhida', ['map.legend-box', 'map.attribution.gisco', 'map.attribution.info']);
+      expect(overlaps(await box('map.legend-box'), await box('map.attribution.info'))).toBe(false);
+
+      // Ficha aberta: sem legenda; atribuição recolhida no canto, por cima da ficha; o botão por cima.
+      await openMap(page, `/map?company=${C004}`);
+      await expect(page.getByTestId('map.card')).toBeVisible();
+      await expect(page.getByTestId('map.legend-box')).toHaveCount(0);
+      const { attribution } = await check('ficha', ['map.attribution', 'map.sheet']);
+      const sheet = await box('map.sheet');
+      expect(sheet.y - bottom(attribution)).toBeGreaterThanOrEqual(8);
+      expect(bottom(sheet)).toBeLessThanOrEqual(viewport.height);
+      await context.close();
+    });
+  }
+
+  test('teclado: chips → mapa → botão de posição → atribuição', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await login(page, USERS.cliente);
+    await openMap(page);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    const order: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      await page.keyboard.press('Tab');
+      order.push(
+        await page.evaluate(() => {
+          const el = document.activeElement;
+          if (el?.classList.contains('maplibregl-canvas')) return 'canvas';
+          return el?.getAttribute('data-testid') ?? '';
+        }),
+      );
+    }
+    const at = (id: string) => order.indexOf(id);
+    expect(at('companies.category-chip-all')).toBe(0);
+    expect(at('canvas')).toBeGreaterThan(at('companies.category-chip-e2e-comercio'));
+    expect(at('map.locate')).toBe(at('canvas') + 1);
+    expect(at('map.attribution.close')).toBeGreaterThan(at('map.locate'));
+    await context.close();
+  });
+});
+
 // W5. Posição simulada com casas decimais distintivas (sem falsos positivos nas pesquisas).
 const SIM = { latitude: 38.7123456, longitude: -9.4198765 };
 const SIM_TRACES = ['38.7123', '9.41987', '38,7123', '9,41987'];

@@ -550,3 +550,63 @@ Também nos builds Release: o `EXPO_PUBLIC_*` é inlinado na transformação e a
 env na chave, e o Gradle pode dar o bundle como `UP-TO-DATE`. Ao trocar de API entre builds, limpar a
 cache do Metro e `android/app/build/generated/assets/react` (senão o APK fica com o URL anterior;
 confirmar com `unzip -p … index.android.bundle | grep 127.0.0.1`).
+
+## 10. Ajuste mobile (20/11/2026)
+
+Pedido do Salvador (20/11), só no ramo telemóvel (web `sm`) e nativo do `MapScreen` (o desktop fica
+igual). Branch `feat/mapa-ajuste-mobile`, a partir do `origin/main` 7e5507f.
+
+**O que mudou**
+
+1. **Sem a cápsula do título** (`map.title`): a tab já se chama "Mapa" e o chip "Todas · N" mostra o
+   total. Os chips passam a ser a 1.ª linha, logo abaixo da safe area. Fica, só para leitores de
+   ecrã (`srOnly`), o cabeçalho "Mapa de empresas" (`header`) e a contagem `map.count` ("5
+   empresas", "1 empresa") como live region `polite`.
+2. **Faixa de baixo: legenda à esquerda, atribuição no canto inferior direito.** O `MapAttribution`
+   ganhou o `beside` (a legenda): a faixa vem primeiro na árvore e o `column-reverse` desenha a OSM
+   (ou o painel "Fontes e licenças") por cima do GISCO. O canto não encolhe; quem quebra é a legenda.
+   Medido a 390 e a 360 (lado a lado não cabia, com a OSM aberta ou recolhida):
+   - (a) a legenda quebra os rótulos: "Zona aproximada / (código postal)" em 2 linhas (36 = 2 × 18,
+     `meta`), "Localização exata" numa;
+   - (b) mesmo assim, o GISCO e o "(i)" lado a lado (198 de largura) deixavam à legenda 152 a 390
+     (94 para o texto) e "Zona aproximada" passava a 3 linhas. Por isso a atribuição recolhida
+     **empilha**: GISCO por cima do "(i)", encostados ao canto. A legenda fica com 200 a 390 e 170 a
+     360; os rótulos ficam em ≤ 2 linhas nas duas larguras.
+   - OSM aberta (à entrada, até aos 5 s): o chip da OSM fica por cima do GISCO, no canto, e a legenda
+     ao lado do GISCO; sem sobreposições nem cortes ([360, escuro](mapa-refino/ajuste-mobile/depois__mobile360__dark__card-fechado.jpg)).
+   - Com a ficha: como antes, legenda escondida e atribuição recolhida (GISCO e "(i)" numa linha), no
+     canto, por cima da ficha.
+   - Os tamanhos de texto não mudam (`label` 12 no GISCO, `meta` 13 na legenda e na OSM).
+3. **Botão de posição em baixo, à direita**, `spacing.sm` acima da faixa (ou da atribuição, com a
+   ficha), no mesmo bloco medido. Acompanha a altura da faixa (OSM aberta/recolhida, painel das
+   fontes, ficha). Aparece nas mesmas condições de antes.
+
+**Consequências**
+
+- `padding` do mapa: `topEnd` = fim dos chips; `bottomStart` = início do bloco botão + faixa. A
+  estimativa antes da 1.ª medição passou de `hitTarget * 2 + sm` em cima e `hitTarget` em baixo para
+  `hitTarget` em cima e `hitTarget * 2 + sm` em baixo.
+- `map.me` continua em `padding.top` (dentro da área livre, abaixo dos chips).
+- **Ordem de foco (web, Tab):** chips → mapa → botão de posição → atribuição (a legenda não tem
+  alvos). Para os chips virem antes do mapa, **só na web** a camada de cima (chips, aviso) passa para
+  antes do mapa na árvore, com `zIndex: 1` para se desenhar por cima. Antes era mapa → botão → chips
+  → "(i)". No nativo a ordem fica como no `main` (mapa primeiro, controlos depois, sem `zIndex`).
+- Regras do #41 mantidas: auditoria de literais 0 / 0 / 2; sem dependências nem domínios novos;
+  `maplibre-gl` lazy; alvos ≥ 44.
+
+**Área do mapa livre de controlos (web mobile, grelha de 8 px, `metrics.json`)**
+
+| Viewport         | Estado                       |  Antes |     Depois |
+| ---------------- | ---------------------------- | -----: | ---------: |
+| 390×844          | ficha fechada, OSM aberta    | 74,6 % | **79,0 %** |
+|                  | ficha fechada, OSM recolhida | 76,3 % | **81,6 %** |
+|                  | ficha aberta                 | 68,5 % | **70,7 %** |
+| 360×800 (escuro) | ficha fechada, OSM aberta    | 71,4 % | **76,0 %** |
+
+Iguais em claro e escuro. Capturas (`mapa-refino/ajuste-mobile/`): 390 claro/escuro × ficha
+fechada/aberta e 360 escuro com a OSM aberta. Sem capturas nativas nesta ronda.
+
+**Por verificar no nativo (próxima ronda de emuladores):** o bloco de baixo usa o mesmo
+`insets.bottom` + constante da tab bar (iOS 0, Android 80) e o de cima o `insets.top`; a contagem só para leitores de ecrã (o `mapa.yaml` faz
+`assertVisible: "5 empresas"` e espera "2 empresas"/"1 empresa"); o `map.me` abaixo dos chips. Os
+fluxos Maestro encontram o `map.locate` por id (continua a existir).
