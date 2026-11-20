@@ -18,8 +18,16 @@ const PREFIX = process.env.CAPTURE_PREFIX ?? 'web';
 type Theme = 'light' | 'dark';
 type Viewport = { name: string; width: number; height: number; themes: Theme[]; only?: string };
 const BOTH: Theme[] = ['light', 'dark'];
+const SETS: Record<string, Viewport[]> = {
+  // Faixa de baixo (docs/design/mapa-refino.md, "Faixa de baixo"): 390 e 360, claro e escuro.
+  'faixa-baixo': [
+    { name: 'mobile', width: 390, height: 844, themes: BOTH },
+    { name: 'mobile360', width: 360, height: 800, themes: BOTH },
+  ],
+};
 const VIEWPORTS: Viewport[] =
-  process.env.CAPTURE_SET === 'ajuste-mobile'
+  SETS[process.env.CAPTURE_SET ?? ''] ??
+  (process.env.CAPTURE_SET === 'ajuste-mobile'
     ? [
         { name: 'mobile', width: 390, height: 844, themes: BOTH },
         { name: 'mobile360', width: 360, height: 800, themes: ['dark'], only: 'card-fechado' },
@@ -27,7 +35,7 @@ const VIEWPORTS: Viewport[] =
     : [
         { name: 'desktop', width: 1440, height: 900, themes: BOTH },
         { name: 'mobile', width: 390, height: 844, themes: BOTH },
-      ];
+      ]);
 
 type FixturePoint = {
   id: string;
@@ -76,7 +84,7 @@ async function mapArea(page: Page) {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const canvas = document.querySelector('.maplibregl-canvas');
-    if (!canvas) return { canvas: 0, visible: 0 };
+    if (!canvas) return { canvas: 0, visible: 0, band: 0 };
     const r = canvas.getBoundingClientRect();
     const ix = Math.max(0, Math.min(r.right, w) - Math.max(r.left, 0));
     const iy = Math.max(0, Math.min(r.bottom, h) - Math.max(r.top, 0));
@@ -88,9 +96,21 @@ async function mapArea(page: Page) {
         if (document.elementFromPoint(x, y) === canvas) hit++;
       }
     }
+    // Bloco de baixo: do topo do botão de posição (ou da legenda) ao fundo da atribuição.
+    const rect = (id: string) =>
+      document.querySelector(`[data-testid="${id}"]`)?.getBoundingClientRect() ?? null;
+    const parts = ['map.locate', 'map.legend-box', 'map.attribution']
+      .map(rect)
+      .filter((r): r is DOMRect => !!r && r.height > 0);
+    const attribution = rect('map.attribution');
+    const band =
+      attribution && parts.length
+        ? Math.round(attribution.bottom - Math.min(...parts.map((r) => r.top)))
+        : 0;
     return {
       canvas: Math.round(((ix * iy) / (w * h)) * 1000) / 10,
       visible: Math.round((hit / total) * 1000) / 10,
+      band,
     };
   });
 }

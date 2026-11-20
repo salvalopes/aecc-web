@@ -27,7 +27,7 @@ export const COLLAPSE_AFTER_MS = 5000;
 /** `open`: chip da OSM; `collapsed`: só o "(i)"; `details`: painel "Fontes e licenças". */
 export type AttributionState = 'open' | 'collapsed' | 'details';
 
-const factory = createStyles(({ layout, radius, spacing }) => ({
+const factory = createStyles(({ layout, radius, size, spacing }) => ({
   stack: { alignItems: 'flex-end', gap: spacing.xs, maxWidth: '100%' },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, maxWidth: '100%' },
   // Com `beside`: a faixa vem primeiro na árvore (ordem de leitura: legenda, depois atribuição) e o
@@ -38,6 +38,17 @@ const factory = createStyles(({ layout, radius, spacing }) => ({
   // O canto não encolhe (o GISCO fica numa linha): quem quebra é a legenda.
   corner: { flexShrink: 0, alignItems: 'flex-end', gap: spacing.xs },
   top: { alignSelf: 'flex-end', maxWidth: '100%' },
+  // Forma compacta (protótipo da faixa de baixo): uma cápsula de 44 com o texto à esquerda e um só
+  // botão à direita ("x" com a OSM aberta, "(i)" recolhida). A altura não muda entre os estados.
+  capsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: size.hitTarget,
+    paddingLeft: spacing.lg,
+    maxWidth: '100%',
+  },
+  lines: { flexShrink: 1, alignItems: 'flex-end' },
+  legendBlock: { gap: spacing.sm, paddingBottom: spacing.xs },
   osm: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -84,6 +95,8 @@ export function MapAttribution({
   onChange,
   paused = false,
   beside,
+  compact = false,
+  legend,
   style,
 }: {
   state: AttributionState;
@@ -92,6 +105,10 @@ export function MapAttribution({
   paused?: boolean;
   /** Conteúdo à esquerda na faixa de baixo (a legenda, no telemóvel e no nativo). */
   beside?: ReactNode;
+  /** Uma cápsula de 44 (telemóvel, protótipo da faixa de baixo). */
+  compact?: boolean;
+  /** Legenda no painel do "(i)" (protótipo B: a faixa sem legenda). */
+  legend?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
   const s = useStyles(factory);
@@ -138,6 +155,78 @@ export function MapAttribution({
       />
     </GlassSurface>
   );
+
+  const detailsPanel = (
+    <GlassSurface
+      opaque
+      elevated
+      style={[s.details, beside || compact ? s.top : null]}
+      testID="map.attribution.details"
+    >
+      <View style={s.detailsHead}>
+        <Text variant="name" accessibilityRole="header" style={s.detailsTitle}>
+          {legend ? 'Legenda e fontes' : 'Fontes e licenças'}
+        </Text>
+        <IconButton
+          testID="map.attribution.details.close"
+          icon="x"
+          label={legend ? 'Fechar a legenda e as fontes' : 'Fechar as fontes e licenças'}
+          onPress={() => onChange('collapsed')}
+        />
+      </View>
+      <View style={s.detailsBody}>
+        {legend ? <View style={s.legendBlock}>{legend}</View> : null}
+        <Text variant="meta" color="text">
+          Dados do mapa © <Link url={OSM_COPYRIGHT_URL}>colaboradores do OpenStreetMap</Link>,
+          licença ODbL.
+        </Text>
+        <Text variant="meta" color="text">
+          Mapa base: <Link url={PROTOMAPS_URL}>Protomaps</Link>.
+        </Text>
+        <Text testID="map.attribution.gisco-full" variant="meta" color="text">
+          Posições dos códigos postais: {GISCO_ATTRIBUTION}
+        </Text>
+      </View>
+    </GlassSurface>
+  );
+
+  if (compact) {
+    const open = state === 'open';
+    return (
+      <View testID="map.attribution" style={[s.stack, style]} pointerEvents="box-none">
+        {state === 'details' ? detailsPanel : null}
+        <GlassSurface opaque elevated radius={radius.capsule} style={s.capsule}>
+          <View style={s.lines}>
+            {open ? (
+              <Text testID="map.attribution.osm" variant="meta" color="text">
+                © <Link url={OSM_COPYRIGHT_URL}>OpenStreetMap</Link>
+                {' · '}
+                <Link url={PROTOMAPS_URL}>Protomaps</Link>
+              </Text>
+            ) : null}
+            <Text testID="map.attribution.gisco" variant="label" color="text2">
+              {GISCO_SHORT}
+            </Text>
+          </View>
+          {open ? (
+            <IconButton
+              testID="map.attribution.close"
+              icon="x"
+              label="Recolher a atribuição"
+              onPress={() => onChange('collapsed')}
+            />
+          ) : (
+            <IconButton
+              testID="map.attribution.info"
+              icon="info"
+              label={legend ? 'Legenda, fontes e licenças do mapa' : 'Fontes e licenças do mapa'}
+              onPress={() => onChange('details')}
+            />
+          )}
+        </GlassSurface>
+      </View>
+    );
+  }
 
   if (state === 'collapsed' && beside) {
     return (
