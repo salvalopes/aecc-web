@@ -588,8 +588,9 @@ igual). Branch `feat/mapa-ajuste-mobile`, a partir do `origin/main` 7e5507f.
   `hitTarget` em cima e `hitTarget * 2 + sm` em baixo.
 - `map.me` continua em `padding.top` (dentro da área livre, abaixo dos chips).
 - **Ordem de foco (web, Tab):** chips → mapa → botão de posição → atribuição (a legenda não tem
-  alvos). Para os chips virem antes do mapa, a camada de cima (chips, aviso) passou para antes do
-  mapa na árvore, com `zIndex: 1` para se desenhar por cima. Antes era mapa → botão → chips → "(i)".
+  alvos). Para os chips virem antes do mapa, **só na web** a camada de cima (chips, aviso) passa para
+  antes do mapa na árvore, com `zIndex: 1` para se desenhar por cima. Antes era mapa → botão → chips
+  → "(i)". No nativo a ordem fica como no `main` (mapa primeiro, controlos depois, sem `zIndex`).
 - Regras do #41 mantidas: auditoria de literais 0 / 0 / 2; sem dependências nem domínios novos;
   `maplibre-gl` lazy; alvos ≥ 44.
 
@@ -606,7 +607,6 @@ Iguais em claro e escuro. Capturas (`mapa-refino/ajuste-mobile/`): 390 claro/esc
 fechada/aberta e 360 escuro com a OSM aberta. Sem capturas nativas nesta ronda.
 
 **Por verificar no nativo (próxima ronda de emuladores):** o bloco de baixo usa o mesmo
-`insets.bottom` + constante da tab bar (iOS 0, Android 80) e o de cima o `insets.top`; o `zIndex` da
-camada de cima sobre o `MapView` nativo; a contagem só para leitores de ecrã (o `mapa.yaml` faz
+`insets.bottom` + constante da tab bar (iOS 0, Android 80) e o de cima o `insets.top`; a contagem só para leitores de ecrã (o `mapa.yaml` faz
 `assertVisible: "5 empresas"` e espera "2 empresas"/"1 empresa"); o `map.me` abaixo dos chips. Os
 fluxos Maestro encontram o `map.locate` por id (continua a existir).

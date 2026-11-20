@@ -54,8 +54,8 @@ const factory = createStyles(({ colors, layout, radius, spacing }) => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   map: { ...StyleSheet.absoluteFillObject },
   overlay: { ...StyleSheet.absoluteFillObject, gap: spacing.sm },
-  // Telemóvel e nativo: a camada de cima vem antes do mapa na árvore (Tab e leitores de ecrã: chips
-  // → mapa → botão de posição → legenda → atribuição) e desenha-se por cima dele.
+  // Só web (`sm`): a camada de cima vem antes do mapa na árvore (Tab: chips → mapa → botão de posição
+  // → legenda → atribuição) e o `zIndex` desenha-a por cima dele. No nativo fica depois do mapa.
   layerTop: { zIndex: 1 },
   overlayWide: { padding: spacing.lg, gap: spacing.md },
   inset: { paddingHorizontal: spacing.md },
@@ -531,7 +531,7 @@ export default function MapScreen() {
     // Cabeçalho e contagem só para leitores de ecrã: a tab já se chama "Mapa" e o chip "Todas · N"
     // mostra o total.
     overlayTop = (
-      <View style={[s.overlay, s.layerTop, pad]} pointerEvents="box-none">
+      <View style={[s.overlay, native ? null : s.layerTop, pad]} pointerEvents="box-none">
         <View style={s.top} pointerEvents="box-none" onLayout={onTopLayout}>
           <View style={s.srOnly}>
             <Text accessibilityRole="header">Mapa de empresas</Text>
@@ -607,7 +607,7 @@ export default function MapScreen() {
 
   return (
     <View testID="map.screen" style={s.screen}>
-      {overlayTop}
+      {native ? null : overlayTop}
       <View style={s.map}>
         <Suspense fallback={<StateScreen testID="map.loading" loading />}>
           <CompanyMap
@@ -627,6 +627,7 @@ export default function MapScreen() {
         </Suspense>
       </View>
       {emptyCategory}
+      {native ? overlayTop : null}
       {overlay}
       {me.position ? (
         <View
