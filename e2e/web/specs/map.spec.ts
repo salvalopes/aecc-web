@@ -238,14 +238,21 @@ const SIM_TRACES = ['38.7123', '9.41987', '38,7123', '9,41987'];
 // Conta as chamadas à API de geolocalização do browser (regra 1: só depois do toque no botão).
 async function instrumentGeolocation(page: Page) {
   await page.addInitScript(() => {
-    const w = window as unknown as { __geo: { get: number; watch: number } };
+    const w = window as unknown as {
+      __geo: { get: number; watch: number };
+      __geoInGesture: boolean[];
+    };
     w.__geo = { get: 0, watch: 0 };
+    // O Safari pode recusar sem perguntar se o pedido sai do gesto: regista se cada
+    // getCurrentPosition correu com a ativação do utilizador ainda ativa.
+    w.__geoInGesture = [];
     const geo = navigator.geolocation;
     if (!geo) return;
     const get = geo.getCurrentPosition.bind(geo);
     const watch = geo.watchPosition.bind(geo);
     geo.getCurrentPosition = (...args: Parameters<Geolocation['getCurrentPosition']>) => {
       w.__geo.get += 1;
+      w.__geoInGesture.push(navigator.userActivation?.isActive ?? false);
       return get(...args);
     };
     geo.watchPosition = (...args: Parameters<Geolocation['watchPosition']>) => {
@@ -290,6 +297,12 @@ test.describe('mapa: a minha posição (regras 1 e 2)', () => {
       'A sua posição está no mapa',
     );
     expect(await geoCalls(page)).toEqual({ get: 1, watch: 0 });
+    // Dentro do gesto do toque (sem await nem setTimeout antes do pedido).
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __geoInGesture: boolean[] }).__geoInGesture,
+      ),
+    ).toEqual([true]);
 
     // Mexer no mapa depois (filtro → novo GET /companies/map) também não leva a posição.
     await page.getByTestId('companies.category-chip-e2e-restauracao').click();
@@ -320,7 +333,10 @@ test.describe('mapa: a minha posição (regras 1 e 2)', () => {
 
     await page.getByTestId('map.locate').click();
     await expect(page.getByTestId('map.locate.denied')).toBeVisible();
-    await expect(page.getByTestId('map.locate.denied')).toContainText('Sem acesso à localização');
+    // Na web, a permissão é do browser (por site), não do dispositivo.
+    await expect(page.getByTestId('map.locate.denied')).toHaveText(
+      'Sem acesso à localização. Permita a localização para este site nas definições do browser.',
+    );
     await expect(page.getByTestId('map.me')).toHaveCount(0);
 
     await page.getByTestId('companies.category-chip-e2e-comercio').click();

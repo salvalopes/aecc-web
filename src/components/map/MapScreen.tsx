@@ -115,6 +115,12 @@ const factory = createStyles(({ colors, layout, radius, spacing }) => ({
 
 type Selection = { kind: 'company'; id: string } | { kind: 'group'; ids: string[] } | null;
 
+// Na web a permissão é do browser, por site; no nativo, das definições do dispositivo.
+const DENIED_MESSAGE =
+  Platform.OS === 'web'
+    ? 'Sem acesso à localização. Permita a localização para este site nas definições do browser.'
+    : 'Sem acesso à localização. Pode ativá-lo nas definições do dispositivo.';
+
 function countText(n: number) {
   return n === 1 ? '1 empresa' : `${n} empresas`;
 }
@@ -394,11 +400,7 @@ export default function MapScreen() {
       message="Esta empresa não aparece no mapa (sem localização ou escondida)."
     />
   ) : me.state === 'denied' ? (
-    <InlineAlert
-      testID="map.locate.denied"
-      tone="error"
-      message="Sem acesso à localização. Pode ativá-lo nas definições do dispositivo."
-    />
+    <InlineAlert testID="map.locate.denied" tone="error" message={DENIED_MESSAGE} />
   ) : me.state === 'unavailable' ? (
     <InlineAlert
       testID="map.locate.unavailable"
