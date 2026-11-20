@@ -82,7 +82,8 @@ test.describe('mapa: ficha', () => {
     const page = await context.newPage();
     await login(page, USERS.cliente);
     await openMap(page);
-    await expect(page.getByTestId('map.legend')).toBeVisible();
+    // Telemóvel (faixa de baixo, direção B): a legenda está no painel do "(i)", nunca na faixa.
+    await expect(page.getByTestId('map.legend')).toHaveCount(0);
     await expect(page.getByTestId('map.attribution.close')).toBeVisible();
 
     await openMap(page, `/map?company=${C004}`);
