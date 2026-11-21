@@ -120,9 +120,9 @@ test.describe('mapa: componente', () => {
   });
 });
 
-// Ajuste mobile (docs/design/mapa-refino.md, "Ajuste mobile"): sem a cápsula do título, os chips são
-// a 1.ª linha; em baixo, o botão de posição à direita, logo acima da faixa com a legenda à esquerda e
-// a atribuição no canto inferior direito.
+// Telemóvel (docs/design/mapa-refino.md §10 "Ajuste mobile" e §11 "Faixa de baixo", direção B): os
+// chips são a 1.ª linha; em baixo, à direita, o botão de posição por cima da cápsula da atribuição
+// (canto inferior direito). A legenda está no painel do "(i)" ("Legenda e fontes").
 test.describe('mapa: telemóvel', () => {
   type Box = { x: number; y: number; width: number; height: number };
   const bottom = (b: Box) => b.y + b.height;
@@ -136,7 +136,7 @@ test.describe('mapa: telemóvel', () => {
     { width: 390, height: 844 },
     { width: 360, height: 800 },
   ]) {
-    test(`${viewport.width} px: chips em cima; botão de posição acima da faixa, sem a sobrepor nem à ficha`, async ({
+    test(`${viewport.width} px: chips em cima; botão de posição por cima da atribuição, no canto, sem saltar`, async ({
       browser,
     }) => {
       const context = await browser.newContext({ viewport });
@@ -153,53 +153,70 @@ test.describe('mapa: telemóvel', () => {
       const chips = await box('map.chips');
       const canvas = (await page.locator('.maplibregl-canvas').boundingBox())!;
       expect(chips.y - canvas.y).toBeLessThanOrEqual(16);
+      // Na faixa só ficam o botão e a atribuição: a legenda está no painel do "(i)".
+      await expect(page.getByTestId('map.legend')).toHaveCount(0);
 
-      // O botão de posição: dentro do ecrã, encostado à direita (12), 8 acima da faixa e sem a
-      // sobrepor; a legenda à esquerda e a atribuição no canto, na mesma faixa.
-      const check = async (state: string, band: string[]) => {
+      // O botão: dentro do ecrã, encostado à direita (12), 8 acima da atribuição e sem a sobrepor.
+      // A cápsula da atribuição tem 44 e fica no canto inferior direito (o elemento mais baixo da
+      // margem direita); com a ficha, a ficha fica por baixo dela.
+      const check = async (state: string) => {
         const locate = await box('map.locate');
-        expect(locate.x, state).toBeGreaterThanOrEqual(0);
+        const bar = await box('map.attribution.bar');
         expect(locate.y, state).toBeGreaterThan(bottom(chips));
         expect(near(right(locate), viewport.width - 12), `${state}: ${right(locate)}`).toBe(true);
-        expect(bottom(locate), state).toBeLessThanOrEqual(canvas.y + canvas.height);
-        const below = await Promise.all(band.map(box));
-        const top = Math.min(...below.map((b) => b.y));
-        expect(top - bottom(locate), state).toBeGreaterThanOrEqual(8);
-        expect(top - bottom(locate), state).toBeLessThan(10);
-        for (const [i, b] of below.entries()) expect(overlaps(locate, b), band[i]).toBe(false);
-        // A atribuição fica no canto inferior direito: é o elemento mais baixo da margem direita.
-        const attribution = await box('map.attribution');
-        const corner = await box(
-          state === 'aberta' ? 'map.attribution.gisco' : 'map.attribution.info',
-        );
-        expect(near(right(corner), viewport.width - 12), `${state}: ${right(corner)}`).toBe(true);
-        expect(near(bottom(corner), bottom(attribution)), state).toBe(true);
-        return { locate, attribution };
+        expect(near(right(bar), viewport.width - 12), `${state}: ${right(bar)}`).toBe(true);
+        expect(bar.x, state).toBeGreaterThanOrEqual(12);
+        expect(near(bar.height, 44), `${state}: ${bar.height}`).toBe(true);
+        expect(bar.y - bottom(locate), state).toBeGreaterThanOrEqual(8);
+        expect(bar.y - bottom(locate), state).toBeLessThan(10);
+        expect(overlaps(locate, bar), state).toBe(false);
+        expect(bottom(bar), state).toBeLessThanOrEqual(canvas.y + canvas.height);
+        return { locate, bar };
       };
 
-      // Atribuição aberta (OSM visível à entrada): legenda à esquerda, sem cortes nem sobreposições.
+      // OSM aberta à entrada: as duas linhas (OSM e GISCO curto) cabem na cápsula, sem cortes.
       await expect(page.getByTestId('map.attribution.osm')).toBeVisible();
-      await check('aberta', ['map.attribution.osm', 'map.legend-box', 'map.attribution.gisco']);
-      const legend = await box('map.legend-box');
-      const gisco = await box('map.attribution.gisco');
-      expect(near(legend.x, 12)).toBe(true);
-      expect(overlaps(legend, gisco)).toBe(false);
-      expect(overlaps(legend, await box('map.attribution.osm'))).toBe(false);
-      expect(near(bottom(legend), bottom(gisco))).toBe(true);
+      await expect(page.getByTestId('map.attribution.gisco')).toHaveText(GISCO_SHORT);
+      const open = await check('aberta');
+      for (const id of ['map.attribution.osm', 'map.attribution.gisco', 'map.attribution.close']) {
+        const b = await box(id);
+        expect(b.x >= open.bar.x && right(b) <= right(open.bar) + 1, id).toBe(true);
+        expect(b.y >= open.bar.y - 1 && bottom(b) <= bottom(open.bar) + 1, id).toBe(true);
+      }
 
-      // Recolhida: o botão desce com a faixa.
+      // Recolhida: GISCO curto e "(i)" na mesma cápsula; nada salta (mesma altura e posição).
       await page.getByTestId('map.attribution.close').click();
       await expect(page.getByTestId('map.attribution.info')).toBeVisible();
-      await check('recolhida', ['map.legend-box', 'map.attribution.gisco', 'map.attribution.info']);
-      expect(overlaps(await box('map.legend-box'), await box('map.attribution.info'))).toBe(false);
+      await expect(page.getByTestId('map.attribution.gisco')).toBeVisible();
+      const collapsed = await check('recolhida');
+      expect(near(collapsed.locate.y, open.locate.y)).toBe(true);
+      expect(near(collapsed.bar.y, open.bar.y)).toBe(true);
 
-      // Ficha aberta: sem legenda; atribuição recolhida no canto, por cima da ficha; o botão por cima.
+      // O "(i)" abre "Legenda e fontes": a legenda (com a zona aproximada) e as fontes, por cima da
+      // cápsula, dentro do ecrã; o botão sobe e não sobrepõe o painel.
+      await page.getByTestId('map.attribution.info').click();
+      const details = page.getByTestId('map.attribution.details');
+      await expect(details).toBeVisible();
+      await expect(details.getByRole('heading', { name: 'Legenda e fontes' })).toBeVisible();
+      await expect(details.getByTestId('map.legend')).toContainText(
+        'Zona aproximada (código postal)',
+      );
+      await expect(details).toContainText('colaboradores do OpenStreetMap');
+      const panel = await box('map.attribution.details');
+      expect(panel.x).toBeGreaterThanOrEqual(0);
+      expect(right(panel)).toBeLessThanOrEqual(viewport.width);
+      expect(bottom(panel)).toBeLessThanOrEqual((await box('map.attribution.bar')).y);
+      expect(overlaps(await box('map.locate'), panel)).toBe(false);
+      await page.keyboard.press('Escape');
+      await expect(details).toHaveCount(0);
+
+      // Ficha aberta: atribuição recolhida no canto, por cima da ficha; o botão por cima.
       await openMap(page, `/map?company=${C004}`);
       await expect(page.getByTestId('map.card')).toBeVisible();
-      await expect(page.getByTestId('map.legend-box')).toHaveCount(0);
-      const { attribution } = await check('ficha', ['map.attribution', 'map.sheet']);
+      await expect(page.getByTestId('map.attribution.info')).toBeVisible();
+      const { bar } = await check('ficha');
       const sheet = await box('map.sheet');
-      expect(sheet.y - bottom(attribution)).toBeGreaterThanOrEqual(8);
+      expect(sheet.y - bottom(bar)).toBeGreaterThanOrEqual(8);
       expect(bottom(sheet)).toBeLessThanOrEqual(viewport.height);
       await context.close();
     });
@@ -238,14 +255,21 @@ const SIM_TRACES = ['38.7123', '9.41987', '38,7123', '9,41987'];
 // Conta as chamadas à API de geolocalização do browser (regra 1: só depois do toque no botão).
 async function instrumentGeolocation(page: Page) {
   await page.addInitScript(() => {
-    const w = window as unknown as { __geo: { get: number; watch: number } };
+    const w = window as unknown as {
+      __geo: { get: number; watch: number };
+      __geoInGesture: boolean[];
+    };
     w.__geo = { get: 0, watch: 0 };
+    // O Safari pode recusar sem perguntar se o pedido sai do gesto: regista se cada
+    // getCurrentPosition correu com a ativação do utilizador ainda ativa.
+    w.__geoInGesture = [];
     const geo = navigator.geolocation;
     if (!geo) return;
     const get = geo.getCurrentPosition.bind(geo);
     const watch = geo.watchPosition.bind(geo);
     geo.getCurrentPosition = (...args: Parameters<Geolocation['getCurrentPosition']>) => {
       w.__geo.get += 1;
+      w.__geoInGesture.push(navigator.userActivation?.isActive ?? false);
       return get(...args);
     };
     geo.watchPosition = (...args: Parameters<Geolocation['watchPosition']>) => {
@@ -290,6 +314,12 @@ test.describe('mapa: a minha posição (regras 1 e 2)', () => {
       'A sua posição está no mapa',
     );
     expect(await geoCalls(page)).toEqual({ get: 1, watch: 0 });
+    // Dentro do gesto do toque (sem await nem setTimeout antes do pedido).
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __geoInGesture: boolean[] }).__geoInGesture,
+      ),
+    ).toEqual([true]);
 
     // Mexer no mapa depois (filtro → novo GET /companies/map) também não leva a posição.
     await page.getByTestId('companies.category-chip-e2e-restauracao').click();
@@ -320,7 +350,10 @@ test.describe('mapa: a minha posição (regras 1 e 2)', () => {
 
     await page.getByTestId('map.locate').click();
     await expect(page.getByTestId('map.locate.denied')).toBeVisible();
-    await expect(page.getByTestId('map.locate.denied')).toContainText('Sem acesso à localização');
+    // Na web, a permissão é do browser (por site), não do dispositivo.
+    await expect(page.getByTestId('map.locate.denied')).toHaveText(
+      'Sem acesso à localização. Permita a localização para este site nas definições do browser.',
+    );
     await expect(page.getByTestId('map.me')).toHaveCount(0);
 
     await page.getByTestId('companies.category-chip-e2e-comercio').click();

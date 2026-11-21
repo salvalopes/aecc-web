@@ -1,0 +1,62 @@
+{
+  "atual__mobile__light__card-fechado": {
+    "canvas": 92.9,
+    "visible": 79,
+    "band": 173
+  },
+  "atual__mobile__light__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 81.6,
+    "band": 125
+  },
+  "atual__mobile__light__card-aberto": {
+    "canvas": 92.9,
+    "visible": 70.7,
+    "band": 99
+  },
+  "atual__mobile__dark__card-fechado": {
+    "canvas": 92.9,
+    "visible": 79,
+    "band": 173
+  },
+  "atual__mobile__dark__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 81.6,
+    "band": 125
+  },
+  "atual__mobile__dark__card-aberto": {
+    "canvas": 92.9,
+    "visible": 70.7,
+    "band": 99
+  },
+  "atual__mobile360__light__card-fechado": {
+    "canvas": 92.5,
+    "visible": 76,
+    "band": 173
+  },
+  "atual__mobile360__light__atribuicao-recolhida": {
+    "canvas": 92.5,
+    "visible": 79.3,
+    "band": 125
+  },
+  "atual__mobile360__light__card-aberto": {
+    "canvas": 92.5,
+    "visible": 64.2,
+    "band": 99
+  },
+  "atual__mobile360__dark__card-fechado": {
+    "canvas": 92.5,
+    "visible": 76,
+    "band": 173
+  },
+  "atual__mobile360__dark__atribuicao-recolhida": {
+    "canvas": 92.5,
+    "visible": 79.3,
+    "band": 125
+  },
+  "atual__mobile360__dark__card-aberto": {
+    "canvas": 92.5,
+    "visible": 64.2,
+    "band": 99
+  }
+}

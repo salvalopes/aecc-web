@@ -21,7 +21,8 @@ const OVERLAY = [
   /^map\.locate$/,
   /^companies\.category-chip-/,
   /^map\.legend-box$/,
-  /^map\.attribution\.(osm|info|gisco|details)$/,
+  // `bar`: a cápsula da atribuição no telemóvel e no nativo (faixa de baixo, direção B).
+  /^map\.attribution\.(osm|info|gisco|details|bar)$/,
   /^map\.sheet$/,
   /^map\.(locate\.denied|locate\.unavailable|company-missing)$/,
 ];

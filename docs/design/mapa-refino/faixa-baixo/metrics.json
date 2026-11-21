@@ -1,0 +1,82 @@
+{
+  "final__mobile__light__card-fechado": {
+    "canvas": 92.9,
+    "visible": 84.1,
+    "band": 99
+  },
+  "final__mobile__light__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 84.8,
+    "band": 99
+  },
+  "final__mobile__light__legenda": {
+    "canvas": 92.9,
+    "visible": 56.3,
+    "band": 357
+  },
+  "final__mobile__light__card-aberto": {
+    "canvas": 92.9,
+    "visible": 69.2,
+    "band": 99
+  },
+  "final__mobile__dark__card-fechado": {
+    "canvas": 92.9,
+    "visible": 84.1,
+    "band": 99
+  },
+  "final__mobile__dark__atribuicao-recolhida": {
+    "canvas": 92.9,
+    "visible": 84.8,
+    "band": 99
+  },
+  "final__mobile__dark__legenda": {
+    "canvas": 92.9,
+    "visible": 56.3,
+    "band": 357
+  },
+  "final__mobile__dark__card-aberto": {
+    "canvas": 92.9,
+    "visible": 69.2,
+    "band": 99
+  },
+  "final__mobile360__light__card-fechado": {
+    "canvas": 92.5,
+    "visible": 81.5,
+    "band": 99
+  },
+  "final__mobile360__light__atribuicao-recolhida": {
+    "canvas": 92.5,
+    "visible": 82.4,
+    "band": 99
+  },
+  "final__mobile360__light__legenda": {
+    "canvas": 92.5,
+    "visible": 52.5,
+    "band": 357
+  },
+  "final__mobile360__light__card-aberto": {
+    "canvas": 92.5,
+    "visible": 62.9,
+    "band": 99
+  },
+  "final__mobile360__dark__card-fechado": {
+    "canvas": 92.5,
+    "visible": 81.5,
+    "band": 99
+  },
+  "final__mobile360__dark__atribuicao-recolhida": {
+    "canvas": 92.5,
+    "visible": 82.4,
+    "band": 99
+  },
+  "final__mobile360__dark__legenda": {
+    "canvas": 92.5,
+    "visible": 52.5,
+    "band": 357
+  },
+  "final__mobile360__dark__card-aberto": {
+    "canvas": 92.5,
+    "visible": 62.9,
+    "band": 99
+  }
+}
